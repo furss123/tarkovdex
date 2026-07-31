@@ -55,10 +55,15 @@ export default async function HomePage({ params }: PageProps) {
 
   return (
     <section className="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14">
-      <div className="mb-10 space-y-2">
-        <h1 className="text-2xl font-medium text-fg sm:text-3xl">{t('title')}</h1>
-        <p className="text-sm text-muted sm:text-base">{t('subtitle')}</p>
-      </div>
+      <header className="mb-10 border-b border-border pb-8">
+        <p className="text-xs font-medium uppercase tracking-widest text-accent">TarkovDex</p>
+        <h1 className="mt-2 text-2xl font-medium tracking-tight text-fg sm:text-3xl">
+          {t('title')}
+        </h1>
+        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted sm:text-base">
+          {t('subtitle')}
+        </p>
+      </header>
 
       <div className="space-y-10">
         <InGameClock />
