@@ -64,6 +64,7 @@ export interface GunsmithCondition {
 export interface GunsmithPartCandidate {
   requirement: 'item' | 'category';
   requirementId: string;
+  slotName: string;
   item: ToolItem;
   compatible: boolean;
   pathComplete: boolean;

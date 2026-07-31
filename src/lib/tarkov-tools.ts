@@ -277,14 +277,22 @@ function allowedChildren(
   parent: RawItem,
   rawItems: Record<string, RawItem>,
   categories: Map<string, string[]>,
-): string[] {
+): Array<{ id: string; slotName: string }> {
   const allowed = new Set<string>();
+  const slotByItem = new Map<string, string>();
   for (const slot of parent.properties?.slots ?? []) {
     const filters = slot.filters;
     if (!filters) continue;
-    for (const id of filters.allowedItems ?? []) allowed.add(id);
+    const slotName = slot.name ?? slot.nameId ?? '';
+    for (const id of filters.allowedItems ?? []) {
+      allowed.add(id);
+      if (!slotByItem.has(id)) slotByItem.set(id, slotName);
+    }
     for (const category of filters.allowedCategories ?? []) {
-      for (const id of categories.get(category) ?? []) allowed.add(id);
+      for (const id of categories.get(category) ?? []) {
+        allowed.add(id);
+        if (!slotByItem.has(id)) slotByItem.set(id, slotName);
+      }
     }
     for (const id of filters.excludedItems ?? []) allowed.delete(id);
     for (const id of [...allowed]) {
@@ -293,28 +301,37 @@ function allowedChildren(
       }
     }
   }
-  return [...allowed].filter((id) => Boolean(rawItems[id]));
+  return [...allowed]
+    .filter((id) => Boolean(rawItems[id]))
+    .map((id) => ({ id, slotName: slotByItem.get(id) ?? '' }));
 }
 
+// 부위(slot) grouping: the slot name is recorded only at the weapon's own
+// direct slots — deeper hops (adapters/intermediate parts) inherit the same
+// group so a part still groups under the weapon body-part area it occupies,
+// not the intermediate part's own attachment point.
 function reachablePartPaths(
   weapon: RawItem,
   rawItems: Record<string, RawItem>,
   categories: Map<string, string[]>,
   maxDepth = 4,
-): Map<string, string[]> {
-  const paths = new Map<string, string[]>();
+): Map<string, { path: string[]; slotName: string }> {
+  const paths = new Map<string, { path: string[]; slotName: string }>();
   const visited = new Set<string>([weapon.id]);
-  const queue: Array<{ item: RawItem; path: string[] }> = [{ item: weapon, path: [] }];
+  const queue: Array<{ item: RawItem; path: string[]; slotName: string }> = [
+    { item: weapon, path: [], slotName: '' },
+  ];
 
   while (queue.length > 0) {
     const current = queue.shift();
     if (!current || current.path.length >= maxDepth) continue;
-    for (const childId of allowedChildren(current.item, rawItems, categories)) {
-      if (visited.has(childId)) continue;
-      visited.add(childId);
-      const path = [...current.path, childId];
-      paths.set(childId, path);
-      queue.push({ item: rawItems[childId], path });
+    for (const child of allowedChildren(current.item, rawItems, categories)) {
+      if (visited.has(child.id)) continue;
+      visited.add(child.id);
+      const path = [...current.path, child.id];
+      const slotName = current.path.length === 0 ? child.slotName : current.slotName;
+      paths.set(child.id, { path, slotName });
+      queue.push({ item: rawItems[child.id], path, slotName });
     }
   }
   return paths;
@@ -324,7 +341,7 @@ export async function getGunsmithTasks(
   locale: Locale,
   gameMode: GameMode = DEFAULT_MODE,
 ): Promise<GunsmithTask[]> {
-  const [{ rawItems, items }, tasksDoc, taskDict] = await Promise.all([
+  const [{ rawItems, items, itemDict }, tasksDoc, taskDict] = await Promise.all([
     fetchCore(locale, gameMode),
     fetchTarkovJson<RawTasksDoc>(`/${gameMode}/tasks`),
     getTranslationDict('tasks', locale, gameMode),
@@ -353,18 +370,19 @@ export async function getGunsmithTasks(
             : raw.categories?.includes(requirement.id)
           );
         })
-        .map(([id, path]) => ({
+        .map(([id, entry]) => ({
           item: items.get(id),
-          path: path.map((partId) => items.get(partId)).filter((part): part is ToolItem => Boolean(part)),
+          path: entry.path.map((partId) => items.get(partId)).filter((part): part is ToolItem => Boolean(part)),
+          slotName: entry.slotName,
         }))
-        .filter((entry): entry is { item: ToolItem; path: ToolItem[] } => Boolean(entry.item))
+        .filter((entry): entry is { item: ToolItem; path: ToolItem[]; slotName: string } => Boolean(entry.item))
         .sort((a, b) => a.item.name.localeCompare(b.item.name, locale, { numeric: true }));
 
       let pathComplete = reachableMatches.length > 0;
       if (reachableMatches.length === 0 && requirement.type === 'item') {
         const requiredItem = items.get(requirement.id);
         if (requiredItem) {
-          reachableMatches.push({ item: requiredItem, path: [requiredItem] });
+          reachableMatches.push({ item: requiredItem, path: [requiredItem], slotName: '' });
           pathComplete = false;
         }
       }
@@ -374,6 +392,7 @@ export async function getGunsmithTasks(
       candidates.push({
         requirement: requirement.type,
         requirementId: requirement.id,
+        slotName: translate(itemDict, selected.slotName),
         item: selected.item,
         compatible: pathComplete && selected.path.length === 1,
         pathComplete,
