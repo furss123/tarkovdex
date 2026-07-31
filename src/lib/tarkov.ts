@@ -8,7 +8,7 @@ import type {
   TaskTrader,
 } from '@/types/tarkov';
 import type { Locale } from '@/i18n/routing';
-import { localizeMobName } from '@/lib/game-localization';
+import { localizeMobName, localizeTaskText } from '@/lib/game-localization';
 
 /**
  * json.tarkov.dev static JSON API client.
@@ -441,41 +441,65 @@ export async function getTasks({
   locale,
   gameMode = DEFAULT_GAME_MODE,
 }: GetTasksParams): Promise<Task[]> {
-  const [doc, dict, traders, mapNames] = await Promise.all([
+  const [doc, dict, traders, mapNames, englishDict] = await Promise.all([
     fetchTarkovJson<RawTasksDoc>(`/${gameMode}/tasks`),
     getTranslationDict('tasks', locale, gameMode),
     getTraders(locale, gameMode),
     getMapNameIndex(locale, gameMode),
+    // The English name is shown in parentheses after the localized one so a
+    // quest stays findable by the name English guides/videos use. On `en` the
+    // localized name already *is* the English one, so skip the extra fetch.
+    locale === 'en' ? null : getTranslationDict('tasks', 'en', gameMode),
   ]);
 
   const rawTasks = Object.values(doc.data.tasks);
+  /** Localized name + English name, per task id — prerequisites are id-only
+   * references, so both have to be resolvable by id for the requirement list. */
   const taskNames = new Map(
-    rawTasks.map((raw) => [raw.id, translate(dict, raw.name)]),
+    rawTasks.map((raw) => [
+      raw.id,
+      {
+        name: localizeTaskText(translate(dict, raw.name), locale),
+        nameEn: englishDict ? translate(englishDict, raw.name) : null,
+      },
+    ]),
   );
 
   return rawTasks.map((raw): Task => {
     const trader = raw.trader ? traders[raw.trader] ?? null : null;
     const map =
       raw.map && mapNames[raw.map] ? { id: raw.map, name: mapNames[raw.map] } : null;
+    const names = taskNames.get(raw.id);
 
     return {
       id: raw.id,
-      name: translate(dict, raw.name),
+      name: names?.name ?? translate(dict, raw.name),
+      // Suppressed when it would just repeat the localized name — either
+      // because we're on `en`, or because upstream's own ko/zh entry is
+      // already the untranslated English string.
+      nameEn: names?.nameEn && names.nameEn !== names.name ? names.nameEn : null,
       trader,
       map,
       minPlayerLevel: raw.minPlayerLevel,
       kappaRequired: raw.kappaRequired,
       experience: raw.experience ?? null,
       taskImageLink: raw.taskImageLink ?? null,
-      requirements: (raw.taskRequirements ?? []).map((requirement) => ({
-        taskId: requirement.task,
-        taskName: taskNames.get(requirement.task) ?? requirement.task,
-        statuses: requirement.status ?? [],
-      })),
+      requirements: (raw.taskRequirements ?? []).map((requirement) => {
+        const prerequisite = taskNames.get(requirement.task);
+        return {
+          taskId: requirement.task,
+          taskName: prerequisite?.name ?? requirement.task,
+          taskNameEn:
+            prerequisite?.nameEn && prerequisite.nameEn !== prerequisite.name
+              ? prerequisite.nameEn
+              : null,
+          statuses: requirement.status ?? [],
+        };
+      }),
       objectives: (raw.objectives ?? []).map((o) => ({
         id: o.id,
         type: o.type,
-        description: translate(dict, o.description),
+        description: localizeTaskText(translate(dict, o.description), locale),
         optional: o.optional,
         count: o.count ?? null,
       })),

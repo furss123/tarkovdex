@@ -97,6 +97,8 @@ export interface TaskObjective {
 export interface TaskRequirement {
   taskId: string;
   taskName: string;
+  /** English name of the prerequisite, for the same reason as `Task.nameEn`. */
+  taskNameEn: string | null;
   statuses: string[];
 }
 
@@ -104,6 +106,10 @@ export interface TaskRequirement {
 export interface Task {
   id: string;
   name: string;
+  /** The quest's English name, shown in parentheses after the localized name
+   * so players can find a quest by the name used in English guides/videos.
+   * Null when it would just repeat `name` (i.e. on the `en` locale). */
+  nameEn: string | null;
   trader: TaskTrader | null;
   /** The task's single target map, if any (many tasks — hideout/trader-only
    * — have none). Resolved from the `maps` endpoint by id. */

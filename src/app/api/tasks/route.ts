@@ -76,7 +76,14 @@ export async function GET(request: Request) {
     for (const task of tasks) questDepth(task, byId, depthById);
     const filtered = tasks
       .filter((task) => {
-        if (query && !task.name.toLocaleLowerCase(locale).includes(query)) return false;
+        // Matches the English name too, so a quest is findable by the name
+        // used in English guides/videos even on the ko/zh locales.
+        if (
+          query &&
+          !`${task.name} ${task.nameEn ?? ''}`.toLocaleLowerCase(locale).includes(query)
+        ) {
+          return false;
+        }
         if (traderId && task.trader?.id !== traderId) return false;
         if (mapId && task.map?.id !== mapId) return false;
         return true;

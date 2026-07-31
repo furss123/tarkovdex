@@ -33,6 +33,7 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [traderId, setTraderId] = useState('');
   const [mapId, setMapId] = useState('');
+  const [focusTaskId, setFocusTaskId] = useState('');
   const [data, setData] = useState<TaskSearchResponse>({
     tasks: [],
     total: 0,
@@ -49,6 +50,19 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
     const timer = window.setTimeout(() => setDebouncedSearch(search), 250);
     return () => window.clearTimeout(timer);
   }, [search]);
+
+  /**
+   * Jump to a prerequisite quest from an open quest's requirement list: search
+   * for it by name (clearing the trader/map filters, which would otherwise
+   * hide it) and mark it focused so its card opens and scrolls into view.
+   */
+  function openTask(taskId: string, taskName: string) {
+    setTraderId('');
+    setMapId('');
+    setSearch(taskName);
+    setDebouncedSearch(taskName);
+    setFocusTaskId(taskId);
+  }
 
   const baseParams = useMemo(
     () =>
@@ -129,7 +143,13 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
       ) : (
         <>
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <TaskSearch value={search} onChange={setSearch} />
+            <TaskSearch
+              value={search}
+              onChange={(value) => {
+                setSearch(value);
+                setFocusTaskId('');
+              }}
+            />
             <TaskFilters
               maps={data.filters.maps}
               mapId={mapId}
@@ -159,6 +179,8 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
                     key={task.id}
                     task={task}
                     sequence={(data.page - 1) * data.pageSize + index + 1}
+                    focused={task.id === focusTaskId}
+                    onOpenTask={openTask}
                   />
                 ))}
               </div>

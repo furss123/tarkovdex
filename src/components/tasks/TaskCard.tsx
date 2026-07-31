@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ChevronDown,
   ClipboardList,
@@ -12,14 +12,34 @@ import {
 import { useTranslations } from 'next-intl';
 import type { Task } from '@/types/tarkov';
 
-export function TaskCard({ task, sequence }: { task: Task; sequence: number }) {
+export function TaskCard({
+  task,
+  sequence,
+  focused = false,
+  onOpenTask,
+}: {
+  task: Task;
+  sequence: number;
+  /** Set when this card is the target of a prerequisite click — opens its
+   * guide and scrolls it into view. */
+  focused?: boolean;
+  onOpenTask?: (taskId: string, taskName: string) => void;
+}) {
   const t = useTranslations('tasks');
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(focused);
+  const article = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!focused) return;
+    setExpanded(true);
+    article.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [focused]);
 
   return (
     <article
+      ref={article}
       data-task-id={task.id}
-      className="border-b border-border/60 bg-bg/30 last:border-0"
+      className="scroll-mt-4 border-b border-border/60 bg-bg/30 last:border-0"
     >
       <div className="flex items-start gap-3 px-4 py-4 hover:bg-surface-2/50">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-xs font-medium tabular-nums text-muted">
@@ -50,6 +70,9 @@ export function TaskCard({ task, sequence }: { task: Task; sequence: number }) {
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-fg underline-offset-4 group-hover:text-accent group-hover:underline">
                 {task.name}
+                {task.nameEn ? (
+                  <span className="ml-1 font-normal text-muted">({task.nameEn})</span>
+                ) : null}
               </span>
               <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
                 {task.trader ? <span>{task.trader.name}</span> : null}
@@ -121,8 +144,21 @@ export function TaskCard({ task, sequence }: { task: Task; sequence: number }) {
                   {task.requirements.length ? (
                     <ul className="mt-2 space-y-1">
                       {task.requirements.map((requirement) => (
-                        <li key={requirement.taskId} className="text-fg">
-                          · {requirement.taskName}
+                        <li key={requirement.taskId}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onOpenTask?.(requirement.taskId, requirement.taskName)
+                            }
+                            className="text-left text-fg underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+                          >
+                            · {requirement.taskName}
+                            {requirement.taskNameEn ? (
+                              <span className="ml-1 text-muted">
+                                ({requirement.taskNameEn})
+                              </span>
+                            ) : null}
+                          </button>
                         </li>
                       ))}
                     </ul>

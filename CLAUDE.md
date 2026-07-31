@@ -1550,6 +1550,46 @@ Footer, Home shortcuts, About, and all locale dictionaries follow this tree.
   no price or price-derived fields at all** — the ammo/armor pages are
   combat-performance tools, and price data was deliberately removed from
   their data model and UI (per explicit request), not just hidden.
+### Korean quest text (glossary, not runtime translation)
+
+`tasks_ko` is substantially incomplete upstream: **209 of 501 quest names and
+535 distinct objective descriptions** come back byte-identical to English
+(audited live across both game modes). Same failure shape as the mob names and
+armor layer names already handled in `game-localization.ts`, just far bigger.
+
+- **Fix is a static glossary, `src/lib/task-ko.json` (760 entries)**, applied
+  by `localizeTaskText()` only when the API's own ko lookup produced no
+  Hangul — so upstream wins the moment it catches up. Keyed on the English
+  text, because the underlying dictionary keys are per-task ids.
+- **Generated offline** by `scripts/generate-task-ko.mjs` (Gemini, the
+  provider this project already uses for news, with a Tarkov-specific
+  glossary prompt for map/trader/boss/verb conventions). Deliberately **not**
+  a runtime translation path like the news page: the quest page is core
+  functionality and shouldn't inherit an LLM's latency, rate limits, or the
+  cache-a-failure-forever class of bug the news page had to be restructured
+  around twice. Re-run after a patch adds quests; existing entries are
+  preserved so only new strings cost a call, and it writes incrementally so a
+  mid-run 429 doesn't lose progress.
+- **Coverage verified**: 501/501 names and 1467/1467 objectives in regular,
+  497/497 and 1438/1438 in pve, all Korean. `tests/task-localization.test.ts`
+  asserts the lookup's guard behavior and that no glossary entry is
+  accidentally still English.
+
+### Quest name pairing and prerequisite navigation
+
+- **`Task.nameEn`** carries the English quest name, rendered muted in
+  parentheses after the localized one (`맛있는 소시지 (The Delicious Sausage)`)
+  so a quest stays findable by the name English guides and videos use. Null
+  when it would just repeat `name` — i.e. on `en`, or where upstream's own
+  ko/zh entry is already the English string. `/api/tasks` matches the query
+  against both names, so `Delicious` and `맛있는` both find the same quest.
+- **Prerequisites are buttons, not text.** `TaskRequirement` gained
+  `taskNameEn` for the same pairing, and clicking one calls back into
+  `TasksExplorer.openTask()`, which searches for that quest by name, clears
+  the trader/map filters (which would otherwise hide it), and marks it
+  focused — `TaskCard` opens its guide and scrolls it into view. Typing in
+  the search box clears the focus so it can't re-expand later.
+
 - `src/lib/game-localization.ts` is the shared display-layer glossary:
   caliber enum → familiar designation (`Caliber545x39` → `5.45×39mm`, all 30
   live values mapped, generic fallback for future ones), armor material enum

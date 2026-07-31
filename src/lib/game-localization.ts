@@ -7,6 +7,10 @@
  * components can import it.
  */
 
+import taskTextKo from './task-ko.json';
+
+const TASK_TEXT_KO: Record<string, string> = taskTextKo;
+
 /** Every caliber value confirmed in a live `regular/items` fetch (30 total),
  * mapped to the familiar cartridge designation. Locale-invariant except
  * shotgun gauges. Unknown future values fall back via `formatCaliber`. */
@@ -139,6 +143,24 @@ export function localizeMobName(
 ): string {
   if (locale === 'ko' && !HAS_HANGUL.test(translated)) {
     return MOB_NAMES_KO[mobId] ?? translated;
+  }
+  return translated;
+}
+
+/**
+ * Korean quest names and objective descriptions for the ~220 quests and ~540
+ * objectives json.tarkov.dev's `tasks_ko` dictionary still returns in English.
+ * Keyed on that English text — the underlying dictionary keys are per-task
+ * ids, so the English string is the stable, meaningful key (same reasoning as
+ * ARMOR_LAYER_NAMES_KO above).
+ *
+ * Generated offline by `scripts/generate-task-ko.mjs`; re-run it after a patch
+ * adds quests. Applied only when the API's own dictionary produced no Hangul,
+ * so upstream wins as soon as it catches up.
+ */
+export function localizeTaskText(translated: string, locale: string): string {
+  if (locale === 'ko' && !HAS_HANGUL.test(translated)) {
+    return TASK_TEXT_KO[translated] ?? translated;
   }
   return translated;
 }
