@@ -122,6 +122,32 @@ export interface Task {
   objectives: TaskObjective[];
 }
 
+export interface TaskFilterTrader {
+  id: string;
+  name: string;
+  imageLink: string | null;
+  taskCount: number;
+}
+
+export interface TaskFilterMap {
+  id: string;
+  name: string;
+}
+
+export interface TasksResponse {
+  tasks: Task[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+  filters: {
+    traders: TaskFilterTrader[];
+    maps: TaskFilterMap[];
+  };
+  gameMode: GameMode;
+  source: 'json.tarkov.dev';
+}
+
 export interface MapBossRef {
   id: string;
   name: string;

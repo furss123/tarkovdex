@@ -210,7 +210,16 @@ function ItemsSkeleton() {
   );
 }
 
-export function ItemsExplorer({ locale }: { locale: Locale }) {
+export function ItemsExplorer({
+  locale,
+  initialResponse,
+}: {
+  locale: Locale;
+  /** Server-rendered default-query first page (regular mode, no search/filters,
+   * page 1) — see economy/items/page.tsx. Lets the initial HTML contain real
+   * item rows and lets hydration skip re-fetching the exact same query. */
+  initialResponse?: MarketItemsResponse | null;
+}) {
   const t = useTranslations('items');
   const { gameMode } = useGameMode();
   const [search, setSearch] = useState('');
@@ -220,14 +229,15 @@ export function ItemsExplorer({ locale }: { locale: Locale }) {
   const [sale, setSale] = useState('all');
   const [category, setCategory] = useState('all');
   const [feeRate, setFeeRate] = useState(DEFAULT_FEE);
-  const [data, setData] = useState<MarketItemsResponse>(EMPTY_RESPONSE);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<MarketItemsResponse>(initialResponse ?? EMPTY_RESPONSE);
+  const [loading, setLoading] = useState(!initialResponse);
   const [loadingMore, setLoadingMore] = useState(false);
   const [failed, setFailed] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [queryReady, setQueryReady] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const skippableInitialFetch = useRef(Boolean(initialResponse));
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -338,6 +348,22 @@ export function ItemsExplorer({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     if (!queryReady) return;
+
+    if (skippableInitialFetch.current) {
+      skippableInitialFetch.current = false;
+      const isDefaultQuery =
+        baseParams.get('mode') === 'regular' &&
+        baseParams.get('q') === '' &&
+        baseParams.get('sort') === DEFAULT_SORT &&
+        baseParams.get('direction') === DEFAULT_DIRECTION &&
+        baseParams.get('sale') === 'all' &&
+        baseParams.get('category') === 'all' &&
+        baseParams.get('feeRate') === String(DEFAULT_FEE);
+      // The server already rendered this exact default query as `data`'s
+      // initial state — don't immediately re-fetch the same page on mount.
+      if (isDefaultQuery) return;
+    }
+
     const controller = new AbortController();
     setLoading(true);
     setFailed(false);

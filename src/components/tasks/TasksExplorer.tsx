@@ -1,32 +1,38 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
-import type { Task } from '@/types/tarkov';
+import type { TasksResponse } from '@/types/tarkov';
 import { useGameMode } from '@/contexts/GameModeContext';
 import { TaskSearch } from './TaskSearch';
-import { TaskFilters, type FilterOption } from './TaskFilters';
+import { TaskFilters } from './TaskFilters';
 import { TaskCard } from './TaskCard';
-import {
-  TraderPortraitFilter,
-  type TraderFilterOption,
-} from './TraderPortraitFilter';
+import { TraderPortraitFilter } from './TraderPortraitFilter';
 
-type TaskSearchResponse = {
-  tasks: Task[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
-  filters: {
-    traders: TraderFilterOption[];
-    maps: FilterOption[];
-  };
+const EMPTY_RESPONSE: TasksResponse = {
+  tasks: [],
+  total: 0,
+  page: 1,
+  pageSize: 40,
+  hasMore: false,
+  filters: { traders: [], maps: [] },
+  gameMode: 'regular',
+  source: 'json.tarkov.dev',
 };
 
-export function TasksExplorer({ locale }: { locale: Locale }) {
+export function TasksExplorer({
+  locale,
+  initialResponse,
+}: {
+  locale: Locale;
+  /** Server-rendered default-query first page (regular mode, no search/trader/
+   * map filter, page 1) — see progression/tasks/page.tsx. Lets the initial
+   * HTML contain real quest names and lets hydration skip re-fetching the
+   * exact same query. */
+  initialResponse?: TasksResponse | null;
+}) {
   const t = useTranslations('tasks');
   const { gameMode } = useGameMode();
   const [search, setSearch] = useState('');
@@ -34,17 +40,11 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
   const [traderId, setTraderId] = useState('');
   const [mapId, setMapId] = useState('');
   const [focusTaskId, setFocusTaskId] = useState('');
-  const [data, setData] = useState<TaskSearchResponse>({
-    tasks: [],
-    total: 0,
-    page: 1,
-    pageSize: 40,
-    hasMore: false,
-    filters: { traders: [], maps: [] },
-  });
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<TasksResponse>(initialResponse ?? EMPTY_RESPONSE);
+  const [loading, setLoading] = useState(!initialResponse);
   const [loadingMore, setLoadingMore] = useState(false);
   const [failed, setFailed] = useState(false);
+  const skippableInitialFetch = useRef(Boolean(initialResponse));
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search), 250);
@@ -78,6 +78,18 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
   );
 
   useEffect(() => {
+    if (skippableInitialFetch.current) {
+      skippableInitialFetch.current = false;
+      const isDefaultQuery =
+        baseParams.get('mode') === 'regular' &&
+        baseParams.get('q') === '' &&
+        baseParams.get('trader') === '' &&
+        baseParams.get('map') === '';
+      // The server already rendered this exact default query as `data`'s
+      // initial state — don't immediately re-fetch the same page on mount.
+      if (isDefaultQuery) return;
+    }
+
     const controller = new AbortController();
     const params = new URLSearchParams(baseParams);
     params.set('page', '1');
@@ -87,7 +99,7 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
     fetch(`/api/tasks?${params.toString()}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error('task request failed');
-        return response.json() as Promise<TaskSearchResponse>;
+        return response.json() as Promise<TasksResponse>;
       })
       .then(setData)
       .catch((error: unknown) => {
@@ -110,7 +122,7 @@ export function TasksExplorer({ locale }: { locale: Locale }) {
     try {
       const response = await fetch(`/api/tasks?${params.toString()}`);
       if (!response.ok) throw new Error('task request failed');
-      const next = (await response.json()) as TaskSearchResponse;
+      const next = (await response.json()) as TasksResponse;
       setData((current) => ({
         ...next,
         tasks: [...current.tasks, ...next.tasks],

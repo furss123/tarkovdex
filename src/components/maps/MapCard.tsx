@@ -14,12 +14,12 @@ import { ExpandableText } from './ExpandableText';
  * same border/muted-text/accent primitives as ItemsTable and TaskCard rather
  * than introducing new styling.
  *
- * The five maps with shipped atmosphere art (see `MAP_ATMOSPHERE`) get a short
- * banner carrying the map name; every other map keeps the plain heading. That
- * asymmetry is deliberate — inventing stand-in art for the remaining maps would
- * either mislabel scenery or add filler. Stats, bosses, description and the
- * wiki link always sit below the banner on the solid card surface, so the image
- * never overlaps data.
+ * Maps with shipped atmosphere art (see `MAP_ATMOSPHERE`) get a short banner
+ * carrying the map name; any map absent from that table keeps the plain
+ * heading instead — inventing stand-in art for it would either mislabel
+ * scenery or add filler. Stats, bosses, description and the wiki link always
+ * sit below the banner on the solid card surface, so the image never overlaps
+ * data.
  */
 export async function MapCard({
   map,
