@@ -1,12 +1,14 @@
 'use client';
 
 import { useMemo } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { ArrowRight } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import type { GameMap } from '@/types/tarkov';
 import type { Locale } from '@/i18n/routing';
 import { useGameMode } from '@/contexts/GameModeContext';
+import { MAP_ATMOSPHERE } from '@/lib/atmosphere';
 import { formatChance } from '@/lib/format';
 
 const INTL_LOCALE: Record<Locale, string> = {
@@ -143,8 +145,28 @@ export function BossSpawnBoard({
         {shown.map((map) => (
           <div
             key={map.id}
-            className="rounded-lg border border-border bg-surface/30 px-3 py-2.5"
+            className="relative isolate overflow-hidden rounded-lg border border-border bg-surface/30 px-3 py-2.5"
           >
+            {/* Atmosphere sits behind the map name only, clipped to a strip
+                and faded to the card surface, so no boss name or spawn
+                percentage ever has image detail behind it. Maps with no
+                shipped art keep the plain heading — see `MAP_ATMOSPHERE`. */}
+            {MAP_ATMOSPHERE[map.id] ? (
+              <span
+                className="pointer-events-none absolute inset-x-0 top-0 -z-10 block h-[56px]"
+                aria-hidden="true"
+              >
+                <Image
+                  src={MAP_ATMOSPHERE[map.id]}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover object-center opacity-30"
+                />
+                <span className="absolute inset-0 block bg-gradient-to-b from-bg/40 via-bg/70 to-bg" />
+              </span>
+            ) : null}
+
             <h3 className="truncate text-sm font-medium text-fg">{map.name}</h3>
 
             {map.bosses.length > 0 ? (

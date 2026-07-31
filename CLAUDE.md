@@ -1480,6 +1480,64 @@ surrounding label is localized (`common.createdBy` in the footer and
     URL plus `noopener noreferrer`, and produces zero overflow in ko/zh/en.
     Message schemas remain identical at 110 leaf keys; forbidden style/weight
     checks, `typecheck`, `lint`, and the 26-page production build pass.
+- [x] **Atmosphere imagery (home hero, boss cards, map banners, support
+  header)** — see "Atmosphere imagery" below for the full account.
+
+## Atmosphere imagery
+
+Four generic dark/industrial environment images (AI-generated, **not** EFT
+screenshots and not official BSG art — see Legal) live in
+`public/images/atmosphere/` and are wired up through `src/lib/atmosphere.ts`.
+They exist to give section entry points identity; every information-dense page
+(flea market, hideout, ammo, armor, quests) stays entirely image-free.
+
+- **Keyed by map id, not name.** `MAP_ATMOSPHERE` maps the five relevant map
+  ids (factory, night-factory, customs, woods, streets-of-tarkov) to a static
+  import, reusing the same stable-id convention as `BossSpawnBoard`'s
+  `POPULAR_MAP_IDS`. Ids don't change across ko/zh/en or PvP/PvE, so a map can
+  never inherit another map's art from a translation change — verified live by
+  switching both locale and game mode. Maps with no shipped art deliberately
+  render with none rather than a stand-in.
+- **`next/image` with static imports**, the first use of it in this project
+  (everything else is a plain `<img>` against remote `assets.tarkov.dev` URLs,
+  which the optimizer would only add cost to). Static imports carry intrinsic
+  dimensions, so `fill` inside a fixed-height box gives zero layout shift, plus
+  responsive `sizes` and lazy-loading for free. Only the home hero is
+  `priority` — confirmed in the rendered DOM as a `link[rel=preload]` with no
+  `loading` attribute; every other atmosphere image is `loading="lazy"`.
+- **`alt=""` everywhere.** Each image sits directly behind the heading it
+  decorates (the map name, or the page H1), so scenery descriptions would add
+  screen-reader noise, not information — and it avoids shipping English alt
+  text on a Korean-first site or 12 new message keys. No message file changed.
+- **Gradient scrims are functional, not decorative.** The design system's
+  no-gradient rule targets surface treatment; these exist purely to hold text
+  contrast over the image, so they are deliberately heavy. The home hero's
+  horizontal scrim is stronger below `sm` (`to-bg/75` vs `sm:to-bg/55`) because
+  mobile copy spans nearly the full hero width while desktop copy stops well
+  inside the dark half.
+- **Contrast measured, not eyeballed** — the Browser pane wasn't compositing
+  (screenshots unavailable, the failure mode CLAUDE.md already documents), so
+  QA re-composited each layer on a canvas from the live `getComputedStyle`
+  gradient specs and the actual fetched image bytes, then swept every text
+  bounding box for its worst pixel. Against `next start`: home hero at 375px
+  (en, longest strings) H1 13.75:1 / subtitle 6.67:1 / eyebrow 6.98:1; at
+  1280px 8.6:1 / 6.45:1; home boss-card titles 6.39:1; all five map banners
+  11.2–14.2:1. WCAG AA needs 4.5:1.
+- **Data is never behind an image.** The home boss cards clip their art to a
+  56px strip behind the map name that fades to the card surface — measured:
+  strip ends 57px from the card top, the first boss row starts at 60px. Map
+  cards put stats/bosses/description/wiki below the banner on the solid
+  surface. Card structure and the 44px touch floor are unchanged.
+- **Palette left alone.** The task brief asked for "current green accent or a
+  restrained olive tactical green"; this project's current accent is **amber**
+  (a hard rule, see Design system), and its reference board was drawn against a
+  green-accent mock. Amber was kept — changing the site's one accent is an
+  identity change, not a visual-integration change, and is a separate decision.
+- **Verified**: `typecheck`, `lint`, 26-page production build, and 23 unit
+  tests pass. Live `next start` QA at 1280px and 375px across ko/zh/en:
+  exactly 5 of 17 map cards banner (140px desktop / 110px mobile), all 17 wiki
+  links intact, boss counts unchanged, zero page-level horizontal overflow,
+  zero tap targets under 44px, zero console errors.
 
 ## Local development
 

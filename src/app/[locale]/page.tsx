@@ -1,6 +1,8 @@
+import Image from 'next/image';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
+import { HERO_ATMOSPHERE } from '@/lib/atmosphere';
 import { getMaps, getTraders } from '@/lib/tarkov';
 import type { GameMap, TaskTrader } from '@/types/tarkov';
 import { InGameClock } from '@/components/home/InGameClock';
@@ -55,7 +57,38 @@ export default async function HomePage({ params }: PageProps) {
 
   return (
     <section className="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14">
-      <header className="mb-10 border-b border-border pb-8">
+      {/*
+        Atmosphere hero. The image is decoration only — the two overlays below
+        are what make the existing heading copy readable over it, so they are
+        deliberately heavy (the site's no-gradient rule is about decorative
+        surface treatment, not a contrast scrim). `fill` inside a fixed
+        min-height box means no layout shift, and this is the one image on the
+        site marked `priority`; everything else lazy-loads.
+      */}
+      {/* `isolate` so the `-z-10` decoration layers stack behind the copy but
+          still in front of the page background. */}
+      <header className="relative isolate mb-10 flex min-h-[260px] flex-col justify-end overflow-hidden rounded-lg border border-border px-6 py-8 sm:min-h-[380px] sm:px-10 sm:py-12">
+        <Image
+          src={HERO_ATMOSPHERE}
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 80rem) 100vw, 1280px"
+          className="-z-10 object-cover object-center"
+        />
+        {/* Heavier on mobile: below `sm` the copy spans nearly the full hero
+            width, so the right edge of a line can otherwise land on the
+            image's brightest area (measured ~3.9:1 for the muted subtitle
+            before this). Desktop copy stops well inside the dark half. */}
+        <div
+          className="absolute inset-0 -z-10 bg-gradient-to-r from-bg via-bg/90 to-bg/75 sm:to-bg/55"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-bg via-bg/55 to-transparent sm:via-bg/45"
+          aria-hidden="true"
+        />
+
         <p className="text-xs font-medium uppercase tracking-widest text-accent">TarkovDex</p>
         <h1 className="mt-2 text-2xl font-medium tracking-tight text-fg sm:text-3xl">
           {t('title')}

@@ -1,7 +1,9 @@
+import Image from 'next/image';
 import { getTranslations } from 'next-intl/server';
 import { ExternalLink } from 'lucide-react';
 import type { GameMap } from '@/types/tarkov';
 import type { Locale } from '@/i18n/routing';
+import { MAP_ATMOSPHERE } from '@/lib/atmosphere';
 import { formatChance } from '@/lib/format';
 import { ExpandableText } from './ExpandableText';
 
@@ -11,6 +13,13 @@ import { ExpandableText } from './ExpandableText';
  * height — description length and boss count both vary per map. Reuses the
  * same border/muted-text/accent primitives as ItemsTable and TaskCard rather
  * than introducing new styling.
+ *
+ * The five maps with shipped atmosphere art (see `MAP_ATMOSPHERE`) get a short
+ * banner carrying the map name; every other map keeps the plain heading. That
+ * asymmetry is deliberate — inventing stand-in art for the remaining maps would
+ * either mislabel scenery or add filler. Stats, bosses, description and the
+ * wiki link always sit below the banner on the solid card surface, so the image
+ * never overlaps data.
  */
 export async function MapCard({
   map,
@@ -20,10 +29,29 @@ export async function MapCard({
   locale: Locale;
 }) {
   const t = await getTranslations('maps');
+  const atmosphere = MAP_ATMOSPHERE[map.id];
 
   return (
-    <div className="flex flex-col rounded-lg border border-border p-5">
-      <h2 className="text-base text-fg">{map.name}</h2>
+    <div className="flex flex-col overflow-hidden rounded-lg border border-border">
+      {atmosphere ? (
+        <div className="relative isolate flex h-[110px] items-end px-5 pb-3 sm:h-[140px]">
+          <Image
+            src={atmosphere}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 50vw, 33vw"
+            className="-z-10 object-cover object-center"
+          />
+          <div
+            className="absolute inset-0 -z-10 bg-gradient-to-t from-bg via-bg/75 to-bg/40"
+            aria-hidden="true"
+          />
+          <h2 className="text-base text-fg">{map.name}</h2>
+        </div>
+      ) : null}
+
+      <div className="flex flex-col p-5">
+      {atmosphere ? null : <h2 className="text-base text-fg">{map.name}</h2>}
 
       <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-[13px] leading-5 text-muted">
         {map.players ? (
@@ -84,6 +112,7 @@ export async function MapCard({
           <ExternalLink className="size-3" aria-hidden="true" />
         </a>
       ) : null}
+      </div>
     </div>
   );
 }
