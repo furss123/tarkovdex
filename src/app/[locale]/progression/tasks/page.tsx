@@ -11,7 +11,13 @@ import type { TasksResponse } from '@/types/tarkov';
 type Props = { params: Promise<{ locale: string }> };
 // Structural quest data (not price data) — matches the 6h cadence getTasks()
 // already caches at, so the SSR'd first page doesn't go stale between builds.
+// `force-static` is the deterministic guarantee that this route builds as
+// static/ISR rather than executing per request — see Phase 1.5 caching audit:
+// getTasks() also pulls the maps endpoint (via getMapNameIndex) for map-name
+// resolution, and that fetch is large enough that `revalidate` alone was
+// empirically flaky across repeated builds.
 export const revalidate = 21600;
+export const dynamic = 'force-static';
 export async function generateMetadata({ params }: Props) {
   const locale = (await params).locale as Locale;
   return buildPageMetadata({ locale, page: 'tasks', path: '/progression/tasks' });

@@ -8,6 +8,7 @@ import type { MarketItemsResponse } from '@/types/tarkov';
 
 type Props = { params: Promise<{ locale: string }> };
 export const revalidate = 900;
+export const dynamic = 'force-static';
 
 export async function generateMetadata({ params }: Props) {
   const locale = (await params).locale as Locale;

@@ -11,6 +11,16 @@ type PageProps = {
   params: Promise<{ locale: string }>;
 };
 
+// Structural map/boss data, not price data — same 6h cadence REVALIDATE_SECONDS
+// uses in lib/tarkov.ts. `force-static` is the deterministic guarantee that
+// this route builds as static/ISR rather than executing per request — see
+// Phase 1.5 caching audit: `getMaps()`'s ~9.5-13MB fetch is large enough that
+// relying on `revalidate` alone was empirically flaky across repeated builds,
+// unlike the smaller endpoints the ammo/armor/gunsmith pages already pin the
+// same way.
+export const revalidate = 21600;
+export const dynamic = 'force-static';
+
 export async function generateMetadata({ params }: PageProps) {
   const locale = (await params).locale as Locale;
   return buildPageMetadata({ locale, page: 'maps', path: '/maps' });
