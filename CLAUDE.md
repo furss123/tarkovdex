@@ -1608,6 +1608,49 @@ Footer, Home shortcuts, About, and all locale dictionaries follow this tree.
   no price or price-derived fields at all** — the ammo/armor pages are
   combat-performance tools, and price data was deliberately removed from
   their data model and UI (per explicit request), not just hidden.
+
+### Body armor page (`/combat/armor`) — renamed and cut down
+
+Renamed **방어구 정보 → 방탄복 정보** (zh 防弹衣信息, en Body Armor) across nav,
+page `h1`, page metadata, Home/About cards and the ammo page's related link.
+
+Rebuilt around the four questions players actually open an armor page for —
+*what class is it, what does it cover, what does it cost me in movement, and
+which plates fit* — and everything that didn't answer one was deleted:
+
+- **The 15 API collider zones collapse to 5 body areas** (흉부/복부/옆구리/팔/목)
+  via `ZONE_AREA` in `ArmorExplorer.tsx`. Nobody shops by "SpineDown"; they ask
+  whether it covers the stomach and arms. Drives both the filter and a fixed
+  5-chip coverage strip on every collapsed card (lit = covered, dim = not), so
+  coverage is comparable *between* cards instead of being a variable-length
+  badge list. Replaced the `zones.*` message keys with `areas.*`.
+- **Deleted**: the two-figure SVG silhouette (said the same thing as the chips
+  in 20 hand-drawn paths), the layer×coverage table at the bottom of the detail
+  panel (100% duplication of the soft-armor and plate-slot sections directly
+  above it), the `unknownZonesNote` data-integrity aside, and the material
+  filter (kept as displayed data — players filter by class, not by aramid).
+- **No scroll, no truncation in the detail panel** (explicit request): the
+  plate list's `max-h-48 overflow-y-auto`, the plate name's `truncate`, and the
+  table's `overflow-x-auto` are all gone. Plates render in full in a 1/2/3-col
+  grid sorted by class desc — verified 0 scroll containers and 0 clipped text
+  nodes with all 30 cards open at both 1280px and 375px.
+- **Plate slots with identical plate sets are merged** (front/back almost
+  always accept the same plates) — the biggest single source of length in the
+  now-unscrolled panel, e.g. Hexgrid went from 2 lists of 19 to one.
+- **`effectiveClass()`** is the armor's own class, else its best soft layer,
+  else its best compatible plate — so plate carriers (whose own `class` is
+  null) sort and filter by the protection you can actually put in them, and the
+  card leads with that number in a badge instead of burying it in a meta line.
+- Summary is a 4-column grid with the coverage strip on its own full-width row;
+  at 375px the name column measures 130px and wraps rather than clipping.
+
+**Verified** against `next start`: `typecheck`/`lint`/55-page build pass;
+22/23 unit tests (the 1 failure is a pre-existing `maps.title` glossary
+violation, unrelated). ko/zh/en all render the new label with no stale
+방어구/护甲/Armor Info string anywhere; class 6 → 59 items, + arms → 7 items with
+the Arms chip lit on all 7; PvE toggle re-renders with no refetch; zero
+page-level horizontal overflow at 1280px and 375px.
+
 ### Korean quest text (glossary, not runtime translation)
 
 `tasks_ko` is substantially incomplete upstream: **209 of 501 quest names and
