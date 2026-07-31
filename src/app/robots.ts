@@ -6,6 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
+      // JSON data endpoints, not indexable content — see src/app/api.
+      disallow: '/api/',
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };

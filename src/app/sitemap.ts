@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { locales, defaultLocale, type Locale } from '@/i18n/routing';
 import { SITE_URL } from '@/lib/site';
+import { X_DEFAULT_LOCALE } from '@/lib/metadata';
 
 /** Every static route in the app, relative to a locale segment. */
 const ROUTES = [
@@ -31,9 +32,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     locales.map((locale) => ({
       url: urlFor(locale, route),
       alternates: {
-        languages: Object.fromEntries(
-          locales.map((l) => [l, urlFor(l, route)]),
-        ),
+        languages: Object.fromEntries([
+          ...locales.map((l) => [l, urlFor(l, route)]),
+          ['x-default', urlFor(X_DEFAULT_LOCALE, route)],
+        ]),
       },
       ...(locale === defaultLocale ? { priority: route === '' ? 1 : 0.8 } : {}),
     })),

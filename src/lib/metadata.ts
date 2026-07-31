@@ -23,6 +23,18 @@ const OG_LOCALE: Record<Locale, string> = {
   en: 'en_US',
 };
 
+/**
+ * hreflang `x-default` target. Not the same as `routing.ts`'s `defaultLocale`
+ * (`ko`, chosen for the site's primary audience) — `x-default` is a distinct
+ * SEO signal for "which page to show a user/crawler whose language doesn't
+ * match any listed hreflang". The bare `/` root isn't a valid candidate: with
+ * `localePrefix: 'always'`, `/` 307-redirects based on `Accept-Language`
+ * rather than serving stable content, so per Google's guidance x-default
+ * should point at a real, direct-hit page instead — English, as TarkovDex's
+ * lingua-franca fallback for a global EFT audience.
+ */
+export const X_DEFAULT_LOCALE: Locale = 'en';
+
 export async function buildPageMetadata({
   locale,
   page,
@@ -58,7 +70,7 @@ export async function buildPageMetadata({
           language,
           `${SITE_URL}/${language}${path}`,
         ]),
-        ['x-default', `${SITE_URL}/ko${path}`],
+        ['x-default', `${SITE_URL}/${X_DEFAULT_LOCALE}${path}`],
       ]),
     },
     openGraph: {

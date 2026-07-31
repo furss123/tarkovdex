@@ -1684,3 +1684,84 @@ feature-specific raw types and normalized types (`src/types/tools.ts`).
 
 Pure calculations and mappings live in `src/lib/tool-calculations.ts` and are
 covered by `tests/tool-calculations.test.ts` through the `npm test` script.
+
+## 2026-07-31 custom domain migration + SEO foundation
+
+The canonical production domain moved from the free `tarkovdex.vercel.app`
+subdomain to **`https://tarkovdex.dev`** (`www.tarkovdex.dev` 308-redirects to
+it at the Vercel edge — configured in Vercel's dashboard, not in this repo).
+`SITE_URL` in `src/lib/site.ts` now falls back to `https://tarkovdex.dev`;
+`vercel.json`'s `NEXT_PUBLIC_SITE_URL` and `.env.example` were updated to
+match, so every consumer (root layout's `metadataBase`, `robots.ts`,
+`sitemap.ts`, and every page's `buildPageMetadata()` call) picks up the new
+domain with no per-file changes.
+
+Most of the actual SEO surface — per-page `title`/`description` via
+`buildPageMetadata()` in `src/lib/metadata.ts`, reciprocal `hreflang`
+alternates (ko/zh/en + `x-default`, see below) via each page's `alternates`,
+and self-referencing `canonical` URLs — already existed from the tool-suite
+expansion above and needed no redesign, just the domain swap. Two real gaps
+were found and fixed:
+
+- **`sitemap.ts`'s hreflang alternates had no `x-default`** entry, while the
+  HTML `<link rel="alternate">` tags from `buildPageMetadata()` did — the two
+  hreflang sources disagreed. Sitemap alternates now include `x-default`,
+  matching the HTML head exactly (see "x-default target" below for what it
+  points at and why).
+- **`robots.ts` allowed everything with no exclusions.** `/api/items` and
+  `/api/tasks` are JSON data endpoints (consumed by client components), not
+  indexable content, so they're now `Disallow`'d. Nothing else was excluded —
+  every real content route stays crawlable.
+
+**Structured data**: a minimal `WebSite` JSON-LD block (`name: "TarkovDex"`,
+locale-specific `url`, `inLanguage`) was added inline on the home page only
+(`src/app/[locale]/page.tsx`) — no separate lib file, since nothing else
+needs it. No `Organization`/`BreadcrumbList` schema was added: this is a fan
+project with no organizational identity to declare, and no page currently has
+a multi-level navigable hierarchy that would benefit from breadcrumbs.
+
+**Locale routing double-checked, not changed**: `next-intl`'s middleware only
+redirects the bare `/` root based on `Accept-Language` (to the
+`defaultLocale`, `ko`, when absent/unmatched); every `/ko`, `/zh`, `/en` URL
+is a direct, non-redirecting hit for Googlebot or any other crawler — no
+loop, no single-locale trap. This is existing `localePrefix: 'always'`
+behavior (see the i18n routing decision above), left untouched.
+
+**Verified**: `typecheck`, `lint`, and a production build (Gemini disabled)
+all pass. A real `next start` server confirmed: `robots.txt` allows `/`,
+disallows `/api/`, and points `Sitemap:` at `https://tarkovdex.dev/sitemap.xml`;
+`sitemap.xml` emits only `https://tarkovdex.dev/...` URLs with reciprocal
+per-route hreflang including `x-default`; a sampled page
+(`/en/combat/ammo`) rendered the correct distinct `<title>`, self-referencing
+`canonical`, three-way `hreflang` alternates, and `og:url` all under the new
+domain; the home page's `<script type="application/ld+json">` parses as valid
+`WebSite` schema.
+
+### x-default target — `/en`, not `/ko` (post-launch review fix)
+
+The first pass above pointed `x-default` at `/ko{path}`, reusing
+`routing.ts`'s `defaultLocale`. Caught in review: `defaultLocale` encodes
+*this site's* primary-audience choice (Korean players), which is a different
+question from *what a generic/unmatched crawler or user should land on* —
+conflating the two pointed a global hreflang signal at one specific language.
+`ko` was also disqualified on a second, independent ground: with
+`localePrefix: 'always'`, the bare `/` root 307-redirects based on
+`Accept-Language` rather than serving stable content (see the i18n routing
+decision above), so per Google's own guidance `x-default` must target a real,
+directly-crawlable page — not a redirect, and not implicitly "whichever
+locale we personally favor."
+
+**Fix**: `X_DEFAULT_LOCALE = 'en'`, now a single exported constant in
+`src/lib/metadata.ts` (English — TarkovDex's lingua-franca fallback for a
+global EFT audience), imported by both `buildPageMetadata()` (HTML
+`<link rel="alternate" hreflang="x-default">`) and `sitemap.ts` (its
+`alternates.languages['x-default']`) so the two hreflang sources can't drift
+apart again — one constant, not two hardcoded locale strings. `ko`/`zh`/`en`
+alternates and `canonical` were untouched; only the `x-default` target moved.
+
+**Verified**: `typecheck`, `lint`, `build` all pass. A real `next start`
+server confirmed reciprocity across `/en`, `/ko`, `/zh`, and `x-default` for
+both a sampled page (`/{locale}/combat/ammo`) and `sitemap.xml`: all three
+locale pages emit identical `hreflang="x-default"` pointing at
+`https://tarkovdex.dev/en/combat/ammo`, and the sitemap's `<xhtml:link>`
+block matches the HTML head exactly.

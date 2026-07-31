@@ -2,7 +2,7 @@
 
 TarkovDex is an unofficial Escape from Tarkov data toolkit for Korean,
 Simplified Chinese, and English players. It supports PvP and PvE data
-side-by-side and is deployed at [tarkovdex.vercel.app](https://tarkovdex.vercel.app).
+side-by-side and is deployed at [tarkovdex.dev](https://tarkovdex.dev).
 
 Game data comes from the public static JSON API at
 [json.tarkov.dev](https://json.tarkov.dev). TarkovDex is not affiliated with
