@@ -179,25 +179,11 @@ async function translateItem(item: NewsItem, locale: 'ko' | 'zh'): Promise<NewsI
   }
 }
 
-/**
- * Sequential, not Promise.all — firing every post's translation at once
- * reliably bursts past Gemini's free-tier 15-requests/minute quota (worse
- * with ko+zh generating concurrently), and a 429'd item that isn't the
- * request currently in flight when the shared deadline (below) fires never
- * gets a real attempt at all. One at a time keeps well under the quota, so
- * the 429 retry path becomes the rare case instead of the common one.
- */
-async function translateAll(items: NewsItem[], locale: 'ko' | 'zh'): Promise<NewsItem[]> {
-  const translated: NewsItem[] = [];
-  for (const item of items) {
-    translated.push(await translateItem(item, locale));
-  }
-  return translated;
-}
-
 async function translateFeed(feed: SteamNewsFeed, locale: 'ko' | 'zh'): Promise<SteamNewsFeed> {
-  const patchNotes = await translateAll(feed.patchNotes, locale);
-  const events = await translateAll(feed.events, locale);
+  const [patchNotes, events] = await Promise.all([
+    Promise.all(feed.patchNotes.map((item) => translateItem(item, locale))),
+    Promise.all(feed.events.map((item) => translateItem(item, locale))),
+  ]);
   return { patchNotes, events };
 }
 
