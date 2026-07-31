@@ -391,9 +391,12 @@ export async function getGunsmithTasks(
         value: condition.value,
         compareMethod: condition.compareMethod ?? '=',
       }));
+    const translatedName = translate(taskDict, task.name);
+    // Skip "Old Friend's Request" (early Gunsmith quest)
+    if (translatedName.includes('Old Friend') || translatedName.includes('생지옥')) continue;
     result.push({
       id: task.id,
-      name: translate(taskDict, task.name),
+      name: translatedName,
       weapon,
       containsAll: objective.containsAll ?? [],
       containsCategory: objective.containsCategory ?? [],

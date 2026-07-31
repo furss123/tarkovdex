@@ -20,6 +20,15 @@ const CONDITION_NAMES: Record<string, string> = {
   sightingrange: 'sightingRange',
 };
 
+function translateTaskName(name: string): string {
+  // Translate "Gunsmith - Part X" to Korean
+  const partMatch = name.match(/Gunsmith\s*-\s*Part\s+(\d+)/i);
+  if (partMatch) {
+    return `건스미스 - 파트 ${partMatch[1]}`;
+  }
+  return name;
+}
+
 export function GunsmithExplorer({
   regular,
   pve,
@@ -59,7 +68,7 @@ export function GunsmithExplorer({
             className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg"
           >
             {tasks.map((item) => (
-              <option key={item.id} value={item.id}>{item.name}</option>
+              <option key={item.id} value={item.id}>{translateTaskName(item.name)}</option>
             ))}
           </select>
         </label>
