@@ -1,6 +1,6 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import type { NewsItem, SteamNewsFeed } from './steam-news';
 import { getSteamNews } from './steam-news';
 
@@ -8,17 +8,18 @@ import { getSteamNews } from './steam-news';
  * Real translation of Steam's English-only news posts into ko/zh — Steam
  * itself doesn't provide this (see steam-news.ts's locale note), and the
  * site's own audience is majority Korean, so leaving every post in English
- * was judged not good enough. Uses the Nvidia API (previously Gemini API —
- * switched per explicit request).
+ * was judged not good enough. Uses the Gemini API (previously Claude API —
+ * switched per explicit request; same rationale of translation quality on
+ * gaming-specific phrasing/tone over a dedicated translation API applies).
  *
- * **Requires `NVIDIA_API_KEY`** to be set (e.g. in Vercel's project env
+ * **Requires `GEMINI_API_KEY`** to be set (e.g. in Vercel's project env
  * vars). Without it, this silently falls back to the original English text
  * — translation is a nice-to-have layered on top of a working English
  * fallback, not something that should take the whole news page down if
  * unconfigured or if the API call fails for any reason.
  */
 
-const MODEL = 'nvidia/nemotron-3-ultra-550b-a55b';
+const MODEL = 'gemini-3.5-flash-lite';
 const TRANSLATION_DEADLINE_MS = 40_000;
 
 const LANGUAGE_NAME: Record<'ko' | 'zh', string> = {
@@ -26,15 +27,10 @@ const LANGUAGE_NAME: Record<'ko' | 'zh', string> = {
   zh: 'Simplified Chinese',
 };
 
-let client: OpenAI | null = null;
-function getClient(): OpenAI | null {
-  if (!process.env.NVIDIA_API_KEY) return null;
-  if (!client) {
-    client = new OpenAI({
-      apiKey: process.env.NVIDIA_API_KEY,
-      baseURL: 'https://integrate.api.nvidia.com/v1',
-    });
-  }
+let client: GoogleGenAI | null = null;
+function getClient(): GoogleGenAI | null {
+  if (!process.env.GEMINI_API_KEY) return null;
+  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   return client;
 }
 
@@ -83,8 +79,8 @@ async function translateUncached(
   title: string,
   content: string,
 ): Promise<Translated> {
-  const nvidia = getClient();
-  if (!nvidia) throw new Error('NVIDIA_API_KEY not configured');
+  const gemini = getClient();
+  if (!gemini) throw new Error('GEMINI_API_KEY not configured');
 
   const targetLanguage = LANGUAGE_NAME[locale];
   // ko glossary: terms the game's official Korean localization uses, so the
@@ -112,20 +108,28 @@ Title: ${title}
 
 Content: ${content}`;
 
-  // Retried up to 3 attempts, but ONLY on 429 (rate limit). Non-429 failures
-  // (bad JSON, network error, etc.) are not retried.
+  // Retried up to 3 attempts, but ONLY on 429 (rate limit) — discovered live
+  // (both in local testing and in the first production deploy) that
+  // translateFeed's Promise.all fires one request per post concurrently
+  // (~10 posts × 2 locales, worse in a Vercel build where multiple locale
+  // pages can generate concurrently too), which trivially bursts past the
+  // Gemini free tier's 15-requests/minute cap. A fixed short backoff
+  // (originally 6s/12s) was not enough headroom — the API's own error
+  // reliably reports the quota resetting ~46-48s out, well past that — so
+  // this parses the server's own suggested `retryDelay` and waits (roughly)
+  // that long instead of guessing. Non-429 failures (bad JSON, network
+  // error, etc.) are not retried — there's no reason to expect a second
+  // attempt to parse better.
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await nvidia.chat.completions.create({
+      const response = await gemini.models.generateContent({
         model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 1,
-        top_p: 0.95,
-        max_tokens: 16384,
+        contents: prompt,
       });
-      // Nvidia API sometimes wraps JSON in ```json fences — strip them before parsing.
-      const text = (response.choices[0]?.message?.content ?? '').trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
+      // Gemini sometimes wraps JSON in ```json fences despite being told
+      // not to — strip them before parsing.
+      const text = (response.text ?? '').trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
       const parsed = JSON.parse(text) as Partial<Translated>;
       return {
         title: typeof parsed.title === 'string' && parsed.title ? parsed.title : title,
@@ -135,6 +139,10 @@ Content: ${content}`;
       lastErr = err;
       const status = (err as { status?: number } | null)?.status;
       if (status === 429 && attempt < 2) {
+        // Each retry re-reads the delay off its own error rather than a
+        // multiplied fixed schedule — the server reports how long *this*
+        // attempt's quota window needs, which doesn't necessarily grow
+        // attempt-over-attempt.
         await new Promise((resolve) => setTimeout(resolve, retryDelayMs(err)));
         continue;
       }
@@ -181,17 +189,19 @@ async function translateFeed(feed: SteamNewsFeed, locale: 'ko' | 'zh'): Promise<
 
 /**
  * Steam news, localized: English passes through untouched; ko/zh get
- * translated (or fall back to English if `NVIDIA_API_KEY` is unset or a
+ * translated (or fall back to English if `GEMINI_API_KEY` is unset or a
  * call fails). This is the function the news page actually calls.
  */
 export async function getLocalizedNews(locale: 'ko' | 'zh' | 'en'): Promise<SteamNewsFeed> {
   const feed = await getSteamNews();
   if (locale === 'en') return feed;
 
-  // Next's static page worker aborts a page after 60 seconds. Resolve with
-  // the existing English baseline first, while successful per-item
-  // translations still retain their indefinite cache entries for the next
-  // ISR attempt.
+  // Next's static page worker aborts a page after 60 seconds. Gemini can
+  // legitimately recommend a 46-48s rate-limit retry, and a slow follow-up
+  // request can otherwise push the whole news page past that hard limit.
+  // Resolve with the existing English baseline first, while successful
+  // per-item translations still retain their indefinite cache entries for
+  // the next ISR attempt.
   let deadline: ReturnType<typeof setTimeout> | undefined;
   const fallback = new Promise<SteamNewsFeed>((resolve) => {
     deadline = setTimeout(() => resolve(feed), TRANSLATION_DEADLINE_MS);

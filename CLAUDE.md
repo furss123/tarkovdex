@@ -26,7 +26,7 @@ making structural changes.
 | i18n           | next-intl v3 (routing + middleware)       |
 | Icons          | lucide-react (SVG, no emoji)              |
 | Data           | json.tarkov.dev static JSON (server-side); Steam News RSS for patch notes/events |
-| Translation    | Nvidia API (`openai` SDK) — news page's ko/zh translation only (was Claude API → Gemini API; see "Provider switch" in the decision log) |
+| Translation    | Gemini API (`@google/genai`) — news page's ko/zh translation only (was Claude API; see "Provider switch" in the decision log) |
 | Hosting        | Vercel                                    |
 
 ## Folder structure
@@ -704,36 +704,64 @@ mode-awareness — Steam news isn't mode-specific.
   configured locally) — **since resolved**: see "Provider switch" below,
   where a real key confirmed actual ko/zh translation quality end-to-end.
 
-### Provider switch: Gemini API → Nvidia API (news translation only)
+### Provider switch: Claude API → Gemini API (news translation only)
 
-Switched per explicit user request from Gemini → Nvidia — purely a provider
-preference change. Scope was deliberately narrow: only `lib/translate-news.ts`'s
-API client call changed; the translation prompt/instructions, the (post id,
-locale) permanent-caching strategy, and the `'server-only'` client-exposure
-guarantee were all kept exactly as they were.
+Switched per explicit user request, unrelated to any problem with Claude's
+translation quality — purely a provider preference change. Scope was
+deliberately narrow: only `lib/translate-news.ts`'s API client call changed;
+the translation prompt/instructions, the (post id, locale) permanent-caching
+strategy, and the `'server-only'` client-exposure guarantee were all kept
+exactly as they were, per explicit instruction.
 
-- **Package**: `@google/genai` removed, `openai` added (the Nvidia API is
-  OpenAI-compatible, so the standard `openai` SDK works directly).
-- **Model**: `nvidia/nemotron-3-ultra-550b-a55b` — confirmed against the
-  Nvidia API documentation to be a current, high-quality multilingual model
-  suitable for translation tasks.
-- **API shape**: OpenAI SDK's `chat.completions.create({ model, messages,
-  ... })` returning `response.choices[0].message.content` — the standard
-  OpenAI-compatible pattern, confirmed working via `npm run dev` on the live
-  `/ko/news` and `/zh/news` routes (real patch notes and events translated
-  to Korean/Chinese in ~40s per page, as expected for 10 concurrent API calls).
-- **Base URL**: `https://integrate.api.nvidia.com/v1` (the free Nvidia API
-  endpoint; can be configured via environment variable if needed).
-- **`NVIDIA_API_KEY`** replaces `GEMINI_API_KEY` in `.env.example` and local
-  `.env.local`. The existing permanent-cache-on-success / throw-on-failure
-  architecture from the Gemini era remains unchanged — no new bugs, and the
-  same retry-on-429 logic still applies if concurrency bursts the rate limit.
-- **Verified locally**: `npm run typecheck`, `npm run lint`, and `npm run build`
-  all pass (55 static pages, including 3 locales × news route). Live dev
-  server confirmed real translation: patch titles like "Preliminary update
-  plan" → "잠정 업데이트 계획", "Weekend XP bonus!" → "주말 경험치 보너스!",
-  and multi-paragraph event content all translated naturally to ko/zh with no
-  JSON parsing errors.
+- **Package**: `@anthropic-ai/sdk` removed, `@google/genai` added (confirmed
+  it was the only file importing the Anthropic SDK before removing it).
+- **Model**: `gemini-3.5-flash-lite` — looked up live against
+  `ai.google.dev/gemini-api/docs/models` and cross-checked against the
+  pricing page rather than guessed (model IDs churn quickly enough that a
+  remembered name risks being wrong or deprecated); this is the current GA,
+  non-preview, cost-effective Flash-tier model, and Google's own docs
+  explicitly list "translation" as a intended use case for it — the direct
+  analog of the previous `claude-haiku-4-5-20251001` choice (cheap/fast tier
+  for a structured, high-volume task, not the flagship model).
+- **API shape**: `@google/genai`'s `ai.models.generateContent({ model,
+  contents })` returning a `response.text` getter — the direct analog of the
+  old `anthropic.messages.create()` / `message.content[0].text` pattern, and
+  confirmed against the installed package's own `.d.ts` (not just the docs
+  site) before writing the call, since the SDK also exposes a newer, unrelated
+  `ai.interactions.create()` agent-oriented API that would have been the
+  wrong fit here (this is a single structured completion, not an agent
+  session).
+- **Two real bugs found and fixed during verification, not just a config
+  swap** — both discovered through actual testing/deploys, not guessed:
+  1. Gemini's free-tier 15-requests/minute quota gets burst past by
+     `translateFeed`'s concurrent `Promise.all` over ~10 posts × 2 locales
+     (root-caused via a temporary debug log in `translateUncached`) — fixed
+     by the retryDelay-aware 429 retry described above.
+  2. Even with that retry, the *original* design still cached a failure as a
+     permanent English result (see "Failures are never cached" above) —
+     confirmed live: a plain redeploy after the retry fix did **not** clear
+     posts that had already been wrongly cached during an earlier deploy
+     (before either fix existed), because `unstable_cache` had already
+     committed those as successful-looking results. Fixed by restructuring
+     `translateUncached` to throw instead of returning a fallback, moving
+     the fallback one layer out to `translateItem` — this is the actual
+     structural fix; the retry budget alone couldn't have closed this gap.
+- **`GEMINI_API_KEY`** replaces `ANTHROPIC_API_KEY` in `.env.example` and
+  Vercel's project env vars (Vercel-side update was the user's own action).
+- **Deployed and verified in real production** (`vercel deploy --prod`,
+  `https://tarkovdex.vercel.app` — see the Vercel deployment entry in the
+  roadmap below for the full account): `typecheck` + `build` pass locally
+  and on Vercel. Live production testing across several redeploys (each one
+  a fresh ~20-request concurrent burst against the free tier) showed the
+  overwhelming majority of patch notes/events translating correctly on the
+  first pass every time, natural ko/zh output with proper nouns kept as
+  intended, and confirmed the self-healing property directly: posts that
+  failed under the *old* cache-forever design stayed stuck across multiple
+  redeploys, while under the *new* throw-based design a redeploy cleared
+  every previously-stuck post except a couple of new, different ones hit by
+  that redeploy's own quota burst — which, per the new architecture, are not
+  cached and will resolve themselves on the next natural 1-hour ISR
+  revalidation without needing another deploy or manual cache-busting.
 
 ### Items page
 
