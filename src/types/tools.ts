@@ -59,29 +59,36 @@ export interface GunsmithCondition {
   key: string;
   value: number;
   compareMethod: string;
+  /** What the shipped build actually reaches. */
+  actual: number;
+  satisfied: boolean;
 }
 
-export interface GunsmithPartCandidate {
-  requirement: 'item' | 'category';
-  requirementId: string;
-  slotName: string;
+export interface GunsmithBuildPart {
   item: ToolItem;
-  compatible: boolean;
-  pathComplete: boolean;
-  path: ToolItem[];
-  alternatives: ToolItem[];
-  alternativePaths: ToolItem[][];
+  /** Localized name of the slot it goes into. */
+  slot: string;
+  /** The part it attaches to, or null when it goes straight on the weapon. */
+  parent: ToolItem | null;
+  /** True when the quest itself names this part (or its category). */
+  required: boolean;
 }
 
 export interface GunsmithTask {
   id: string;
   name: string;
+  /** English name, shown alongside the localized one; null when identical. */
+  nameEn: string | null;
+  /** "Gunsmith - Part N" ordinal, null for the named one-offs. */
+  part: number | null;
+  trader: string | null;
+  minPlayerLevel: number | null;
   weapon: ToolItem;
-  containsAll: string[];
-  containsCategory: string[];
+  /** A complete build, parents before children — install it top to bottom. */
+  build: GunsmithBuildPart[];
   conditions: GunsmithCondition[];
-  candidates: GunsmithPartCandidate[];
-  structuralComplete: boolean;
+  /** Every condition met by `build`. False means the guide is incomplete. */
+  verified: boolean;
 }
 
 export interface AmmoRound {

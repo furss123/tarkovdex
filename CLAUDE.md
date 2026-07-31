@@ -1719,14 +1719,117 @@ feature-specific raw types and normalized types (`src/types/tools.ts`).
 - Armor zones pass through one central mapping table. Unknown values remain
   visible as unclassified source zones. Soft armor and installed plate layers
   are never collapsed into one class.
-- Gunsmith currently searches direct weapon-slot compatibility for structured
-  `containsAll` and `containsCategory` requirements and exposes bounded price
-  alternatives. It is labeled a current-data candidate, not globally cheapest.
-  Numeric final-stat requirements stay visibly unverified because this dataset
-  does not provide an authoritative complete nested-build stat formula.
+- ~~Gunsmith's numeric final-stat requirements stay visibly unverified because
+  this dataset does not provide an authoritative complete nested-build stat
+  formula.~~ Superseded — the formula was derived and validated, see "Gunsmith:
+  solved builds" below.
 
 Pure calculations and mappings live in `src/lib/tool-calculations.ts` and are
 covered by `tests/tool-calculations.test.ts` through the `npm test` script.
+
+## Gunsmith: solved builds, not a parts checklist
+
+The Gunsmith page's original design listed what the quest *names* — the
+`containsAll` items, one arbitrary alphabetical pick per `containsCategory`,
+and the raw numeric thresholds — and told the player to work the numbers out in
+the in-game preset editor. That is the easy half of the problem and not the
+half anyone opens a Gunsmith guide for: the required parts almost never reach
+the thresholds on their own, so the page could not actually get a player
+through a single quest. It now ships **one complete build per quest whose
+computed stats clear every threshold**, and says so with the numbers next to
+the requirements.
+
+### Stat model, validated against the game's own numbers
+
+The dataset ships 376 in-game weapon presets that each carry the game's
+computed `ergonomics` / `recoilVertical` / `width` / `height`. Those are ground
+truth, so every formula was checked against all of them rather than assumed:
+
+| stat | formula | agreement |
+| ---- | ------- | --------- |
+| ergonomics | `base + SUM(part.properties.ergonomics)` | 376/376 exact |
+| recoil (vertical) | `base * (1 + SUM(part.properties.recoilModifier))` | 376/376 exact |
+| weight | `SUM(part.weight)` | exact |
+| width / height | per direction: `SUM(forced increaseSize) + MAX(unforced)` | 373/376, 376/376 |
+| effective distance | `MAX(sightingRange)` over the weapon and its parts | — |
+| magazine capacity | the installed magazine's `capacity` | — |
+
+Two findings worth keeping: **ammunition is excluded** (presets bundle loaded
+rounds, which carry an ergonomics penalty *and* a recoil modifier; a handed-in
+build has neither, and the recoil column only reconciles once ammo is dropped),
+and the size model is **not** a plain max — `increaseSizeForced` parts stack
+while unforced ones take the max, which is what moves width from 315/376 to
+373/376. `durability` is deliberately not modelled: it is a repair-state check,
+not a parts problem, and the page says so instead.
+
+### Solver: offline, hill-climbing, refuses to guess
+
+`scripts/generate-gunsmith-builds.mjs` writes `src/lib/gunsmith-builds.json`
+(both game modes, 27 build quests each — Gunsmith 1-25 plus Gunsmith - Old
+Friend's Request and Hell on Earth - Part 1). Offline for the same reason the
+Korean quest glossary is (see "Korean quest text" above): the page is core
+functionality and should not inherit a solver's cost or nondeterminism at
+request time. Re-run it after a patch changes weapons, parts or requirements.
+
+It places the quest's required parts, fills every slot the weapon cannot fire
+without, then hill-climbs single moves — add a part, swap a subtree, remove a
+subtree — against the remaining normalized shortfall. Four things were found by
+running it, not by design, and each is why a whole class of quest solves:
+
+- **Requirements are tracked as requirements, not as the part that satisfied
+  them.** Removing a scope mount takes the tactical device sitting on it down
+  too; the search may put back *any* item of that category, anywhere it fits.
+- **Provider chains install whole.** A 2000m scope scores nothing until its
+  mount is in as well, so no single add ever reaches it. Sighting range and
+  magazine capacity install as a complete chain instead.
+- **Route search keeps every route to a target, not the shortest.** On the
+  DVL-10 both the required tactical device and a 2000m scope can only reach the
+  weapon's single scope slot, so the build is only possible on the one mount
+  that carries both — which is not the cheapest mount, and collapsing targets
+  to one path lost it.
+- **Move selection prefers headroom.** Scoring purely on "is the threshold
+  met" makes a 0.9kg thermal scope and a 0.08kg red dot identical when both
+  clear the sighting requirement — and then the build cannot get back under the
+  weight cap. A thousandth-weight slack term breaks that tie.
+
+Anything unsolved is written out with its unmet conditions rather than shipped
+as a guess, and the UI renders that state honestly. Currently nothing is
+unsolved: 27/27 in both modes.
+
+`tests/gunsmith-builds.test.ts` guards the shipped artifact, not the solver —
+Gunsmith 1-25 all present, every part attaching to something installed before
+it, no slot filled twice (keyed on slot **id**: the AS VAL genuinely exposes
+two slots both named `MOD_MOUNT`), and every condition met by the stored stats.
+
+### Page
+
+`getGunsmithTasks()` is now pure presentation over that snapshot: ids to
+localized names and icons, slot names through the same `translate()` dictionary
+as everything else, plus the quest's trader and level gate read from the *live*
+tasks document so they stay current between regenerations. The UI is a numbered
+install list (each row: slot, part with its own icon, what it attaches to, and
+a marker when the quest names it) beside a requirements panel showing demanded
+vs. reached per stat. Sorted Part 1-25 first, then the named one-offs.
+
+Two adjacent bugs fixed on the way:
+
+- The old component skipped quests by matching `'Old Friend'` or `'생지옥'`
+  against the *localized* name, so which quests appeared depended on the
+  locale. All 27 build quests are now included in every locale.
+- `translate()` now trims. Every `items_ko` value ships with a trailing space,
+  which showed up as a gap before the Korean particle in "…장전 손잡이 에
+  장착". Fixed at the shared helper, so it applies site-wide. Also aligned
+  `task-ko.json`'s Gunsmith 23/24/25 and Old Friend's Request entries with
+  upstream's own "건스미스 - 파트 N" convention (they read "총기 제작 - 23").
+
+**Verified** against `next start`: `typecheck`, `lint`, the production build,
+and `npm test` (the one failure is the pre-existing `maps.title` glossary
+assertion, unrelated). All 27 tasks × ko/zh/en render with zero unmet-condition
+warnings, zero page-level horizontal overflow at 1280px and 375px, zero tap
+targets under 44px, zero console errors, and all part icons resolve. Screenshots
+were unavailable — the Browser pane was not compositing, the failure mode
+documented under "Atmosphere imagery" — so every check above is a measured DOM
+read rather than a visual one.
 
 ## 2026-07-31 custom domain migration + SEO foundation
 

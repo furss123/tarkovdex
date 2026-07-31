@@ -120,7 +120,10 @@ export async function getTranslationDict(
  */
 export function translate(dict: TranslationDict, raw: string | null | undefined): string {
   if (!raw) return '';
-  return dict[raw] ?? raw;
+  // Trimmed because upstream ships padding: every `items_ko` value carries a
+  // trailing space, which shows up as a gap before any punctuation or particle
+  // a template puts after the name.
+  return (dict[raw] ?? raw).trim();
 }
 
 // ---------------------------------------------------------------------------
