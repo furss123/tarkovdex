@@ -11,10 +11,12 @@ const NAV_ITEMS = [
   { key: 'news', href: '/news', activePath: '/news' },
   { key: 'items', href: '/economy/items', activePath: '/economy/items' },
   { key: 'barters', href: '/economy/barters', activePath: '/economy/barters' },
-  { key: 'tasks', href: '/progression/tasks', activePath: '/progression' },
+  { key: 'tasks', href: '/progression/tasks', activePath: '/progression/tasks' },
+  { key: 'gunsmith', href: '/progression/gunsmith', activePath: '/progression/gunsmith' },
   { key: 'ammo', href: '/combat/ammo', activePath: '/combat/ammo' },
   { key: 'armor', href: '/combat/armor', activePath: '/combat/armor' },
   { key: 'maps', href: '/maps', activePath: '/maps' },
+  { key: 'support', href: '/support', activePath: '/support' },
 ] as const;
 
 const SWITCHER_FALLBACK = <div className="h-[46px] w-[150px] rounded-md border border-border" />;
