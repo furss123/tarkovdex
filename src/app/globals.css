@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens — single source of truth for color and typography.
+ * Values are RGB triplets so Tailwind's `rgb(var(--x) / <alpha-value>)`
+ * mapping (tailwind.config.ts) can apply opacity utilities.
+ *
+ * Palette policy: one accent (amber) + a neutral gray scale. The only other
+ * hues are the muted positive/negative pair, reserved strictly for signed
+ * price deltas (data semantics, not decoration). See CLAUDE.md.
+ */
+:root {
+  --color-bg: 23 24 27; /* #17181b — dark gray page, not pure black */
+  --color-surface: 30 32 36; /* #1e2024 — cards */
+  --color-surface-2: 41 44 50; /* #292c32 — elevated / hover */
+  --color-border: 57 61 69; /* #393d45 — clearer structural dividers */
+  --color-fg: 231 232 234; /* #e7e8ea — primary text */
+  --color-muted: 154 160 168; /* #9aa0a8 — secondary text */
+  --color-accent: 226 164 56; /* #e2a438 — amber, the only accent */
+  --color-accent-fg: 23 24 27; /* text on accent surfaces */
+  --color-positive: 88 179 104; /* #58b368 — price up (muted green) */
+  --color-negative: 208 100 95; /* #d0645f — price down (muted red) */
+
+  /*
+   * Font stack. Pretendard covers Korean + Latin; Noto Sans SC covers
+   * Simplified Chinese. The zh override (below) promotes Noto Sans SC so
+   * Chinese glyphs render in their intended typeface.
+   */
+  --font-sans: 'Pretendard Variable', Pretendard, 'Noto Sans SC', -apple-system,
+    BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+html[lang='zh'] {
+  --font-sans: 'Noto Sans SC', 'Pretendard Variable', Pretendard, -apple-system,
+    BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-fg font-sans font-normal antialiased;
+  }
+
+  /* Roomy default rhythm; components tighten where needed. */
+  h1,
+  h2,
+  h3 {
+    @apply font-medium;
+  }
+
+  ::selection {
+    @apply bg-accent text-accent-fg;
+  }
+}

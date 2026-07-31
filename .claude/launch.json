@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tarkovdex-dev",
+      "runtimeExecutable": "C:\\Users\\Kim\\Desktop\\Work\\tarkovdex\\scripts\\dev-with-path.bat",
+      "runtimeArgs": [],
+      "port": 3000,
+      "url": "http://127.0.0.1:3000"
+    },
+    {
+      "name": "tarkovdex-prod",
+      "runtimeExecutable": "C:\\Users\\Kim\\Desktop\\Work\\tarkovdex\\scripts\\start-with-path.bat",
+      "runtimeArgs": [],
+      "port": 3001,
+      "url": "http://127.0.0.1:3001"
+    },
+    {
+      "name": "tarkovdex-prod-3002",
+      "runtimeExecutable": "C:\\Users\\Kim\\Desktop\\Work\\tarkovdex\\scripts\\start-3002.bat",
+      "runtimeArgs": [],
+      "port": 3002,
+      "url": "http://127.0.0.1:3002"
+    }
+  ]
+}
