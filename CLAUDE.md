@@ -1765,3 +1765,33 @@ both a sampled page (`/{locale}/combat/ammo`) and `sitemap.xml`: all three
 locale pages emit identical `hreflang="x-default"` pointing at
 `https://tarkovdex.dev/en/combat/ammo`, and the sitemap's `<xhtml:link>`
 block matches the HTML head exactly.
+
+### Production deployment of the domain migration
+
+Committed as a single SEO-only commit (`SEO: migrate canonical domain to
+tarkovdex.dev`) and deployed via `vercel deploy --prod` — **not** a git push:
+this repo has no git remote configured, and the Vercel project has no Git
+repository connected either (matches the earlier-documented "no CI/CD, no
+git remote wired to Vercel" state under the Vercel deployment roadmap entry
+above), so there is no push-triggered deploy path to use.
+
+**One real gap the deploy itself surfaced**: the first production redeploy
+still served `tarkovdex.vercel.app` in `robots.txt`/`sitemap.xml`/canonical
+URLs, despite every source file already pointing at `tarkovdex.dev`. Cause:
+`NEXT_PUBLIC_SITE_URL` was also set as a **Vercel dashboard Production
+environment variable** (added when the site was first deployed, holding the
+old `tarkovdex.vercel.app` value) — dashboard-configured project env vars
+take precedence over `vercel.json`'s `env` block, and `NEXT_PUBLIC_*` values
+are inlined at build time, so editing `vercel.json` alone was silently a
+no-op in production. Fixed by removing and re-adding the Production env var
+via `vercel env rm` / `vercel env add` with the `tarkovdex.dev` value, then
+redeploying (`vercel deploy --prod --force`) so the build picked it up.
+
+**Verified against real production** (`curl`, not just `next start`):
+`robots.txt` allows `/`, disallows `/api/`, points `Sitemap:` at
+`https://tarkovdex.dev/sitemap.xml`; `sitemap.xml` emits only
+`tarkovdex.dev` URLs with `x-default → /en`; `/en`, `/ko`, `/zh`, and
+`/en/combat/ammo` all return `200` with correct, distinct `<title>`,
+self-referencing `canonical`, reciprocal `hreflang` (en/ko/zh/x-default), and
+`og:url`, all under `tarkovdex.dev`; the home page's `WebSite` JSON-LD and
+`og-image.png` both resolve correctly in production.
