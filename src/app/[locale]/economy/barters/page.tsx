@@ -4,6 +4,8 @@ import { buildPageMetadata } from '@/lib/metadata';
 import { getEconomyDataset } from '@/lib/tarkov-tools';
 import { EconomyExplorer } from '@/components/economy/EconomyExplorer';
 import { DataError, ToolIntro } from '@/components/tools/ToolShell';
+import { Link } from '@/i18n/navigation';
+import { RELATED_LINK_CLASS } from '@/components/tools/relatedLinkClass';
 
 type Props = { params: Promise<{ locale: string }> };
 export const revalidate = 900;
@@ -26,6 +28,7 @@ export default async function BartersPage({ params }: Props) {
     return (
       <section className="mx-auto max-w-content px-4 py-8 sm:px-6">
         <ToolIntro title={t('title')} description={t('description')} sourceLabel={t('source')} />
+        <Link href="/economy/items" className={RELATED_LINK_CLASS}>{t('relatedLink')}</Link>
         <EconomyExplorer regular={regular} pve={pve} />
       </section>
     );

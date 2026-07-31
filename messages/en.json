@@ -96,7 +96,7 @@
     "mapsBody": "Check raid times, boss lineups, and spawn rates."
   },
   "items": {
-    "title": "Flea Market",
+    "title": "Flea Market Prices & Value per Slot",
     "eyebrow": "Raid economy",
     "subtitle": "Compare value per inventory slot and decide what is worth carrying out.",
     "searchPlaceholder": "Search item name",
@@ -171,6 +171,7 @@
       "stale": "Stale",
       "unknown": "Unknown"
     },
+    "relatedLink": "Check hideout crafting profit",
     "columns": {
       "item": "Item",
       "size": "Size",
@@ -184,7 +185,7 @@
     }
   },
   "news": {
-    "title": "News",
+    "title": "Patch Notes & Events",
     "subtitle": "Patch notes and event updates from the official Escape from Tarkov Steam news feed.",
     "patchNotesTitle": "Patch Notes",
     "eventsTitle": "Events & Announcements",
@@ -227,7 +228,8 @@
     "guideTip": "Complete the objectives on {map} in the order shown, and preserve any survival or extraction conditions until the raid ends.",
     "questInfo": "Quest information",
     "experience": "Experience",
-    "experienceValue": "{value} XP"
+    "experienceValue": "{value} XP",
+    "relatedLink": "Open the Gunsmith build guide"
   },
   "economy": {
     "title": "Hideout craft profit",
@@ -261,7 +263,8 @@
     "materialsAndTools": "View materials and tools",
     "showAllInStation": "Show all {count} crafts",
     "showTopOnly": "Show top 6 only",
-    "empty": "No hideout crafts match the current filters."
+    "empty": "No hideout crafts match the current filters.",
+    "relatedLink": "Compare with live flea market prices"
   },
   "gunsmith": {
     "title": "Detailed Gunsmith modding guide",
@@ -291,6 +294,7 @@
     "structuralPartial": "Some requirements need an adapter or intermediate part that must be confirmed in the in-game preset editor.",
     "guideNoteTitle": "Before assembly",
     "guideNote": "A category may allow several valid combinations. If the selected part conflicts with another slot, choose an alternative and use the final values shown in the in-game preset editor.",
+    "relatedLink": "Find the quest for this build",
     "conditionNames": {
       "accuracy": "Accuracy",
       "ergonomics": "Ergonomics",
@@ -318,6 +322,7 @@
     "damage": "Damage",
     "tracerOnly": "Tracer only",
     "method": "Cells are performance grades, not exact first-shot probabilities. They compare penetration power to class × 10; real results vary with armor durability and current game formulas.",
+    "relatedLink": "Compare with armor protection",
     "ammo": "Ammo",
     "armorDamage": "Armor damage",
     "speed": "Velocity",
@@ -367,6 +372,7 @@
     "plateSlot": "Plate slot",
     "fixedArmor": "No replaceable plate slots.",
     "unknownZonesNote": "{count} protected zones are new in the game data and not yet classified.",
+    "relatedLink": "Compare with ammo penetration",
     "layer": "Protection layer",
     "coverage": "Coverage",
     "loadMore": "Load 30 more",
@@ -390,7 +396,7 @@
     }
   },
   "maps": {
-    "title": "Map guide",
+    "title": "Maps & Boss Spawn Rates",
     "subtitle": "Player count, raid duration, and boss spawn rates for each map.",
     "empty": "No map data available.",
     "error": "Couldn't load map data.",

@@ -21,6 +21,8 @@ import type { Locale } from '@/i18n/routing';
 import type { MarketItemsResponse } from '@/types/tarkov';
 import { useGameMode } from '@/contexts/GameModeContext';
 import { formatRelativeTime } from '@/lib/format';
+import { Link } from '@/i18n/navigation';
+import { RELATED_LINK_CLASS } from '@/components/tools/relatedLinkClass';
 import { ItemSearch } from './ItemSearch';
 import { ItemsTable, type ItemSort } from './ItemsTable';
 
@@ -450,6 +452,7 @@ export function ItemsExplorer({ locale }: { locale: Locale }) {
             </span>
           </div>
           <p className="mt-1 max-w-2xl text-[13px] leading-5 text-muted">{t('subtitle')}</p>
+          <Link href="/economy/barters" className={RELATED_LINK_CLASS}>{t('relatedLink')}</Link>
         </div>
         <div
           className={`inline-flex min-h-[32px] shrink-0 items-center gap-2 self-start rounded-full border px-3 py-1.5 text-[12px] leading-4 sm:self-auto ${

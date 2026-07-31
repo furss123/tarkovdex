@@ -96,7 +96,7 @@
     "mapsBody": "查看行动时间、Boss 阵容与刷新率。"
   },
   "items": {
-    "title": "跳蚤市场",
+    "title": "跳蚤市场价格与每格价值",
     "eyebrow": "战局经济",
     "subtitle": "比较每格价值，快速判断哪些物品值得带出战局。",
     "searchPlaceholder": "搜索物品名称",
@@ -171,6 +171,7 @@
       "stale": "数据较旧",
       "unknown": "时间未知"
     },
+    "relatedLink": "查看藏身处制作收益",
     "columns": {
       "item": "物品",
       "size": "尺寸",
@@ -184,7 +185,7 @@
     }
   },
   "news": {
-    "title": "资讯",
+    "title": "补丁说明与活动公告",
     "subtitle": "来自 Escape from Tarkov 官方 Steam 新闻的补丁说明与活动资讯。",
     "patchNotesTitle": "补丁说明",
     "eventsTitle": "活动与公告",
@@ -227,7 +228,8 @@
     "guideTip": "请按显示顺序在{map}完成目标，并将生存或撤离条件保持到战局结束。",
     "questInfo": "任务信息",
     "experience": "经验值",
-    "experienceValue": "{value} XP"
+    "experienceValue": "{value} XP",
+    "relatedLink": "查看枪匠改装指南"
   },
   "economy": {
     "title": "藏身处制作收益",
@@ -261,6 +263,7 @@
     "materialsAndTools": "查看材料与工具",
     "showAllInStation": "查看全部 {count} 个制作项目",
     "showTopOnly": "仅显示前 6 个",
+    "relatedLink": "对比跳蚤市场实时价格",
     "empty": "没有符合当前筛选的藏身处制作项目。"
   },
   "gunsmith": {
@@ -291,6 +294,7 @@
     "structuralPartial": "部分要求需要在游戏预设编辑器中确认转接件或中间配件。",
     "guideNoteTitle": "组装前确认",
     "guideNote": "同一类别可能存在多种有效组合。如果所选配件与其他插槽冲突，请选择替代项，并以游戏内预设编辑器显示的最终数值为准。",
+    "relatedLink": "查找需要此改装的任务",
     "conditionNames": {
       "accuracy": "精度",
       "ergonomics": "人体工学",
@@ -318,6 +322,7 @@
     "damage": "伤害",
     "tracerOnly": "仅曳光弹",
     "method": "单元格是性能等级，不是精确首发穿透概率。它比较穿透力与护甲等级×10；实际结果会受耐久度和当前游戏公式影响。",
+    "relatedLink": "查看护甲防护对比",
     "ammo": "弹药",
     "armorDamage": "护甲伤害",
     "speed": "初速",
@@ -367,6 +372,7 @@
     "plateSlot": "插板槽",
     "fixedArmor": "没有可更换插板槽。",
     "unknownZonesNote": "有 {count} 个保护区域是游戏数据中的新增内容，尚未分类。",
+    "relatedLink": "查看弹药穿透对比",
     "layer": "保护层",
     "coverage": "覆盖区域",
     "loadMore": "再加载 30 条",
@@ -390,7 +396,7 @@
     }
   },
   "maps": {
-    "title": "地图指南",
+    "title": "地图与 boss 刷新率",
     "subtitle": "各地图的人数、突袭时长与主要 boss 刷新率信息。",
     "empty": "暂无地图数据。",
     "error": "无法加载地图数据。",

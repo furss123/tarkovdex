@@ -3,6 +3,10 @@ import { ChartNoAxesColumn, ListChecks, Map, Newspaper, Scale, Search, Shield } 
 import { SITE_AUTHOR } from '@/lib/site';
 import { buildPageMetadata } from '@/lib/metadata';
 import type { Locale } from '@/i18n/routing';
+import { Link } from '@/i18n/navigation';
+
+const FEATURE_LINK_CLASS =
+  'underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded';
 
 export async function generateMetadata({
   params,
@@ -45,7 +49,7 @@ export default async function AboutPage({
             <article className="rounded-lg border border-border bg-surface/30 p-4">
               <Search className="size-5 text-accent" aria-hidden="true" />
               <h3 className="mt-3 text-sm font-medium text-fg">
-                {t('itemsTitle')}
+                <Link href="/economy/items" className={FEATURE_LINK_CLASS}>{t('itemsTitle')}</Link>
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 {t('itemsBody')}
@@ -55,7 +59,7 @@ export default async function AboutPage({
             <article className="rounded-lg border border-border bg-surface/30 p-4">
               <ListChecks className="size-5 text-accent" aria-hidden="true" />
               <h3 className="mt-3 text-sm font-medium text-fg">
-                {t('tasksTitle')}
+                <Link href="/progression/tasks" className={FEATURE_LINK_CLASS}>{t('tasksTitle')}</Link>
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 {t('tasksBody')}
@@ -65,7 +69,7 @@ export default async function AboutPage({
             <article className="rounded-lg border border-border bg-surface/30 p-4">
               <Map className="size-5 text-accent" aria-hidden="true" />
               <h3 className="mt-3 text-sm font-medium text-fg">
-                {t('mapsTitle')}
+                <Link href="/maps" className={FEATURE_LINK_CLASS}>{t('mapsTitle')}</Link>
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 {t('mapsBody')}
@@ -75,7 +79,7 @@ export default async function AboutPage({
             <article className="rounded-lg border border-border bg-surface/30 p-4">
               <Newspaper className="size-5 text-accent" aria-hidden="true" />
               <h3 className="mt-3 text-sm font-medium text-fg">
-                {t('newsTitle')}
+                <Link href="/news" className={FEATURE_LINK_CLASS}>{t('newsTitle')}</Link>
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 {t('newsBody')}
@@ -83,17 +87,23 @@ export default async function AboutPage({
             </article>
             <article className="rounded-lg border border-border bg-surface/30 p-4">
               <Scale className="size-5 text-accent" aria-hidden="true" />
-              <h3 className="mt-3 text-sm font-medium text-fg">{t('economyTitle')}</h3>
+              <h3 className="mt-3 text-sm font-medium text-fg">
+                <Link href="/economy/barters" className={FEATURE_LINK_CLASS}>{t('economyTitle')}</Link>
+              </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">{t('economyBody')}</p>
             </article>
             <article className="rounded-lg border border-border bg-surface/30 p-4">
               <ChartNoAxesColumn className="size-5 text-accent" aria-hidden="true" />
-              <h3 className="mt-3 text-sm font-medium text-fg">{t('combatTitle')}</h3>
+              <h3 className="mt-3 text-sm font-medium text-fg">
+                <Link href="/combat/ammo" className={FEATURE_LINK_CLASS}>{t('combatTitle')}</Link>
+              </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">{t('combatBody')}</p>
             </article>
             <article className="rounded-lg border border-border bg-surface/30 p-4">
               <Shield className="size-5 text-accent" aria-hidden="true" />
-              <h3 className="mt-3 text-sm font-medium text-fg">{t('armorTitle')}</h3>
+              <h3 className="mt-3 text-sm font-medium text-fg">
+                <Link href="/combat/armor" className={FEATURE_LINK_CLASS}>{t('armorTitle')}</Link>
+              </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">{t('armorBody')}</p>
             </article>
           </div>

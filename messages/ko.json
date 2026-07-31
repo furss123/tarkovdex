@@ -96,7 +96,7 @@
     "mapsBody": "레이드 시간과 보스 구성, 등장 확률을 확인합니다."
   },
   "items": {
-    "title": "플리마켓",
+    "title": "플리마켓 시세·슬롯당 가치",
     "eyebrow": "레이드 경제",
     "subtitle": "가방 한 칸의 가치까지 계산해, 지금 챙길 아이템을 빠르게 판단하세요.",
     "searchPlaceholder": "아이템 이름 검색",
@@ -171,6 +171,7 @@
       "stale": "오래됨",
       "unknown": "갱신 시각 미확인"
     },
+    "relatedLink": "은신처 제작 수익 확인하기",
     "columns": {
       "item": "아이템",
       "size": "크기",
@@ -184,7 +185,7 @@
     }
   },
   "news": {
-    "title": "공식 소식",
+    "title": "패치노트·이벤트 소식",
     "subtitle": "Escape from Tarkov 공식 Steam 뉴스의 패치노트와 이벤트를 한국어로 제공합니다.",
     "patchNotesTitle": "패치노트",
     "eventsTitle": "이벤트 & 공지",
@@ -227,7 +228,8 @@
     "guideTip": "{map}에서 수행할 목표를 위 순서대로 확인하세요. 생존·탈출 조건이 있는 목표는 레이드 종료 전까지 함께 유지해야 합니다.",
     "questInfo": "퀘스트 정보",
     "experience": "경험치",
-    "experienceValue": "{value} 경험치"
+    "experienceValue": "{value} 경험치",
+    "relatedLink": "Gunsmith 조립 가이드 보기"
   },
   "economy": {
     "title": "은신처 제작 수익",
@@ -261,6 +263,7 @@
     "materialsAndTools": "재료와 도구 보기",
     "showAllInStation": "제작 항목 {count}개 모두 보기",
     "showTopOnly": "상위 6개만 보기",
+    "relatedLink": "실시간 플리마켓 시세와 비교하기",
     "empty": "현재 필터와 일치하는 은신처 제작이 없습니다."
   },
   "gunsmith": {
@@ -291,6 +294,7 @@
     "structuralPartial": "일부 조건은 직접 호환 후보가 없어 게임 내 프리셋에서 추가 어댑터나 중간 부품을 확인해야 합니다.",
     "guideNoteTitle": "조립 전 확인",
     "guideNote": "같은 카테고리의 부품은 여러 조합이 가능할 수 있습니다. 선택한 부품이 다른 슬롯과 충돌하면 대체 후보를 선택하고, 마지막에는 게임 내 프리셋 화면의 최종 수치를 기준으로 확인하세요.",
+    "relatedLink": "이 조립이 필요한 퀘스트 찾기",
     "conditionNames": {
       "accuracy": "명중 정확도",
       "ergonomics": "인체공학",
@@ -318,6 +322,7 @@
     "damage": "피해량",
     "tracerOnly": "예광탄만",
     "method": "셀은 정확한 초탄 관통 확률이 아니라 성능 등급입니다. 관통력과 방어 등급×10을 비교하며, 실제 결과는 방어구 내구도와 현재 게임 공식에 따라 달라집니다.",
+    "relatedLink": "방어구 방어력과 비교하기",
     "ammo": "탄약",
     "armorDamage": "방어구 피해",
     "speed": "탄속",
@@ -362,6 +367,7 @@
     "plateSlot": "플레이트 슬롯",
     "fixedArmor": "교체 가능한 플레이트 슬롯이 없습니다.",
     "unknownZonesNote": "게임 데이터에 새로 추가되어 아직 분류되지 않은 보호 영역이 {count}개 있습니다.",
+    "relatedLink": "탄약 관통력과 비교하기",
     "layer": "보호층",
     "coverage": "커버 영역",
     "loadMore": "30개 더 보기",
@@ -371,7 +377,7 @@
     }
   },
   "maps": {
-    "title": "지도 정보",
+    "title": "지도·보스 스폰 확률",
     "subtitle": "각 지도의 플레이어 수, 레이드 시간, 보스 등장 확률을 확인합니다.",
     "empty": "표시할 맵 정보가 없습니다.",
     "error": "맵 정보를 불러오지 못했습니다.",
