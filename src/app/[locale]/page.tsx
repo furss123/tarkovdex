@@ -1,14 +1,4 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import {
-  ChartNoAxesColumn,
-  House,
-  ListChecks,
-  Map,
-  Newspaper,
-  Shield,
-  Store,
-} from 'lucide-react';
-import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { getMaps, getTraders } from '@/lib/tarkov';
@@ -71,27 +61,6 @@ export default async function HomePage({ params }: PageProps) {
       </div>
 
       <div className="space-y-10">
-        <section aria-labelledby="home-tools">
-          <h2 id="home-tools" className="text-sm font-medium uppercase tracking-wide text-muted">{t('toolsTitle')}</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { href: '/news', icon: Newspaper, title: 'newsTitle', body: 'newsBody' },
-              { href: '/economy/items', icon: Store, title: 'fleaTitle', body: 'fleaBody' },
-              { href: '/economy/barters', icon: House, title: 'hideoutTitle', body: 'hideoutBody' },
-              { href: '/progression/tasks', icon: ListChecks, title: 'questsTitle', body: 'questsBody' },
-              { href: '/combat/ammo', icon: ChartNoAxesColumn, title: 'ammoTitle', body: 'ammoBody' },
-              { href: '/combat/armor', icon: Shield, title: 'armorTitle', body: 'armorBody' },
-              { href: '/maps', icon: Map, title: 'mapsTitle', body: 'mapsBody' },
-            ].map((tool) => (
-              <Link key={tool.href} href={tool.href} className="group rounded-lg border border-border bg-surface/30 p-4 transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
-                <tool.icon className="size-5 text-accent" aria-hidden="true" />
-                <h3 className="mt-3 text-sm font-medium text-fg group-hover:text-accent">{t(tool.title)}</h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted">{t(tool.body)}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
         <InGameClock />
         {pvpTraders.length > 0 || pveTraders.length > 0 ? (
           <TraderRestockBoard pvpTraders={pvpTraders} pveTraders={pveTraders} />
