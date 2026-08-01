@@ -58,21 +58,40 @@ export function GunsmithExplorer({
 
   return (
     <div>
-      <div className="rounded-lg border border-border bg-surface/30 p-4">
-        <label className="block max-w-2xl text-xs text-muted">
-          <span className="mb-1 block">{t('task')}</span>
-          <select
-            value={task.id}
-            onChange={(event) => setTaskId(event.target.value)}
-            className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg"
-          >
-            {tasks.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.minPlayerLevel ? `${item.name} · Lv.${item.minPlayerLevel}` : item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      {/* Every quest is visible at once as a chip; the visible "task" label is
+        * dropped and kept only as the group's accessible name. Numbered parts
+        * show just their ordinal — the page title supplies the "Gunsmith"
+        * context, and the selected quest's full name sits in the panel below. */}
+      <div
+        role="group"
+        aria-label={t('task')}
+        className="flex flex-wrap gap-2 rounded-lg border border-border bg-surface/30 p-3"
+      >
+        {tasks.map((item) => {
+          const active = item.id === task.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setTaskId(item.id)}
+              className={`flex min-h-touch min-w-touch flex-col items-center justify-center rounded-md border px-3 py-1 leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+                active
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-border bg-surface text-muted hover:border-accent/50 hover:text-fg'
+              }`}
+            >
+              <span className="text-sm font-medium tabular-nums">{item.part ?? item.name}</span>
+              {item.minPlayerLevel ? (
+                <span
+                  className={`text-[11px] tabular-nums ${active ? 'text-accent/70' : 'text-muted'}`}
+                >
+                  Lv.{item.minPlayerLevel}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">

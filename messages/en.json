@@ -37,8 +37,8 @@
       "description": "Check raid duration, player counts, bosses, and current spawn rates for PvP and PvE maps."
     },
     "news": {
-      "title": "Tarkov patches and events | TarkovDex",
-      "description": "Read Escape from Tarkov patch notes and event updates from the official Steam news feed."
+      "title": "Tarkov Live — current events, patches and maintenance | TarkovDex",
+      "description": "See which Escape from Tarkov events are running right now, when they end in Korean time, and what they change — with official facts kept separate from developer hints."
     },
     "about": {
       "title": "About TarkovDex",
@@ -185,14 +185,10 @@
     }
   },
   "news": {
-    "title": "Patch Notes & Events",
-    "subtitle": "Patch notes and event updates from the official Escape from Tarkov Steam news feed.",
-    "patchNotesTitle": "Patch Notes",
-    "eventsTitle": "Events & Announcements",
-    "empty": "No news to show.",
+    "title": "Tarkov Live",
     "error": "Couldn't load news.",
-    "description": "Patch notes and event updates from the official Escape from Tarkov Steam news feed.",
-    "sourceNote": "Sourced directly from Steam's official news feed."
+    "description": "What is running in Tarkov right now — events, maintenance and patches, with every time shown in Korean Standard Time and confirmed facts kept separate from developer hints.",
+    "sourceNote": "Compiled from public sources including Steam's official news feed and official X accounts; translation and summaries use AI. Event start and end times are shown only when an official announcement confirms them."
   },
   "tasks": {
     "title": "Quest guide",
@@ -463,5 +459,86 @@
     "disclaimerTitle": "Unofficial fan project",
     "disclaimerBody": "TarkovDex is not affiliated with or endorsed by Battlestate Games. Names, images, and game assets related to Escape from Tarkov belong to their respective rights holders. External data may differ from the live game following updates or changes at the source.",
     "creatorLabel": "Created and maintained by"
+  },
+  "live": {
+    "situationTitle": "Current Tarkov situation",
+    "feedTitle": "News feed",
+    "noActiveEvents": "No event is running right now",
+    "empty": "No news to show.",
+    "lastChecked": "Last checked",
+    "degradedNotice": "{sources} is unavailable, so posts from it are not shown. Every other source is working normally.",
+    "alsoReportedBy": "also reported by {count} other source(s)",
+    "viewSource": "View source",
+    "translationPending": "Translation pending — showing the original text.",
+    "pendingReview": "Awaiting review",
+    "startsAt": "Starts",
+    "endsAt": "Ends",
+    "endUnknown": "End time not confirmed",
+    "remaining": "Time left",
+    "startsIn": "Starts in",
+    "checkingTime": "Checking time",
+    "playerImpact": "Player impact",
+    "recommendedAction": "What to do",
+    "status": {
+      "active": "Active",
+      "ending_soon": "Ending soon",
+      "scheduled": "Scheduled",
+      "ended": "Ended",
+      "unknown": "Schedule unconfirmed"
+    },
+    "modes": {
+      "pvp": "PvP",
+      "pve": "PvE",
+      "arena": "Arena",
+      "unknown": "Scope unconfirmed"
+    },
+    "affects": {
+      "xp": "Experience",
+      "boss": "Bosses",
+      "map": "Maps",
+      "quest": "Quests",
+      "trader": "Traders",
+      "item": "Items",
+      "spawn": "Appearance rates",
+      "server": "Servers",
+      "other": "Other"
+    },
+    "reliability": {
+      "official_confirmed": "Officially confirmed",
+      "official_statement": "Official statement",
+      "developer_hint": "Developer hint",
+      "tarkovdex_inference": "TarkovDex reading",
+      "unverified": "Unverified"
+    },
+    "reliabilityHint": {
+      "official_confirmed": "Announced as confirmed by an official channel.",
+      "official_statement": "Said by an official channel, but the details are not confirmed.",
+      "developer_hint": "A developer’s personal remark, not an official announcement.",
+      "tarkovdex_inference": "TarkovDex’s own reading of several signals.",
+      "unverified": "The source of this information has not been verified."
+    },
+    "filters": {
+      "all": "All",
+      "active_events": "Active events",
+      "developer": "Developer talk",
+      "official": "Patches & announcements",
+      "status": "Maintenance & servers",
+      "ended": "Ended events"
+    },
+    "sourceLabel": {
+      "steam": "Official Steam news",
+      "official_x": "Official X account",
+      "nikita_x": "Nikita on X",
+      "official_telegram": "Official Telegram",
+      "official_website": "Official website",
+      "manual": "Curated by TarkovDex"
+    },
+    "lastCheckedNever": "never checked",
+    "eventsUncertain": "News collection is behind, so we could not confirm whether an event is currently running.",
+    "freshness": {
+      "stale": "News collection is running behind. What follows is from the last successful check.",
+      "down": "No source can be reached right now. What follows is from the last successful check.",
+      "never": "News collection has not completed successfully yet."
+    }
   }
 }

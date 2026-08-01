@@ -75,6 +75,28 @@ export function formatDate(iso: string | null | undefined, locale: Locale): stri
   }).format(date);
 }
 
+/**
+ * Absolute date+time rendered in Korea Standard Time, whatever the reader's
+ * own timezone is — for the Tarkov Live board, where "when does this event
+ * end" is the question and a browser-local time would silently differ between
+ * the server render and the client.
+ *
+ * Pinning the zone is also what makes this hydration-safe: `Intl` with an
+ * explicit `timeZone` produces identical output on the server and in the
+ * browser, unlike `toLocaleString()` with no zone.
+ */
+export function formatKst(iso: string | null | undefined, locale: Locale): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  const formatted = new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Seoul',
+  }).format(date);
+  return `${formatted} KST`;
+}
+
 /** Relative "updated N minutes ago" style string using Intl.RelativeTimeFormat. */
 export function formatRelativeTime(
   iso: string | null | undefined,

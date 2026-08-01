@@ -25,7 +25,8 @@ making structural changes.
 | Styling        | Tailwind CSS v3 (explicit config)         |
 | i18n           | next-intl v3 (routing + middleware)       |
 | Icons          | lucide-react (SVG, no emoji)              |
-| Data           | json.tarkov.dev static JSON (server-side); Steam News RSS for patch notes/events |
+| Data           | json.tarkov.dev static JSON (server-side); Steam News RSS + X API v2 for news |
+| Storage        | PostgreSQL via `postgres` (postgres.js), hand-written SQL, no ORM — Tarkov Live only; every other page is still stateless |
 | Translation    | Gemini API (`@google/genai`) — news page's ko/zh translation only (was Claude API; see "Provider switch" in the decision log) |
 | Hosting        | Vercel                                    |
 
@@ -1941,3 +1942,330 @@ redeploying (`vercel deploy --prod --force`) so the build picked it up.
 self-referencing `canonical`, reciprocal `hreflang` (en/ko/zh/x-default), and
 `og:url`, all under `tarkovdex.dev`; the home page's `WebSite` JSON-LD and
 `og-image.png` both resolve correctly in production.
+
+## 2026-08-02 Tarkov Live (news page rebuild)
+
+`/[locale]/news` stopped being "the Steam feed, listed" and became a situation
+board: what is running in Tarkov right now, which mode it applies to, when it
+ends in Korean time, what it changes, what to do about it, and how trustworthy
+the claim is. **Operator-facing documentation lives in
+[`docs/tarkov-live.md`](docs/tarkov-live.md)** — env vars, curation format,
+failure matrix, deployment checklist. This section records only the decisions.
+
+### Nothing about the Steam pipeline changed
+
+`lib/steam-news.ts` and `lib/translate-news.ts` are untouched. Steam is still
+the primary source, still on its 1-hour fetch window, and the committed
+`news-ko.json` / `news-zh.json` translations still supply the Korean and
+Chinese text — a post that reads Korean today did not start reading English.
+The Steam adapter reads *both* the original and the localized feed: the
+English original is what the (English keyword) classifier and the dedup hash
+work on, the localized text is what renders. `NewsCard.tsx` was replaced by
+`LiveBoard.tsx` and deleted; `news.subtitle` / `patchNotesTitle` /
+`eventsTitle` / `empty` were removed from all three locales together.
+
+### ~~Storage: no database, deliberately~~ (SUPERSEDED)
+
+The MVP shipped with no database: `manual-entries.json` was the whole review
+workflow, and the X cursor lived per runtime. The costs were stated at the
+time — unpersisted posts, a cold start re-pulling a full page, curation
+requiring a commit and a redeploy — and the second phase below is what paid
+them off. `collectFrom()` was named as the seam if persistence was ever
+wanted; it turned out to be the wrong seam (see "Collection is not rendering"
+below), but the rest of the MVP's design survived intact.
+
+### The board never guesses — enforced structurally, not by prompt
+
+**Event start/end times can only come from `manual-entries.json`.** No adapter
+produces them and the interpreter is forbidden from producing them, so
+"종료 시각을 추측하지 마라" is a property of the data flow rather than a hope
+about model behaviour. A missing end time renders as `종료 시각 미확인`, never
+as an estimate; an unparseable one renders as `시간 확인 중`, never as a wrong
+countdown.
+
+Same reasoning for the rest: game mode is reported only when the text names
+PvP/PvE/Arena, classification is keyword-based and auditable rather than
+model-based, and the interpreter's output is schema-validated
+(`interpret-schema.ts`) with anything malformed discarded rather than shown.
+
+**Source reliability and content review are separate axes** (the brief's
+point, and it turned out to matter): an official account's teaser is an
+`official_statement` — real provenance — but not a confirmed fact, so it sits
+in the feed with its badge and never reaches the top panel. `decideReview()`
+auto-publishes only official-confirmed, timeless posts; anything carrying a
+claimed window waits for a human.
+
+The visible consequence, which is intended: **a freshly deployed site shows no
+running events until someone curates one.** The alternative is a confident
+banner about a schedule nobody published.
+
+### Situation panel contents
+
+Running / ending-soon / scheduled events, recent outages, and — added after
+seeing the real feed render an empty panel — **the newest patch post
+regardless of age**, because "which patch am I on" is a current-situation
+question and the post's own date is shown next to it. The
+`현재 진행 중인 이벤트가 없습니다` line still renders whenever nothing is
+actually running, even when the panel has a patch card, so a patch never reads
+as an event.
+
+### Time and hydration
+
+Times are stored ISO-8601 UTC and displayed via `formatKst()` in `lib/format.ts`
+— `Intl` with an explicit `timeZone: 'Asia/Seoul'`, which is also what makes it
+hydration-safe (unlike `toLocaleString()` with no zone, it produces identical
+output on server and client). `LiveBoard`'s first client render uses the
+server's `lastCheckedAt` instant, so the markup matches; only after mount does
+a 1s timer start. Status comes from the same pure `computeEventStatus()` on
+both sides, so the badge and the countdown cannot tell different stories.
+
+### X, and why not Telegram
+
+X uses the official API v2 only — the project has rejected fragile scraping
+twice already (the GraphQL endpoint, then Steam page scraping). Cost is
+controlled by an interval throttle, `since_id`, a `max_results` cap, and
+server-side `exclude=replies,retweets` so we never pay to download and discard
+them. No pricing figure is hardcoded anywhere. The token is confined to
+`lib/live/x.ts` (`server-only`), never logged, and errors raise the HTTP status
+only — never the body or headers. X media is deliberately not expanded, since
+rendering arbitrary remote images means opening the image config to user-posted
+content.
+
+Telegram ships as **interface + flag + documentation, no collector**. The Bot
+API cannot read a public channel we don't own; MTProto with a personal session
+is an account-credential liability for a static fan site; `t.me/s/<channel>` is
+the fragile scrape again. Writing a collector that would break was worse than
+shipping the seam and saying so.
+
+### Scheduling
+
+No cron endpoint and no scheduled function. ISR at 10 minutes (the shortest
+interval any source needs) already regenerates the page, and most renders are
+cache reads. An unauthenticated cron route would be new attack surface for no
+gain; there is also no manual-entry write API, because curation is a git
+commit. If one is ever added, gate it behind `CRON_SECRET`.
+
+### Testing
+
+`tests/live.test.ts` (24 tests) covers status across every window case,
+KST conversion including a date that crosses midnight in Seoul, the
+ending-soon threshold, missing and unparseable dates, adapter normalization,
+classification and reliability mapping, the auto-publish gate, four dedup
+paths plus a negative case, manual-override protection, panel selection, feed
+ordering, filters, interpreter schema validation and rejection, and source
+isolation (a failing source never removes another's posts). All content is
+invented and offset from an injected `now`, so nothing expires.
+
+**Not added: React component tests.** The suite is `node:test` + `tsx` with no
+DOM; adding jsdom + Testing Library for this page alone was a bigger change
+than the page. The UI's branch conditions are pure functions and are tested
+directly; rendering was verified in a real browser instead.
+
+### Verified
+
+`typecheck`, `lint`, `npm test` (54 tests) and a production build with Gemini
+disabled all pass; `/[locale]/news` shows `Revalidate: 10m` in the route table.
+Live `next start` QA — see the session report for the measured figures.
+
+## 2026-08-02 Tarkov Live phase 2: persistence, scheduled collection, review desk
+
+The MVP above worked but could not be *operated*. Everything it did happened
+inside a page render: three locale pages each ran collection, the X cursor
+lived in module memory, and approving a single event meant editing JSON,
+committing and redeploying. This phase changed **when and where** the work
+happens; it did not redesign the board, the Steam pipeline, the URL, the SEO
+surface, or the rules about guessing. Operator documentation is
+[`docs/tarkov-live.md`](docs/tarkov-live.md); this records the decisions.
+
+### Collection is not rendering
+
+`getLiveFeed()` used to be the pipeline. It is now the *read* path and nothing
+else: database in, view model out. Collection lives in `pipeline.ts`, runs from
+an authenticated cron endpoint, and is the only thing that may touch X or
+Gemini.
+
+This was the root cause of four separate reported problems, not four problems:
+per-locale API spend, a cursor that reset on every cold start, `revalidate =
+600` doubling as a collection schedule, and a board that only updated when
+someone visited it.
+
+`tests/live-security.test.ts` asserts the separation structurally — `feed.ts`,
+`sources.ts` and `news/page.tsx` are read as source text and must not import
+the X collector, the interpreter, or the pipeline. A comment saying "don't call
+X here" is not a control; a failing test is.
+
+`ADAPTERS` in `sources.ts` survives as the **no-database fallback only**, and
+the X adapters were removed from it for the same reason.
+
+### Postgres, postgres.js, hand-written SQL
+
+Requirements that ruled out staying with JSON: relational data (a board item
+has many sources), unique constraints (the same post collected twice), a cursor
+that survives a cold start, and an audit trail.
+
+- **Postgres**, not KV: the constraints *are* the correctness argument here.
+  `unique (source, source_account, source_post_id)` is what makes "collected
+  twice" impossible rather than merely unlikely.
+- **`postgres` (postgres.js)**, not `@vercel/postgres` or `@neondatabase/serverless`:
+  one dependency, no transitive ones, works against any provider. Configured
+  `max: 1, prepare: false` so transaction-mode poolers accept it.
+- **No ORM.** Two dozen statements over eight tables. A schema DSL, a migration
+  generator and a codegen step would all be more moving parts than the thing
+  they manage.
+- **Migrations as data, not files.** A `.sql` file needs `fs` at runtime, which
+  is what breaks once Next traces a serverless bundle. They live as an ordered
+  array in `db/migrations.ts`, are recorded in `live_migrations`, and every
+  statement is additionally `if not exists` — so a database whose ledger was
+  lost converges instead of erroring. They run at the start of every cron; there
+  is no separate migration step to forget.
+
+**Three tables, not one.** A raw post is a fact about the outside world and is
+never rewritten; an interpretation is a derived, versioned, re-runnable
+artifact; a board item is what a human published and carries their edits.
+Collapsing them is exactly what made curation require a redeploy — there was
+nowhere to put an edit that re-collection wouldn't overwrite.
+
+### The tests run real SQL
+
+`tests/helpers/pglite.ts` runs the migrations and every repository query against
+**PGlite** (Postgres compiled to WASM, a devDependency). A repository test that
+mocks its own storage proves nothing; this one exercises real `on conflict`,
+`xmax`, arrays, `jsonb`, unique constraints and interval arithmetic. `npm test`
+gained `--conditions react-server` so `server-only` modules resolve outside
+Next.
+
+### Manual edits win, structurally
+
+`live_events` keeps derived columns and an `overrides` JSONB separately. The
+pipeline writes only derived columns; reads apply `overrides` last. So
+re-collection *cannot* overwrite an operator — not "is careful not to". Removing
+an override restores the automatic value, and a `reviewed`/`rejected` item is
+never demoted back to `pending_review`.
+
+### What a machine may assert
+
+`publish-rules.ts` holds both machine decisions, pure and defaulting to "ask a
+human". Auto-publish needs an official-confirmed source that is not a personal
+account, a non-teaser intent, and either no claimed schedule or one where every
+claimed time is backed by quoted source text.
+
+**Times only survive with evidence.** `parseEnvelope()` keeps a model-reported
+timestamp only if it is full ISO-8601 with an offset *and* the model quoted the
+source sentence *and* that quote actually appears in the post. A bare
+`2026-08-05 18:00` is rejected rather than assumed to be KST. The model may
+raise `requiresReview`; it can never clear it. An operator's `datetime-local`
+field is the only path allowed to resolve a timezone, because a person chose it.
+
+**An absent interpretation is not a red flag.** Intent-based gates are skipped
+when no interpretation exists, otherwise losing the Gemini key would silently
+empty the board.
+
+**End notices auto-attach only on an exact content/URL match.** Same wording
+plus a shared map is a strong hint, not proof: it becomes a preselected
+candidate in the review queue instead of silently ending an event.
+
+### One interpretation call, three languages
+
+The MVP interpreted per locale — three calls per post against the free-tier
+quota this project has already been bitten by twice, for prose that is a
+translation of itself. One call now returns `{ko, en, zh}`, stored per
+`(raw_post_id, prompt_version)`. `unstable_cache` is gone; the database is the
+cache, which also removes the cache-a-failure-forever class of bug this project
+has fixed twice.
+
+### Admin: one secret, a signed cookie, no framework
+
+`node:crypto` HMAC over a `{expiry}.{sessionId}` payload in an HttpOnly,
+`SameSite=Strict`, `Secure`-in-production cookie. No identity provider, no user
+table, no password reset — all of which are more code and more attack surface
+than the thing being protected. `requireSession()` throws rather than returning
+a flag, so a forgotten check is a crash, not a silent privilege escalation, and
+it also verifies a session-bound CSRF token.
+
+`admin-session.ts` holds the crypto with no `next/headers` import, so forgery,
+expiry, cross-secret and CSRF-replay are all covered by real tests rather than
+by reading the code.
+
+**The admin lives under `[locale]`** (`/{locale}/admin/live`) because there is
+deliberately no `app/layout.tsx` (see the i18n routing decision) and adding one
+for a single internal page would restructure the whole tree. It is
+`force-dynamic`, `noindex`, absent from `sitemap.ts`, `Disallow`ed in
+`robots.ts`, and served `no-store`. Its copy is **Korean literals, not message
+keys** — a single-operator internal tool is not site content, and translating it
+would add ~60 keys nobody reads.
+
+`CSRF_INPUT_NAME` lives in its own two-line module: the client form component
+needs it, and importing it from anywhere touching `node:crypto` pulls that into
+the browser bundle, which webpack rejects outright.
+
+### Stale is not empty
+
+The MVP reported the render time as `lastCheckedAt`, so a board built from an
+hours-old collection still claimed to have just looked — and then said "no
+events running" as if that were a finding. `LiveFeed` now carries `lastCheckedAt`
+(last *successful* collection), `renderedAt` (the hydration-safe clock seed),
+and a `freshness` of `ok` / `partial` / `stale` / `down` / `never` /
+`unmanaged`. In the three uncertain states the empty board says it could not
+check, rather than that nothing is running.
+
+### Cron, and the Hobby-plan limit
+
+`vercel.json` requests `*/10 * * * *`. Vercel's Hobby plan triggers cron jobs
+roughly once a day regardless of the expression — the deploy still succeeds, the
+cadence is just coarser. Rather than pretend otherwise, the endpoint is a plain
+`Authorization: Bearer $CRON_SECRET` call that any external scheduler can drive,
+documented as such. No query-parameter secret: URLs end up in logs and referrers.
+
+The lock is a **database row with an expiry**, not a module-scope boolean —
+Vercel runs concurrent instances, and a crashed run must not wedge collection
+forever. An overlapping call gets `409`, not a silent no-op.
+
+### Two bugs found by running it, not by review
+
+- **Same-run duplicates.** Link candidates were snapshotted before the
+  event-building loop, so two mirrors of one announcement collected in the same
+  run could not see each other and the board showed it twice. Fixed by
+  appending each new event to the candidate list and processing oldest-first;
+  `tests/live-pipeline.test.ts` has the regression.
+- **The status dropdown pinned a derived value.** `status` is normally computed
+  from the window, with `unknown` as the "derive it" sentinel — so saving with
+  the select untouched froze a running event at 일정 미확인. The select now
+  offers 자동 (일정 기준) as its empty default and clears the override.
+
+### Telegram, unchanged
+
+Still interface, flag and documentation with no collector, for the same reasons.
+Writing one that would break was worse than shipping the seam and saying so.
+
+### Verified
+
+`typecheck`, `lint`, `npm test` (**107 tests**, up from 54) and a production
+build with Gemini disabled all pass; `/[locale]/news` still shows `Revalidate:
+10m` and the admin route is server-rendered on demand (confirmed absent from
+`prerender-manifest.json`, not just by its `dynamic` export).
+
+Live QA ran against `next start` with a **real Postgres over the wire protocol**
+(PGlite's socket server), so the app used its production driver and SQL:
+
+- cron with the correct bearer → 200, 10 Steam posts + 7 fixtures stored, 17
+  events created, `revalidated: true`; a second run → 0 new, 10 duplicates, 0
+  new events.
+- no header / wrong secret / secret as a query parameter → 401 each.
+- an operator logged in through the browser, edited Korean text, set a KST
+  window and approved — `/ko/news` showed the approved event at the top with the
+  right KST times and a live countdown, with no redeploy and no ISR wait.
+- a wrong password → generic failure, no session cookie; the session cookie is
+  invisible to JavaScript.
+- ageing every source's last success by five hours → the stale notice, with the
+  real last-checked time and all stored content still rendering.
+- an empty database → 수집 기록 없음 plus "확인하지 못했습니다", not "이벤트가
+  없습니다".
+- no `DATABASE_URL` and no secrets at all → `/ko/news`, `/en/news`, `/zh/news`
+  and the admin page all 200, admin reports itself disabled, cron 401.
+- ko/en/zh render, canonical/hreflang/x-default unchanged, zero console errors,
+  zero hydration errors, zero horizontal overflow at 1280px and 375px, zero tap
+  targets under 44px.
+
+Not verified: the real X API (no `X_BEARER_TOKEN` available) and real Gemini
+interpretation — both are covered by injected-dependency tests instead. Vercel
+Cron's actual firing cadence is plan-dependent and untested here.

@@ -37,8 +37,8 @@
       "description": "查看 PvP、PvE 地图的战局时长、人数、Boss 与当前刷新率。"
     },
     "news": {
-      "title": "塔科夫补丁与活动 | TarkovDex",
-      "description": "查看 Escape from Tarkov 官方 Steam 新闻中的补丁说明和活动更新。"
+      "title": "塔科夫实况 — 进行中的活动与补丁 | TarkovDex",
+      "description": "查看当前进行中的塔科夫活动、维护与补丁资讯，时间以韩国时间显示，并区分官方确认信息与开发者暗示。"
     },
     "about": {
       "title": "关于 TarkovDex",
@@ -185,14 +185,10 @@
     }
   },
   "news": {
-    "title": "补丁说明与活动公告",
-    "subtitle": "来自 Escape from Tarkov 官方 Steam 新闻的补丁说明与活动资讯。",
-    "patchNotesTitle": "补丁说明",
-    "eventsTitle": "活动与公告",
-    "empty": "暂无可显示的资讯。",
+    "title": "塔科夫实况",
     "error": "无法加载资讯。",
-    "description": "来自 Escape from Tarkov 官方 Steam 新闻源的补丁说明与活动资讯。",
-    "sourceNote": "内容基于 Steam 官方新闻，原文（英语）由 AI 自动翻译，部分表达可能不够精确。"
+    "description": "汇总当前进行中的活动、维护与补丁资讯，时间以韩国时间显示，并区分官方确认信息与开发者暗示。",
+    "sourceNote": "内容汇总自 Steam 官方新闻与官方 X 账号等公开来源，翻译与摘要由 AI 生成。活动的开始与结束时间仅在官方公告确认后才会显示。"
   },
   "tasks": {
     "title": "任务指南",
@@ -463,5 +459,86 @@
     "disclaimerTitle": "非官方粉丝项目",
     "disclaimerBody": "TarkovDex 与 Battlestate Games 无关联，也未获得其官方认可。与 Escape from Tarkov 相关的名称、图片和游戏资产归各自权利方所有。外部数据可能因游戏更新或数据提供方情况而与实际游戏内容存在差异。",
     "creatorLabel": "制作与运营"
+  },
+  "live": {
+    "situationTitle": "当前塔科夫状况",
+    "feedTitle": "资讯列表",
+    "noActiveEvents": "当前没有正在进行的活动",
+    "empty": "暂无可显示的资讯。",
+    "lastChecked": "最后确认",
+    "degradedNotice": "{sources} 暂时无法连接，该来源的资讯未显示，其余来源正常。",
+    "alsoReportedBy": "另有 {count} 个来源确认",
+    "viewSource": "查看原文",
+    "translationPending": "翻译准备中，暂时显示原文。",
+    "pendingReview": "待人工核对",
+    "startsAt": "开始",
+    "endsAt": "结束",
+    "endUnknown": "结束时间未确认",
+    "remaining": "剩余时间",
+    "startsIn": "距开始",
+    "checkingTime": "正在确认时间",
+    "playerImpact": "对玩家的影响",
+    "recommendedAction": "建议行动",
+    "status": {
+      "active": "进行中",
+      "ending_soon": "即将结束",
+      "scheduled": "即将开始",
+      "ended": "已结束",
+      "unknown": "日程未确认"
+    },
+    "modes": {
+      "pvp": "PvP",
+      "pve": "PvE",
+      "arena": "Arena",
+      "unknown": "适用范围未确认"
+    },
+    "affects": {
+      "xp": "经验",
+      "boss": "首领",
+      "map": "地图",
+      "quest": "任务",
+      "trader": "商人",
+      "item": "物品",
+      "spawn": "出现概率",
+      "server": "服务器",
+      "other": "其他"
+    },
+    "reliability": {
+      "official_confirmed": "官方确认",
+      "official_statement": "官方发言",
+      "developer_hint": "开发者暗示",
+      "tarkovdex_inference": "TarkovDex 解读",
+      "unverified": "未经确认"
+    },
+    "reliabilityHint": {
+      "official_confirmed": "由官方渠道正式确认发布的内容。",
+      "official_statement": "来自官方渠道的发言，但细节尚未确定。",
+      "developer_hint": "开发者个人发言，并非官方正式公告。",
+      "tarkovdex_inference": "TarkovDex 综合多方线索后的解读。",
+      "unverified": "来源尚未得到确认的信息。"
+    },
+    "filters": {
+      "all": "全部",
+      "active_events": "进行中的活动",
+      "developer": "开发者发言",
+      "official": "补丁与官方公告",
+      "status": "维护与服务器",
+      "ended": "已结束的活动"
+    },
+    "sourceLabel": {
+      "steam": "Steam 官方新闻",
+      "official_x": "官方 X 账号",
+      "nikita_x": "Nikita 的 X 账号",
+      "official_telegram": "官方 Telegram",
+      "official_website": "官方网站",
+      "manual": "TarkovDex 整理"
+    },
+    "lastCheckedNever": "尚无采集记录",
+    "eventsUncertain": "消息采集延迟，暂时无法确认当前是否有活动正在进行。",
+    "freshness": {
+      "stale": "消息采集出现延迟，以下内容来自最后一次成功检查。",
+      "down": "目前所有来源均无法访问，以下内容来自最后一次成功检查。",
+      "never": "尚未成功完成任何一次消息采集。"
+    }
   }
 }

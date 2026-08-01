@@ -1,5 +1,11 @@
 {
   "env": {
     "NEXT_PUBLIC_SITE_URL": "https://tarkovdex.dev"
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/tarkov-live",
+      "schedule": "*/10 * * * *"
+    }
+  ]
 }

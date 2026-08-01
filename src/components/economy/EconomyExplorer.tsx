@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bitcoin,
@@ -26,6 +26,8 @@ type Props = { regular: EconomyDataset; pve: EconomyDataset };
 const money = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 const percent = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 1 });
 const INITIAL_STATION_LIMIT = 6;
+const HEADER_HEIGHT = 68; // Header.tsx's fixed sticky bar height
+const NAV_GAP = 16;
 
 /** Per-station icons keyed by the API's stable station id (never by the
  * translated display name). Stations without a mapping fall back to Hammer. */
@@ -55,6 +57,8 @@ export function EconomyExplorer({ regular, pve }: Props) {
   const [hourlyCost, setHourlyCost] = useState(0);
   const [expandedStations, setExpandedStations] = useState<string[]>([]);
   const [activeStationId, setActiveStationId] = useState('');
+  const navRef = useRef<HTMLElement>(null);
+  const [navOffset, setNavOffset] = useState(HEADER_HEIGHT + NAV_GAP);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -150,7 +154,7 @@ export function EconomyExplorer({ regular, pve }: Props) {
         const stationId = visible[0]?.target.getAttribute('data-station-id');
         if (stationId) setActiveStationId(stationId);
       },
-      { rootMargin: '-84px 0px -60% 0px', threshold: 0 },
+      { rootMargin: `-${navOffset}px 0px -60% 0px`, threshold: 0 },
     );
 
     for (const group of stationGroups) {
@@ -159,7 +163,20 @@ export function EconomyExplorer({ regular, pve }: Props) {
     }
 
     return () => observer.disconnect();
-  }, [stationGroups]);
+  }, [stationGroups, navOffset]);
+
+  // The station nav's height varies with viewport width (its grid wraps to
+  // more/fewer rows), so the scroll offset it reserves is measured, not guessed.
+  const hasStations = stationGroups.length > 0;
+  useEffect(() => {
+    const node = navRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => {
+      setNavOffset(HEADER_HEIGHT + node.getBoundingClientRect().height + NAV_GAP);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasStations]);
 
   function toggleStation(stationId: string) {
     setExpandedStations((current) =>
@@ -220,7 +237,11 @@ export function EconomyExplorer({ regular, pve }: Props) {
       <p className="mt-3 text-xs leading-relaxed text-muted">{t('operatingNote')}</p>
 
       {stationGroups.length ? (
-        <nav aria-label={t('stationTabs')} className="mt-4">
+        <nav
+          ref={navRef}
+          aria-label={t('stationTabs')}
+          className="sticky top-[68px] z-10 -mx-4 mt-4 border-y border-border bg-bg px-4 py-3 sm:-mx-6 sm:px-6"
+        >
           <p className="sr-only">{t('stationTabsHint')}</p>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
             {stationGroups.map((group) => {
@@ -279,7 +300,8 @@ export function EconomyExplorer({ regular, pve }: Props) {
               id={`station-section-${group.station.id}`}
               data-station-id={group.station.id}
               aria-labelledby={`station-${group.station.id}`}
-              className="scroll-mt-[84px] overflow-hidden rounded-xl border border-border bg-surface/10"
+              style={{ scrollMarginTop: navOffset }}
+              className="overflow-hidden rounded-xl border border-border bg-surface/10"
             >
               <header className="flex flex-col gap-3 border-b border-border bg-surface/50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">

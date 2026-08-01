@@ -1,0 +1,4 @@
+{
+  "_readme": "Hand-curated Tarkov Live entries — the project's review surface. This is the ONLY place an event start/end time, a corrected summary, or a reviewStatus may come from: adapters and the AI interpreter are both forbidden from inferring times. Every key present under `overrides` is recorded in the entry's `manualFields` and is never overwritten by automated re-collection. See docs/tarkov-live.md for the field reference and the review workflow. Ships empty on purpose — production shows only what an official source actually published.",
+  "entries": []
+}
