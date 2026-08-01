@@ -234,7 +234,13 @@
     "detailTitleShort": "{name} Quest Guide | TarkovDex",
     "detailDescription": "{name} quest from {trader}: objectives, requirements and rewards for Escape from Tarkov.",
     "detailDescLevel": " Requires player level {level}+.",
-    "allQuestsLink": "All Quests"
+    "detailDescPvpOnly": " PvP only.",
+    "detailDescPveOnly": " PvE only.",
+    "allQuestsLink": "All Quests",
+    "pvpOnlyBadge": "PvP only",
+    "pveOnlyBadge": "PvE only",
+    "modeDifferencesTitle": "Differs by mode",
+    "levelLabel": "Required level"
   },
   "economy": {
     "title": "Hideout craft profit",

@@ -234,7 +234,13 @@
     "detailTitleShort": "{name} 任务信息 | TarkovDex",
     "detailDescription": "查看来自{trader}的\"{name}\"任务目标、要求与奖励信息。",
     "detailDescLevel": " 需要角色等级 {level} 以上。",
-    "allQuestsLink": "全部任务"
+    "detailDescPvpOnly": " 仅限 PvP 模式。",
+    "detailDescPveOnly": " 仅限 PvE 模式。",
+    "allQuestsLink": "全部任务",
+    "pvpOnlyBadge": "仅 PvP",
+    "pveOnlyBadge": "仅 PvE",
+    "modeDifferencesTitle": "模式差异",
+    "levelLabel": "所需等级"
   },
   "economy": {
     "title": "藏身处制作收益",

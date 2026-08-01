@@ -234,7 +234,13 @@
     "detailTitleShort": "{name} 퀘스트 정보 | TarkovDex",
     "detailDescription": "{trader}의 \"{name}\" 퀘스트 목표와 요구 조건, 보상 정보를 확인하세요.",
     "detailDescLevel": " 플레이어 레벨 {level} 이상이 필요합니다.",
-    "allQuestsLink": "전체 퀘스트"
+    "detailDescPvpOnly": " PvP 전용 퀘스트입니다.",
+    "detailDescPveOnly": " PvE 전용 퀘스트입니다.",
+    "allQuestsLink": "전체 퀘스트",
+    "pvpOnlyBadge": "PvP 전용",
+    "pveOnlyBadge": "PvE 전용",
+    "modeDifferencesTitle": "모드별 차이",
+    "levelLabel": "필요 레벨"
   },
   "economy": {
     "title": "은신처 제작 수익",

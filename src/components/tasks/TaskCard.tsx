@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Task } from '@/types/tarkov';
+import { Link } from '@/i18n/navigation';
+import { taskSlugFor } from '@/lib/task-slug';
 
 export function TaskCard({
   task,
@@ -60,30 +62,31 @@ export function TaskCard({
         </span>
 
         <div className="min-w-0 flex-1">
+          <Link
+            href={`/progression/tasks/${taskSlugFor(task)}`}
+            className="block min-w-0 rounded text-sm font-medium text-fg underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+          >
+            {task.name}
+            {task.nameEn ? (
+              <span className="ml-1 font-normal text-muted">({task.nameEn})</span>
+            ) : null}
+          </Link>
           <button
             type="button"
             aria-expanded={expanded}
             aria-controls={`guide-${task.id}`}
             onClick={() => setExpanded((current) => !current)}
-            className="group flex min-h-touch w-full items-start justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            className="mt-1 flex min-h-touch w-full items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium text-fg underline-offset-4 group-hover:text-accent group-hover:underline">
-                {task.name}
-                {task.nameEn ? (
-                  <span className="ml-1 font-normal text-muted">({task.nameEn})</span>
-                ) : null}
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+              {task.trader ? <span>{task.trader.name}</span> : null}
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-3" aria-hidden="true" />
+                {task.map ? task.map.name : t('anyMap')}
               </span>
-              <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-                {task.trader ? <span>{task.trader.name}</span> : null}
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="size-3" aria-hidden="true" />
-                  {task.map ? task.map.name : t('anyMap')}
-                </span>
-                {task.minPlayerLevel ? (
-                  <span>{t('minLevel', { level: task.minPlayerLevel })}</span>
-                ) : null}
-              </span>
+              {task.minPlayerLevel ? (
+                <span>{t('minLevel', { level: task.minPlayerLevel })}</span>
+              ) : null}
             </span>
             <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-muted">
               {expanded ? t('closeGuide') : t('openGuide')}

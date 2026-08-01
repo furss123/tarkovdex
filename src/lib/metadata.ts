@@ -35,21 +35,23 @@ const OG_LOCALE: Record<Locale, string> = {
  */
 export const X_DEFAULT_LOCALE: Locale = 'en';
 
-export async function buildPageMetadata({
+/**
+ * Shared shape (canonical/hreflang/OG/Twitter) behind both `buildPageMetadata`
+ * (fixed category pages, title/description looked up from `pageMetadata.*`)
+ * and `buildDetailPageMetadata` (per-entity detail pages, title/description
+ * computed from real data) — one implementation so the two can't drift.
+ */
+function buildMetadataFromStrings({
   locale,
-  page,
-  path = '',
+  path,
+  title,
+  description,
 }: {
   locale: Locale;
-  page: PageMetadataKey;
-  path?: string;
-}): Promise<Metadata> {
-  const t = await getTranslations({
-    locale,
-    namespace: `pageMetadata.${page}`,
-  });
-  const title = t('title');
-  const description = t('description');
+  path: string;
+  title: string;
+  description: string;
+}): Metadata {
   const canonical = `${SITE_URL}/${locale}${path}`;
   const images = [
     {
@@ -92,4 +94,44 @@ export async function buildPageMetadata({
       images: images.map((image) => image.url),
     },
   };
+}
+
+export async function buildPageMetadata({
+  locale,
+  page,
+  path = '',
+}: {
+  locale: Locale;
+  page: PageMetadataKey;
+  path?: string;
+}): Promise<Metadata> {
+  const t = await getTranslations({
+    locale,
+    namespace: `pageMetadata.${page}`,
+  });
+  return buildMetadataFromStrings({
+    locale,
+    path,
+    title: t('title'),
+    description: t('description'),
+  });
+}
+
+/**
+ * Same canonical/hreflang/OG/Twitter shape as `buildPageMetadata`, for pages
+ * whose title/description are computed from real entity data (e.g. a quest
+ * detail page) rather than looked up by a fixed `pageMetadata.*` key.
+ */
+export function buildDetailPageMetadata({
+  locale,
+  path,
+  title,
+  description,
+}: {
+  locale: Locale;
+  path: string;
+  title: string;
+  description: string;
+}): Metadata {
+  return buildMetadataFromStrings({ locale, path, title, description });
 }
