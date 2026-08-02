@@ -3,7 +3,7 @@
   "entries": [
     {
       "postId": "test-event-xp",
-      "url": "https://tarkov.dev",
+      "url": null,
       "publishedAt": "2026-08-01T10:00:00Z",
       "text": {
         "ko": {
@@ -34,7 +34,7 @@
     },
     {
       "postId": "test-developer-hint",
-      "url": "https://x.com/nikgeneburn",
+      "url": null,
       "publishedAt": "2026-08-02T08:30:00Z",
       "text": {
         "ko": {
@@ -60,7 +60,7 @@
     },
     {
       "postId": "test-maintenance",
-      "url": "https://tarkov.dev",
+      "url": null,
       "publishedAt": "2026-08-03T06:00:00Z",
       "text": {
         "ko": {
@@ -90,7 +90,7 @@
     },
     {
       "postId": "test-ended",
-      "url": "https://tarkov.dev",
+      "url": null,
       "publishedAt": "2026-07-25T12:00:00Z",
       "text": {
         "ko": {
