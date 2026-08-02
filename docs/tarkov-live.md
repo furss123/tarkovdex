@@ -251,6 +251,14 @@ imports it as a `reviewed` event. Editing that file after import changes
 nothing — the database is the source of truth from then on; edit it in the admin
 screen instead.
 
+**Never write a status word into the title or body** ("진행 중", "종료됨",
+"예정") — the status badge is computed from `startsAt`/`endsAt` and is the only
+thing on the board allowed to say what state an event is in. A title that
+asserts "진행 중" for an event whose `startsAt` is still in the future will read
+correctly in the JSON but contradict its own badge the moment someone opens the
+card — write titles as a plain description of *what* the event is, never *when*
+it is.
+
 ### Manual tools on the dashboard
 
 지금 전체 수집 / per-source 수집 / 캐시 재검증, plus **AI 해석 다시 실행** on an

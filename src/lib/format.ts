@@ -18,6 +18,20 @@ export function formatRoubles(value: number | null | undefined, locale: Locale):
   return `₽${n}`;
 }
 
+/** Signed whole-rouble value for profit/loss cards. Keeps the project's
+ * currency-first convention while making positive and negative values
+ * distinguishable without relying on color. */
+export function formatSignedRoubles(
+  value: number,
+  locale: Locale,
+): string {
+  const n = new Intl.NumberFormat(INTL_LOCALE[locale], {
+    signDisplay: 'always',
+    maximumFractionDigits: 0,
+  }).format(value);
+  return `₽${n}`;
+}
+
 /** Format a signed percentage (e.g. price change over 48h). */
 export function formatPercent(
   value: number | null | undefined,
@@ -95,6 +109,40 @@ export function formatKst(iso: string | null | undefined, locale: Locale): strin
     timeZone: 'Asia/Seoul',
   }).format(date);
   return `${formatted} KST`;
+}
+
+/**
+ * Absolute date+time in the reader's own browser timezone, with the zone's
+ * abbreviation appended (e.g. "PDT", "GMT+9") so it doubles as the answer to
+ * "what does that mean in my time". Companion to `formatKst()`: KST is the
+ * board's one canonical time, this is a per-visitor convenience alongside it.
+ *
+ * Deliberately takes `timeZone` as a parameter rather than reading it itself
+ * — the browser's zone is only knowable client-side, so callers must detect
+ * it after mount (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and
+ * render this only then, the same hydration-safe pattern `formatKst()`'s own
+ * callers already use for the live countdown.
+ */
+export function formatLocalTime(
+  iso: string | null | undefined,
+  locale: Locale,
+  timeZone: string,
+): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  // `dateStyle`/`timeStyle` cannot be combined with `timeZoneName` per the
+  // Intl.DateTimeFormat spec (throws), so this spells out the equivalent
+  // component options by hand instead of reusing formatKst's shorthand.
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+    timeZone,
+  }).format(date);
 }
 
 /** Relative "updated N minutes ago" style string using Intl.RelativeTimeFormat. */

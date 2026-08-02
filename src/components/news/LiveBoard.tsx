@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ExternalLink, Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
-import { formatDate, formatDuration, formatKst } from '@/lib/format';
+import { formatDate, formatDuration, formatKst, formatLocalTime } from '@/lib/format';
 import {
   computeEventStatus,
   isCurrentEvent,
@@ -35,6 +35,23 @@ import type { EventStatus, FeedFreshness, LiveEntry, LiveFeed, ReliabilityLevel 
  */
 
 const FILTERS: FeedFilter[] = ['all', 'active_events', 'developer', 'official', 'status', 'ended'];
+
+/** The reader's own timezone, detected client-side only — the server has no
+ * way to know it. Null until mount so the first client render still matches
+ * the server's (KST-only) markup; the local-time line simply appears a beat
+ * after hydration instead of ever mismatching it. */
+function useLocalTimeZone(): string | null {
+  const [zone, setZone] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      setZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    } catch {
+      // Some environments (very old browsers) don't support this — the local
+      // time line just never appears, KST remains the source of truth.
+    }
+  }, []);
+  return zone;
+}
 
 const STATUS_CLASS: Record<EventStatus, string> = {
   ending_soon: 'border-accent bg-accent/10 text-accent',
@@ -84,15 +101,22 @@ function Timing({
   status,
   now,
   locale,
+  localTz,
 }: {
   entry: LiveEntry;
   status: EventStatus;
   now: number | null;
   locale: Locale;
+  localTz: string | null;
 }) {
   const t = useTranslations('live');
   const startsAt = formatKst(entry.startsAt, locale);
   const endsAt = formatKst(entry.endsAt, locale);
+  // Only shown once mounted and only when it says something KST doesn't
+  // already say — a KST reader doesn't need their own time repeated back.
+  const showLocal = Boolean(localTz && localTz !== 'Asia/Seoul');
+  const startsAtLocal = showLocal ? formatLocalTime(entry.startsAt, locale, localTz as string) : null;
+  const endsAtLocal = showLocal ? formatLocalTime(entry.endsAt, locale, localTz as string) : null;
   const remaining = now == null ? null : remainingMs(entry, status, now);
   // Only count down toward a time that actually exists. Without this, an event
   // whose end was never announced would show "남은 시간: 시간 확인 중", which
@@ -107,12 +131,18 @@ function Timing({
       {startsAt ? (
         <div className="flex flex-wrap gap-x-2">
           <dt className="shrink-0">{t('startsAt')}</dt>
-          <dd className="text-fg">{startsAt}</dd>
+          <dd className="text-fg">
+            {startsAt}
+            {startsAtLocal ? <span className="text-muted"> · {startsAtLocal}</span> : null}
+          </dd>
         </div>
       ) : null}
       <div className="flex flex-wrap gap-x-2">
         <dt className="shrink-0">{t('endsAt')}</dt>
-        <dd className={endsAt ? 'text-fg' : 'text-muted'}>{endsAt ?? t('endUnknown')}</dd>
+        <dd className={endsAt ? 'text-fg' : 'text-muted'}>
+          {endsAt ?? t('endUnknown')}
+          {endsAtLocal ? <span className="text-muted"> · {endsAtLocal}</span> : null}
+        </dd>
       </div>
       {hasTarget && status !== 'ended' && status !== 'unknown' ? (
         <div className="flex flex-wrap gap-x-2">
@@ -147,7 +177,17 @@ function Badges({ entry, status }: { entry: LiveEntry; status: EventStatus }) {
 
 const PREVIEW_LENGTH = 160;
 
-function SituationCard({ entry, now, locale }: { entry: LiveEntry; now: number | null; locale: Locale }) {
+function SituationCard({
+  entry,
+  now,
+  locale,
+  localTz,
+}: {
+  entry: LiveEntry;
+  now: number | null;
+  locale: Locale;
+  localTz: string | null;
+}) {
   const t = useTranslations('live');
   const status = computeEventStatus(entry, now ?? Date.parse(entry.lastCheckedAt));
   const body =
@@ -162,7 +202,7 @@ function SituationCard({ entry, now, locale }: { entry: LiveEntry; now: number |
       <h3 className="mt-3 text-sm text-fg">{entry.title}</h3>
       {body ? <p className="mt-1.5 whitespace-pre-line text-xs text-muted">{body}</p> : null}
 
-      <Timing entry={entry} status={status} now={now} locale={locale} />
+      <Timing entry={entry} status={status} now={now} locale={locale} localTz={localTz} />
 
       {entry.affects.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -197,7 +237,17 @@ function SituationCard({ entry, now, locale }: { entry: LiveEntry; now: number |
   );
 }
 
-function FeedRow({ entry, now, locale }: { entry: LiveEntry; now: number | null; locale: Locale }) {
+function FeedRow({
+  entry,
+  now,
+  locale,
+  localTz,
+}: {
+  entry: LiveEntry;
+  now: number | null;
+  locale: Locale;
+  localTz: string | null;
+}) {
   const t = useTranslations('live');
   const [open, setOpen] = useState(false);
   const status = computeEventStatus(entry, now ?? Date.parse(entry.lastCheckedAt));
@@ -236,7 +286,7 @@ function FeedRow({ entry, now, locale }: { entry: LiveEntry; now: number | null;
             <p className="mt-2 text-xs text-muted">{t('translationPending')}</p>
           ) : null}
 
-          <Timing entry={entry} status={status} now={now} locale={locale} />
+          <Timing entry={entry} status={status} now={now} locale={locale} localTz={localTz} />
 
           {entry.playerImpact ? (
             <p className="mt-3 text-xs text-muted">
@@ -285,6 +335,7 @@ export function LiveBoard({ feed, locale }: { feed: LiveFeed; locale: Locale }) 
   // clock only starts ticking afterwards.
   const [now, setNow] = useState<number | null>(null);
   const [filter, setFilter] = useState<FeedFilter>('all');
+  const localTz = useLocalTimeZone();
 
   useEffect(() => {
     setNow(Date.now());
@@ -336,7 +387,7 @@ export function LiveBoard({ feed, locale }: { feed: LiveFeed; locale: Locale }) 
         {situation.length > 0 ? (
           <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
             {situation.map((entry) => (
-              <SituationCard key={entry.id} entry={entry} now={now} locale={locale} />
+              <SituationCard key={entry.id} entry={entry} now={now} locale={locale} localTz={localTz} />
             ))}
           </div>
         ) : null}
@@ -365,7 +416,7 @@ export function LiveBoard({ feed, locale }: { feed: LiveFeed; locale: Locale }) 
         {listed.length > 0 ? (
           <div className="mt-3 overflow-hidden rounded-lg border border-border">
             {listed.map((entry) => (
-              <FeedRow key={entry.id} entry={entry} now={now} locale={locale} />
+              <FeedRow key={entry.id} entry={entry} now={now} locale={locale} localTz={localTz} />
             ))}
           </div>
         ) : (
