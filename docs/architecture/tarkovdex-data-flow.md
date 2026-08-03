@@ -277,7 +277,9 @@ domain's `freshness` is hard-wired to `unknown` by
 `DataDomainPolicy.supportsSourceTimestamp: false`, and
 `tests/data-status.test.ts` asserts that thresholds exist *if and only if* a
 domain claims a source timestamp — so a future edit cannot quietly start
-reporting an age nobody measured.
+reporting an age nobody measured. Until the 2026-08-03 hotfix (§11) `/status`
+reported `unknown` for the three price-backed domains too, despite that stamp
+existing; it now resolves it for them and only for them.
 
 ### The seam — `src/lib/data-observations.ts`
 
@@ -450,3 +452,77 @@ Browser GET (same-origin)
 
 Offline HTML shell ≠ live prices/news. User progress remains `localStorage`
 (`tarkovdex:v1`). See `docs/operations/tarkovdex-pwa.md`.
+
+## 11. Post-deploy data-trust hotfix (2026-08-03)
+
+Three data-flow changes, all of them about *which* clock a surface is allowed to
+speak with. Nothing new is fetched by a page except the one bounded read in
+`/status` below. See the hotfix section of
+`docs/roadmaps/tarkovdex-product-completion-roadmap.md` for the defects and
+`artifacts/post-deploy-homepage-audit.md` for the reproduction evidence.
+
+### `/status` now makes exactly one bounded read
+
+```
+/[locale]/status (force-dynamic)
+  → getDomainStatusSnapshot({ locale, now, loadPriceSourceUpdatedAt })
+       ├── loadPriceSourceUpdatedAt()  → fetchTarkovJson('/regular/items')
+       │      (same 15-min runtime cache /economy/items already warms;
+       │       own try/catch — a failure degrades content age only)
+       │      → newest item price.updated  → itemPrices | crafts | barters
+       └── readFetchObservation(cachePathsForDomain(...))
+              → availability | delivery | fetchedAt | observed
+  → DomainStatus per domain (availability nullable, `observed` separate)
+```
+
+This amends "§6 … `/status` reads observations only". The reason for the
+original rule — never call a loader to render a status board — still holds: no
+loader is called, one document is read, and the `sourceUpdatedAt` it yields is
+upstream's own stamp, never the read's own fetch time.
+
+`DomainStatus.availability` is `AvailabilityStatus | null` and `observed` is a
+separate boolean. The view renders `unknown` for a null availability and puts
+observation presence in its own labelled row, so "this instance has no record"
+can no longer be mistaken for a verdict about upstream.
+
+### Craft profit carries the age it actually rests on
+
+```
+EconomyDataset.crafts
+  → selectBestCraftsByStation()
+       priceUpdatedAt = MIN(price.updated) over
+            every priced non-tool required item + every output
+            (null if any contributor has no stamp)
+  → partitionCraftLeadersByFreshness(leaders, renderedAt)
+       contentFreshness() with the registry's `crafts` thresholds (12h/24h)
+       fresh | warning → current      stale | unknown → dated reference
+  → CraftProfitBoard (two labelled sections, never interleaved)
+```
+
+Tools are excluded because they are returned and never enter the cost. `null`
+is not treated as recent: it lands in the dated group with `LastUpdated`
+rendering the unknown form. No new threshold exists — the numbers are the ones
+`/economy/items` already applies via `MARKET_PRICE_STALE_HOURS`.
+
+### One render instant per page, and it comes from the server
+
+`page.tsx` computes a single `renderedAt` and feeds it to both the craft
+partition and `TraderRestockBoard`, which uses it as its initial `now` before
+the post-mount ticker takes over — the `LiveBoard` pattern in §7, extended to a
+second widget. Two consequences: the server and first client render agree, and
+the two widgets cannot disagree about what "now" is.
+
+`selectActionableRestocks(traders, now)` is pure and requires a parseable
+`resetTime` **strictly in the future**. `TaskTrader.resetTime` remains what it
+always was — a future restock instant, not a data age (see the table in §5) —
+and when upstream publishes only past ones the board says so once instead of
+rendering a card per trader.
+
+### News: the translated flag is derived from the body alone
+
+`RawPost.contentTranslated` is set by comparing the localized **content**
+against the original, in both the Steam adapter and the persistence pipeline. A
+reviewed localized title over an untouched English body is now reported as
+untranslated — the title still renders, only the flag and the badge change.
+This is a display-honesty change with no new translation path; runtime
+translation is still not used on this page.

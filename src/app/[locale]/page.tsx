@@ -5,7 +5,10 @@ import { SITE_URL } from '@/lib/site';
 import { serializeJsonLd } from '@/lib/json-ld';
 import { getMaps, getTraders } from '@/lib/tarkov';
 import { getEconomyDataset } from '@/lib/tarkov-tools';
-import { selectBestCraftsByStation } from '@/lib/tool-calculations';
+import {
+  partitionCraftLeadersByFreshness,
+  selectBestCraftsByStation,
+} from '@/lib/tool-calculations';
 import { getLiveFeed } from '@/lib/live/feed';
 import { isPublishable, latestPublicFeedEntries } from '@/lib/live/status';
 import { InGameClock } from '@/components/home/InGameClock';
@@ -77,11 +80,21 @@ export default async function HomePage({ params }: PageProps) {
   const pveTraders = pveTradersById
     ? Object.values(pveTradersById).filter((trader) => trader.hasStore)
     : null;
+  // One render instant for every age decision on this page, so the craft split
+  // and the restock countdown cannot disagree about "now". Pure computation over
+  // the datasets already loaded above — no extra fetch.
+  const renderedAt = Date.now();
   const pvpCraftLeaders = pvpEconomy
-    ? selectBestCraftsByStation(pvpEconomy.crafts)
+    ? partitionCraftLeadersByFreshness(
+        selectBestCraftsByStation(pvpEconomy.crafts),
+        renderedAt,
+      )
     : null;
   const pveCraftLeaders = pveEconomy
-    ? selectBestCraftsByStation(pveEconomy.crafts)
+    ? partitionCraftLeadersByFreshness(
+        selectBestCraftsByStation(pveEconomy.crafts),
+        renderedAt,
+      )
     : null;
   const pvpBossMaps =
     pvpMaps?.map(({ id, name, bosses }) => ({ id, name, bosses })) ?? null;
@@ -118,7 +131,11 @@ export default async function HomePage({ params }: PageProps) {
             pveLeaders={pveCraftLeaders}
             locale={locale}
           />
-          <TraderRestockBoard pvpTraders={pvpTraders} pveTraders={pveTraders} />
+          <TraderRestockBoard
+            pvpTraders={pvpTraders}
+            pveTraders={pveTraders}
+            renderedAt={renderedAt}
+          />
           <BossSpawnBoard pvpMaps={pvpBossMaps} pveMaps={pveBossMaps} locale={locale} />
         </div>
       </section>

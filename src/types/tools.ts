@@ -95,7 +95,16 @@ export interface CraftProfitLeader {
   outputValue: number;
   profit: number;
   hourlyProfit: number | null;
-  updatedAt: string | null;
+  /**
+   * Oldest upstream `price.updated` among the items this profit was actually
+   * computed from — every priced non-tool input plus every output. Null when
+   * any contributor carries no stamp, which is a distinct answer from "recent"
+   * and keeps the craft out of the current ranking.
+   *
+   * This is a content timestamp only. Fetch, cache and observation times live
+   * in `DataHealth.timestamps` and are never substituted here.
+   */
+  priceUpdatedAt: string | null;
 }
 
 export interface EconomyDataset {

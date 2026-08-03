@@ -83,7 +83,11 @@ function buildContent(post: StoredRawPost, interpretation: StoredInterpretation 
     const entry: LocalizedText = {
       title: text?.title ?? post.title,
       content: text?.content ?? post.content,
-      translated: Boolean(text) && (text.title !== post.title || text.content !== post.content),
+      // Judged on the body alone: a reviewed localized title over an untouched
+      // English body is not a translated post, and flagging it as one is what
+      // hid the untranslated notice on the board. Same rule as the Steam
+      // adapter's `contentTranslated`.
+      translated: Boolean(text) && text.content !== post.content,
       summary: prose?.summary ?? null,
       playerImpact: prose?.playerImpact ?? null,
       recommendedAction: prose?.recommendedAction ?? null,

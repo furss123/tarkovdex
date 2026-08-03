@@ -140,10 +140,19 @@ in `docs/architecture/tarkovdex-data-flow.md` §6.
    `/status` says `no record on this instance` rather than inventing a time, and
    the only globally-true signal on that page is Tarkov Live's DB-backed
    `lastCheckedAt`. No new persistence was added.
-3. **`/status` fetches nothing.** Calling every loader to render a status board
-   would download tens of megabytes and would report the board's own fetch
-   rather than what the site served. It reads observations only and is
-   `force-dynamic` (absent from `prerender-manifest.json`).
+3. ~~**`/status` fetches nothing.**~~ **Amended by the post-deploy data-trust
+   hotfix (2026-08-03) — see the section at the end of this file.** The original
+   reasoning still stands for *loaders*: calling every loader to render a status
+   board would download tens of megabytes and would report the board's own fetch
+   rather than what the site served. What it got wrong is that reading
+   observations *only* left every `json.tarkov.dev` card hard-reporting
+   `freshness: unknown`, including the three price-backed domains whose content
+   age `/api/items` was already publishing. `/status` now makes exactly **one**
+   bounded read (`/regular/items`, through the same 15-minute
+   `fetchTarkovJson` runtime cache `/economy/items` already warms) to resolve a
+   real `sourceUpdatedAt` for `itemPrices`/`crafts`/`barters`, isolated in its
+   own `try`/`catch`. It remains `force-dynamic` (absent from
+   `prerender-manifest.json`), and no loader is called.
 4. **Two component files, not eight.** `status/StatusUI.tsx` (six presentational
    components, no `'use client'`, so the same code serves Server and Client
    Components) and `status/RetryAction.tsx`. `DataSourcePopover` is a native
@@ -959,3 +968,131 @@ Everything else waits on one of them.
 | 7 — Patch impact | **complete** (2026-08-03) — see "Phase 7 as built" above |
 | 8 — PWA and offline | **complete** (2026-08-03) — see "Phase 8 as built" above |
 | 9 — Final QA | not started |
+| Post-deploy data-trust hotfix | **complete** (2026-08-03) — see below |
+
+---
+
+## Post-deploy homepage data-trust hotfix (2026-08-03)
+
+A production review of the deployed homepage raised six suspected defects.
+Four reproduced against real data and were fixed; two were checked and found
+healthy, so nothing was changed for them. Full reproduction evidence and
+measurements: `artifacts/post-deploy-homepage-audit.md`.
+
+**No new feature, no new data source, no schema change.** `schemaVersion` stays
+5, `NEXT_PUBLIC_PWA_ENABLED` stays `false`, no public URL moved, and no upstream
+price was rewritten — the only thing that changed about a number is whether the
+site is willing to call it current.
+
+### Fixed 1 — the craft ranking presented a 243-day-old price as "현재 시세"
+
+`selectBestCraftsByStation()` filtered for *missing* prices and never for *old*
+ones. Bitcoin Farm has zero inputs, so its whole profit is one output price
+whose upstream record was stamped 2025-12-03 — and it rendered identically to
+the seven genuinely fresh leaders under copy that said "based on current
+prices".
+
+- `CraftProfitLeader.priceUpdatedAt` replaces the unused product-only
+  `updatedAt`: the **oldest** `price.updated` across every priced non-tool input
+  plus every output, and `null` if any contributor carries no stamp. One
+  timestamp kind only — upstream content age, never a fetch or cache time.
+- `partitionCraftLeadersByFreshness()` (pure, in `tool-calculations.ts`)
+  classifies with the existing `contentFreshness()` and the `crafts` domain's
+  already-registered 12 h / 24 h thresholds. **No new threshold was invented.**
+  `fresh`/`warning` stay in the current ranking; `stale` and `unknown` move to a
+  separate dated-reference group — `unknown` deliberately included, because an
+  age we cannot establish must not be sold as a recent one.
+- `CraftProfitBoard` renders the two groups in separate labelled sections, never
+  interleaved, reusing `StaleDataNotice` and `LastUpdated` rather than adding a
+  home-only status component. The stale cards each print their own price date.
+- Copy moved off "현재 시세 기준" to "확인 가능한 최근 가격 기준" (and the en/zh
+  equivalents), since the value can legitimately be a trader price.
+
+### Fixed 2 — `/status` conflated "no observation" with an availability verdict
+
+Two independent defects on the same page. `t('noObservation')` was printed
+*inside* the Availability row whenever no health record existed, so a
+per-instance bookkeeping gap read as a verdict about upstream; and
+`observedHealth()` hard-coded `freshness: 'unknown'` for every
+`json.tarkov.dev` domain even though `/api/items` already published a real
+`meta.sourceUpdatedAt`.
+
+- New server-only `src/lib/data-status-snapshot.ts`. `getDomainStatusSnapshot()`
+  resolves each domain in the required order — loader `sourceUpdatedAt`, then
+  observation, then `unknown` — and takes its price loader as an injected
+  parameter so tests never touch the network. `DomainStatus.availability` is
+  nullable and `observed` is a separate boolean, so the two questions cannot be
+  collapsed again.
+- Availability now renders `t('unknown')` when undetermined, and delivery
+  observation moved to its own row (`status.label.observation`). Domains that
+  genuinely publish no source timestamp keep `noSourceTimestamp` unchanged.
+- Cost, measured: one cold 664 ms read per runtime per 15-minute cache window;
+  every subsequent render 30–50 ms, indistinguishable from the previous
+  no-fetch path.
+
+### Fixed 3 — nine unusable trader restock cards
+
+Root cause is upstream, not our mapping: every `resetTime` in
+`json.tarkov.dev/regular/traders` was already 3–6 h in the past. The board
+therefore rendered nine "unavailable" cards server-side and flipped all nine to
+"refreshing" on hydration. Inventing a restock cycle is forbidden, so the fix is
+honest presentation.
+
+- New pure `src/lib/trader-restock.ts`. `selectActionableRestocks()` requires a
+  parseable `resetTime` strictly in the future and sorts soonest-first.
+- The home page passes a single server `renderedAt` instant, used as the board's
+  initial `now` so the first client render matches the server markup — the same
+  hydration-safety pattern `LiveBoard` already uses. The 1 s ticker only starts
+  after mount. The same instant drives the craft freshness split, so the two
+  cannot disagree about "now".
+- Only actionable traders render. When none are, one `EmptyState` explains that
+  every published time has passed and the next is not out yet, instead of nine
+  repeated cards. The once-per-expiry-window `router.refresh()` is kept, but now
+  watches only countdowns that were still running at render time — otherwise it
+  would fire on every visit while upstream stays hours behind.
+- `home.restockRefreshing` and `home.restockUnavailable` were removed from all
+  three locales with the markup they served.
+
+### Fixed 4 — an English body rendered as the Chinese translation
+
+`sources.ts` set the translated flag when title **or** content differed, so
+`news-zh.json`'s reviewed Chinese titles over untouched English bodies were
+reported as fully translated, suppressing `live.translationPending`.
+`pipeline.ts` had the identical OR, so the cron path would have persisted
+`zh.translated = true` with an English body.
+
+No translation was written and no content generated — only the flag's honesty
+and its visibility changed. `RawPost.contentTranslated` is derived from the
+**body** alone in both files, the reviewed title still renders, and a compact
+`live.untranslatedBadge` now marks the collapsed row (the notice previously
+existed only inside the expanded panel). Audited against the real committed
+files: zh has 2 of 10 posts in this state, ko has 0 of 10.
+
+### Checked and deliberately not changed
+
+- **Root locale redirect.** Production honours `Accept-Language` (ko→`/ko`,
+  en→`/en`, zh→`/zh`), falls back to `ko` when absent or unmatched, and lets an
+  explicit cookie win. `middleware.ts` is a plain `createMiddleware(routing)`.
+- **Home tool discoverability.** The header already exposes 11 tools plus
+  unified search and the footer 17 including 데이터 신뢰도 and 퀘스트 추적기. A
+  third entry point would lengthen the home page and grow its bundle for no
+  gain.
+- **Trader cache window.** `traders` stays on the 6 h structural window.
+  Shortening it cannot help when the live upstream document itself serves past
+  reset times.
+
+**Verification.** `npm test` 527 pass / 0 fail (495 baseline + 32 new across
+`home-craft-freshness`, `trader-restock`, `data-status-snapshot`, and four
+translation-flag cases in `live.test.ts`); `typecheck`, `lint`, and a
+`GEMINI_API_KEY=`-empty production build all clean; message keys 1029/1029/1029
+identical (+10 new, −2 removed from 1021). Browser QA against `next start`:
+9 route×locale combinations × 8 widths (320/360/390/430/768/1024/1280/1440) —
+zero page-level horizontal overflow anywhere, zero interactive elements under
+44 px tall, zero console errors and zero hydration warnings. Shared First Load
+JS unchanged at 103 kB; the home route grew 11.9 → 13.3 kB (`LastUpdated` and
+`StaleDataNotice` reaching that bundle) with First Load still 145 kB.
+
+**Not verified in a browser:** the untranslated badge rendering, because the
+local instance has no `DATABASE_URL` and the no-database news path publishes
+nothing without curation. It is covered by unit tests plus a real-data audit of
+every current Steam post against both committed translation files.

@@ -65,10 +65,19 @@ In this order. A failure stops the phase; it is not deferred.
 - [ ] PvP and PvE data never appear in the same view, list, total or saved record
 - [ ] Values from different observation times, when combined, say so
 - [ ] "No data" and "failed to load" are visually and textually distinct on every page
-- [ ] A stale value never renders identically to a fresh one
-- [x] `unknown` is displayed as `unknown`, never as a plausible default — nine of the
+- [x] A stale value never renders identically to a fresh one — closed for the home
+      craft board by the 2026-08-03 hotfix. `partitionCraftLeadersByFreshness()`
+      keeps `stale` and `unknown` out of the current ranking and renders them in a
+      separate labelled group with `StaleDataNotice` and their own price date.
+      `tests/home-craft-freshness.test.ts` pins the case that motivated it (a
+      243-day-old Bitcoin Farm output previously ranked as a current figure).
+- [x] `unknown` is displayed as `unknown`, never as a plausible default — seven of the
       twelve domains render `데이터 신선도: 확인할 수 없음` on `/status` rather than a
-      number, because their upstream documents carry no content timestamp.
+      number, because their upstream documents carry no content timestamp. (It was
+      ten before the 2026-08-03 hotfix, which was three too many: `itemPrices`,
+      `crafts` and `barters` do publish a content age and now report it. An
+      undetermined *availability* is likewise rendered as `unknown` rather than
+      borrowing the observation row's wording.)
 - [x] ISR policy ("refreshes every 15 minutes") is never rendered as an observation —
       `DataDomainPolicy` deliberately has no `expectedRefresh` field; the TTL appears only
       under the `캐시 정책` label as prose ("…서버 메모리에 15분간 보관합니다"), never on
@@ -458,6 +467,43 @@ Production deploy was **not** performed in Phase 9.
 - [ ] PWA works
 - [ ] Every route from section A still resolves — no broken bookmark, no broken sitemap URL
 - [ ] No regression in home, news, flea market, barters, quests, gunsmith, ammo, armor, maps
+
+---
+
+## Post-deploy data-trust hotfix gate — passed (2026-08-03)
+
+Run after the four reproduced homepage/`/status`/news defects were fixed. Scope
+was the hotfix's own surfaces plus a regression sweep; the remaining unticked
+boxes above belong to Phase 9.
+
+| Check | Result |
+| --- | --- |
+| `npm test` | **527 pass / 0 fail** (495 baseline + 32 new) |
+| `npm run typecheck` | clean |
+| `npm run lint` | clean ("No ESLint warnings or errors") |
+| `npm run build` (`GEMINI_API_KEY` empty) | exit 0, 1683 pages |
+| ko / en / zh leaf keys | **1029 / 1029 / 1029**, zero one-sided keys (+10, −2 from 1021) |
+| Horizontal overflow | **0** across 9 route×locale renders × 8 widths (320/360/390/430/768/1024/1280/1440) |
+| Interactive elements under 44 px tall | **0** at 320 px and 1280 px on `/ko`, `/ko/status`, `/zh`, `/en` |
+| Console errors / warnings / hydration warnings | **0** across `/ko`, `/en`, `/zh`, `/{ko,en,zh}/status`, `/ko/economy/items`, `/ko/news`, `/zh/news` |
+| Shared First Load JS | **103 kB**, unchanged; home route 11.9 → 13.3 kB, First Load still 145 kB |
+| `/status` render time | 664 ms cold once per 15-min cache window per runtime, then 30–50 ms |
+| `schemaVersion` | **5**, untouched |
+| `NEXT_PUBLIC_PWA_ENABLED` | still `false`; no service-worker change |
+
+Behaviour confirmed in the browser against `next start`, not inferred: the home
+craft board renders 7 current stations plus Bitcoin Farm in the dated group with
+`가격 기준 시각: 2025. 12. 3. 오후 9:34 KST` printed on it; switching to PvE
+re-partitions with no refetch and keeps the same split; the trader board renders
+one honest empty notice instead of nine cards; `/ko/status` shows a real
+`마지막 콘텐츠 갱신` for items/crafts/barters, `확인할 수 없음` availability where
+undetermined, and the observation row only on the ten non-live domains.
+
+**One gap, stated rather than glossed:** the untranslated news badge was not
+browser-verified, because the local instance has no `DATABASE_URL` and the
+no-database news path publishes nothing without curation. It is covered by four
+new `tests/live.test.ts` cases plus an audit of every current Steam post against
+the real committed translation files (zh: 2 of 10 title-only; ko: 0 of 10).
 
 ---
 

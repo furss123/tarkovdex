@@ -1,12 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { TaskTrader } from '@/types/tarkov';
 import { useGameMode } from '@/contexts/GameModeContext';
 import { useRouter } from '@/i18n/navigation';
 import { formatDuration } from '@/lib/format';
+import { selectActionableRestocks } from '@/lib/trader-restock';
 import { EmptyState, ErrorState } from '@/components/status/StatusUI';
 
 /** Below this remaining time, a trader's card gets the accent treatment —
@@ -14,34 +15,42 @@ import { EmptyState, ErrorState } from '@/components/status/StatusUI';
 const URGENT_THRESHOLD_MS = 10 * 60 * 1000;
 
 /**
- * Item-selling traders' next-restock countdown, ticking live client-side
- * from each trader's `resetTime` (already an absolute ISO timestamp from the
- * API and recomputed against Date.now() every second. When a timestamp passes,
- * the route is refreshed once for that expiry window so a new upstream reset
- * time can replace the elapsed one without creating a refresh loop.
- * Service/quest-only characters are filtered by the home server component
- * before reaching this board. Sorted soonest-first so the most actionable
- * restock is always top-left; already-restocked traders (remaining <= 0)
- * sink to the end since they're not time-sensitive anymore.
+ * Item-selling traders' next-restock countdown, ticking live client-side from
+ * each trader's `resetTime` (an absolute ISO timestamp from the API) against
+ * `Date.now()` every second. Service/quest-only characters are filtered by the
+ * home server component before reaching this board.
+ *
+ * Only traders with a restock still ahead of them are rendered, soonest-first.
+ * A trader whose `resetTime` is missing, unparseable or already past is left
+ * out entirely and, when that is all of them, one empty-state line replaces the
+ * whole grid — see `selectActionableRestocks()` for why nine "restocking now"
+ * cards were worse than saying nothing.
+ *
+ * `renderedAt` is the server's own render instant and seeds `now`, so the first
+ * client render reproduces the server markup exactly; the ticker takes over
+ * after mount. This is the same hydration-safety pattern `LiveBoard` uses with
+ * `lastCheckedAt`.
  *
  * Reads the site-wide PvP/PvE selection via `useGameMode()` — restock times
  * genuinely differ between modes (confirmed live: Prapor's next restock was
- * ~24 minutes apart between a regular and pve fetch at the same instant),
- * so both trader lists are passed in already-fetched. See CLAUDE.md >
+ * ~24 minutes apart between a regular and pve fetch at the same instant), so
+ * both trader lists are passed in already-fetched. See CLAUDE.md >
  * "Global PvP/PvE mode".
  */
 export function TraderRestockBoard({
   pvpTraders,
   pveTraders,
+  renderedAt,
 }: {
   pvpTraders: TaskTrader[] | null;
   pveTraders: TaskTrader[] | null;
+  renderedAt: number;
 }) {
   const t = useTranslations('home');
   const router = useRouter();
   const { gameMode } = useGameMode();
   const traders = gameMode === 'regular' ? pvpTraders : pveTraders;
-  const [now, setNow] = useState<number | null>(null);
+  const [now, setNow] = useState(renderedAt);
   const refreshedExpiryWindows = useRef(new Set<string>());
 
   useEffect(() => {
@@ -50,31 +59,21 @@ export function TraderRestockBoard({
     return () => clearInterval(id);
   }, []);
 
-  const withRemaining = (traders ?? []).map((trader) => {
-    const resetMs = trader.resetTime ? new Date(trader.resetTime).getTime() : null;
-    const remaining =
-      now != null && resetMs != null && Number.isFinite(resetMs)
-        ? resetMs - now
-        : null;
-    return { trader, remaining };
-  });
+  const { actionable } = selectActionableRestocks(traders ?? [], now);
 
-  const sorted = [...withRemaining].sort((a, b) => {
-    const aKey = a.remaining != null && a.remaining > 0 ? a.remaining : Infinity;
-    const bKey = b.remaining != null && b.remaining > 0 ? b.remaining : Infinity;
-    return aKey - bKey;
-  });
-
-  const expiredResetTimes =
-    now == null
-      ? []
-      : sorted
-          .filter(({ trader, remaining }) => trader.resetTime && remaining != null && remaining <= 0)
-          .map(({ trader }) => trader.resetTime as string)
-          .sort();
-  const expiryWindowKey = expiredResetTimes.length
-    ? `${gameMode}:${expiredResetTimes.join('|')}`
-    : null;
+  // Only a countdown that was still running when this page was rendered can
+  // expire while it is open. Watching the already-past ones instead would fire
+  // a refresh on every single visit, since upstream's document is routinely
+  // hours behind.
+  const watched = useMemo(
+    () =>
+      selectActionableRestocks(traders ?? [], renderedAt)
+        .actionable.map(({ trader }) => trader.resetTime)
+        .filter((iso): iso is string => iso != null),
+    [traders, renderedAt],
+  );
+  const expired = watched.filter((iso) => Date.parse(iso) <= now).sort();
+  const expiryWindowKey = expired.length ? `${gameMode}:${expired.join('|')}` : null;
 
   useEffect(() => {
     if (!expiryWindowKey || refreshedExpiryWindows.current.has(expiryWindowKey)) return;
@@ -91,17 +90,21 @@ export function TraderRestockBoard({
         <div className="mt-3">
           <ErrorState title={t('traderDataError')} />
         </div>
-      ) : sorted.length === 0 ? (
+      ) : traders.length === 0 ? (
         <div className="mt-3">
           <EmptyState title={t('traderRestockEmpty')} />
         </div>
+      ) : actionable.length === 0 ? (
+        <div className="mt-3">
+          <EmptyState
+            title={t('restockAllUnavailable')}
+            hint={t('restockAllUnavailableHint')}
+          />
+        </div>
       ) : (
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sorted.map(({ trader, remaining }) => {
-            const restocked = remaining != null && remaining <= 0;
-            const urgent =
-              remaining != null && remaining > 0 && remaining <= URGENT_THRESHOLD_MS;
-
+          {actionable.map(({ trader, remaining }) => {
+            const urgent = remaining <= URGENT_THRESHOLD_MS;
             return (
               <article
                 key={trader.id}
@@ -127,21 +130,13 @@ export function TraderRestockBoard({
                 )}
                 <div className="min-w-0">
                   <h3 className="truncate text-sm text-fg">{trader.name}</h3>
-                  {remaining == null ? (
-                    <p className="text-xs leading-5 text-muted">
-                      {t('restockUnavailable')}
-                    </p>
-                  ) : restocked ? (
-                    <p className="text-xs text-accent">{t('restockRefreshing')}</p>
-                  ) : (
-                    <p
-                      className={`font-mono text-sm tabular-nums ${
-                        urgent ? 'text-accent' : 'text-muted'
-                      }`}
-                    >
-                      {formatDuration(remaining)}
-                    </p>
-                  )}
+                  <p
+                    className={`font-mono text-sm tabular-nums ${
+                      urgent ? 'text-accent' : 'text-muted'
+                    }`}
+                  >
+                    {formatDuration(remaining)}
+                  </p>
                 </div>
               </article>
             );

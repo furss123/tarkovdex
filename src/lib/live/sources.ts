@@ -41,10 +41,14 @@ const steamAdapter: SourceAdapter = {
 
     return originals.map((item) => {
       const display = localizedById.get(item.id);
-      const isTranslated =
-        locale !== 'en' &&
-        display != null &&
-        (display.title !== item.title || display.content !== item.content);
+      const localizable = locale !== 'en' && display != null;
+      const titleTranslated = localizable && display.title !== item.title;
+      // Title and body are judged separately on purpose. Several committed
+      // entries pair a reviewed Chinese title with the untouched English body;
+      // treating either difference as "translated" reported those as fully
+      // translated and hid the untranslated notice. The reviewed title is still
+      // used for display — only the flag becomes honest.
+      const contentTranslated = localizable && display.content !== item.content;
       return {
         source: 'steam' as const,
         account: null,
@@ -53,7 +57,11 @@ const steamAdapter: SourceAdapter = {
         title: item.title,
         content: item.content,
         publishedAt: item.publishedAt,
-        translated: isTranslated ? { title: display.title, content: display.content } : null,
+        translated:
+          titleTranslated || contentTranslated
+            ? { title: display.title, content: display.content }
+            : null,
+        contentTranslated,
       };
     });
   },

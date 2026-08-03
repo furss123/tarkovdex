@@ -324,5 +324,51 @@ Items 1–5 were the Phase 0 findings. Phase 1 (2026-08-03) closed 1–4 and loc
 | --- | --- |
 | `npm run typecheck` | pass, no output |
 | `npm run lint` | pass — "No ESLint warnings or errors" (plus the `next lint` deprecation notice) |
-| `npm test` | **174 pass / 0 fail**, 11.8 s — after Phase 1: **234 pass / 0 fail**, 11.6 s — after Phase 2: **314 pass / 0 fail**, ~14.5 s — after Phase 3: **388 pass / 0 fail**, ~14.7 s |
-| `npm run build` (`GEMINI_API_KEY` empty) | exit 0. Shared first-load JS 103 kB; largest route `/economy/items` at 129 kB |
+| `npm test` | **174 pass / 0 fail**, 11.8 s — after Phase 1: **234 pass / 0 fail**, 11.6 s — after Phase 2: **314 pass / 0 fail**, ~14.5 s — after Phase 3: **388 pass / 0 fail**, ~14.7 s — after the 2026-08-03 data-trust hotfix: **527 pass / 0 fail**, ~15.3 s |
+| `npm run build` (`GEMINI_API_KEY` empty) | exit 0. Shared first-load JS 103 kB; largest route `/economy/items` at 129 kB — after the hotfix, shared still 103 kB, `/economy/items` 148 kB, home route 13.3 kB / 145 kB first load |
+
+---
+
+## 8. Post-deploy data-trust hotfix deltas (2026-08-03)
+
+The page-by-page notes above are the Phase-0 audit snapshot. Four entries in
+them are now out of date; the corrections are here rather than rewritten in
+place so the audit stays readable as a record of what was found.
+
+### Home — `/[locale]`
+
+- **Status UI: no longer "none".** The craft board now renders two labelled
+  groups — a current ranking and a dated-price reference group carrying
+  `StaleDataNotice` plus a per-card `LastUpdated`. The trader board renders an
+  `EmptyState` explaining unavailable restock times instead of one card per
+  trader. `ErrorState`/`EmptyState` distinguish failure from emptiness on all
+  four widgets.
+- **One server `renderedAt`** is computed once and passed to both the craft
+  freshness partition and `TraderRestockBoard`, which seeds its clock from it —
+  so server and first client render agree and the widgets share one "now".
+- Fetch count is unchanged: still seven parallel loader calls, each wrapped by
+  the same local `optional()`.
+
+### Data trust — `/[locale]/status`
+
+- Makes exactly **one** bounded read (`/regular/items` through the existing
+  15-minute `fetchTarkovJson` runtime cache) so `itemPrices`, `crafts` and
+  `barters` report a real upstream content age instead of `unknown`. Still
+  `force-dynamic`, still calls no loader, and the read is isolated in its own
+  `try`/`catch`.
+- Availability and observation are separate rows. An undetermined availability
+  renders as `unknown`; observation presence has its own labelled row.
+
+### Tarkov Live — `/[locale]/news`
+
+- `LiveEntry.translated` is derived from the **body** alone, so a reviewed
+  localized title over an English original is reported as untranslated. The
+  collapsed row carries a compact `live.untranslatedBadge`; the reviewed title
+  still renders.
+
+### Pure modules added
+
+`src/lib/trader-restock.ts` (`selectActionableRestocks`) and
+`src/lib/data-status-snapshot.ts` (`getDomainStatusSnapshot`, server-only,
+loader injected), plus `partitionCraftLeadersByFreshness` in the existing
+`src/lib/tool-calculations.ts`.
