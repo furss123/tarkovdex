@@ -8,8 +8,11 @@ import { getRepository } from '@/lib/live/repository-client';
 import type { LiveEventRow, LiveRepository } from '@/lib/live/repository';
 import { computeEventStatus, instantToKstInput } from '@/lib/live/status';
 import {
+  NATURAL_SCHEDULE_LABEL_KO,
   SCHEDULER_HEALTH_LABEL_KO,
   classifyFromSourceStates,
+  classifyNaturalScheduleStatus,
+  extractSchedulerInvocationEvidence,
 } from '@/lib/live/scheduler-health';
 import { ActionForm, LoginForm } from './AdminForms';
 import {
@@ -353,6 +356,16 @@ async function Dashboard({ repo, csrf }: { repo: LiveRepository; csrf: string })
       : null,
     now,
   );
+  const scheduleEvidence = extractSchedulerInvocationEvidence(
+    runs.map((run) => ({
+      trigger: run.trigger,
+      startedAt: run.startedAt,
+      finishedAt: run.finishedAt,
+      ok: run.ok,
+    })),
+    lastSuccess ?? null,
+  );
+  const naturalScheduleStatus = classifyNaturalScheduleStatus(scheduleEvidence, now);
   const active = published.filter((event) =>
     ['active', 'ending_soon', 'scheduled'].includes(
       computeEventStatus(
@@ -395,8 +408,17 @@ async function Dashboard({ repo, csrf }: { repo: LiveRepository; csrf: string })
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <Stat label="스케줄러" value={SCHEDULER_HEALTH_LABEL_KO[schedulerStatus]} />
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <Stat label="출처 확인" value={SCHEDULER_HEALTH_LABEL_KO[schedulerStatus]} />
+          <Stat label="자연 스케줄" value={NATURAL_SCHEDULE_LABEL_KO[naturalScheduleStatus]} />
+          <Stat
+            label="마지막 자연 스케줄"
+            value={formatKst(scheduleEvidence.lastScheduledSuccessAt, 'ko') ?? '기록 없음'}
+          />
+          <Stat
+            label="마지막 수동 실행"
+            value={formatKst(scheduleEvidence.lastManualSuccessAt, 'ko') ?? '기록 없음'}
+          />
           <Stat label="마지막 성공 수집" value={formatKst(lastSuccess ?? null, 'ko') ?? '기록 없음'} />
           <Stat label="검수 대기" value={`${pending.length}건`} />
           <Stat label="진행/예정 이벤트" value={`${active.length}건`} />

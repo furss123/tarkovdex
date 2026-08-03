@@ -4,8 +4,15 @@ import { authorizeCron } from '../src/lib/live/cron-auth';
 import {
   SCHEDULER_DELAYED_AFTER_MS,
   classifyFromSourceStates,
+  classifyNaturalScheduleStatus,
   classifySchedulerHealth,
+  extractSchedulerInvocationEvidence,
 } from '../src/lib/live/scheduler-health';
+import {
+  isManualSchedulerTrigger,
+  isNaturalScheduleTrigger,
+  parseCronInvocationMeta,
+} from '../src/lib/live/cron-invocation';
 import {
   excludeFeaturedStoryIds,
   hasNewerOfficialPost,
@@ -191,13 +198,93 @@ test('GitHub Actions scheduler workflow calls the protected cron endpoint safely
     join(process.cwd(), '.github/workflows/tarkov-live-news-ingestion.yml'),
     'utf8',
   );
-  assert.match(workflow, /cron: "\*\/5 \* \* \* \*"/);
+  assert.match(
+    workflow,
+    /cron: "2,7,12,17,22,27,32,37,42,47,52,57 \* \* \* \*"/,
+  );
+  assert.doesNotMatch(workflow, /cron: "\*\/5 \* \* \* \*"/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /tarkov-live-news-ingestion/);
   assert.match(workflow, /cancel-in-progress: false/);
   assert.match(workflow, /api\/cron\/tarkov-live/);
   assert.match(workflow, /secrets\.CRON_SECRET/);
   assert.match(workflow, /Authorization: Bearer/);
+  assert.match(workflow, /X-TarkovDex-Scheduler: github-actions/);
+  assert.match(workflow, /X-TarkovDex-Trigger:/);
+  assert.match(workflow, /X-TarkovDex-Workflow-Run:/);
   assert.doesNotMatch(workflow, /CRON_SECRET:\s*['"]?[a-zA-Z0-9]{16,}/);
   assert.match(workflow, /"\$status" == "200" \|\| "\$status" == "409"/);
+});
+
+test('cron invocation metadata distinguishes schedule from manual dispatch', () => {
+  const schedule = parseCronInvocationMeta(
+    new Headers({
+      'x-tarkovdex-scheduler': 'github-actions',
+      'x-tarkovdex-trigger': 'schedule',
+      'x-tarkovdex-workflow-run': '123',
+    }),
+  );
+  assert.equal(schedule.triggerLabel, 'github-actions:schedule');
+  assert.equal(schedule.triggerKind, 'schedule');
+  assert.equal(isNaturalScheduleTrigger(schedule.triggerLabel), true);
+  assert.equal(isManualSchedulerTrigger(schedule.triggerLabel), false);
+
+  const manual = parseCronInvocationMeta(
+    new Headers({
+      'x-tarkovdex-scheduler': 'github-actions',
+      'x-tarkovdex-trigger': 'workflow_dispatch',
+      'x-tarkovdex-workflow-run': '456',
+    }),
+  );
+  assert.equal(manual.triggerLabel, 'github-actions:workflow_dispatch');
+  assert.equal(isManualSchedulerTrigger(manual.triggerLabel), true);
+  assert.equal(isNaturalScheduleTrigger(manual.triggerLabel), false);
+
+  const vercel = parseCronInvocationMeta(new Headers({ 'x-vercel-cron': '1' }));
+  assert.equal(vercel.triggerLabel, 'vercel:cron');
+
+  const direct = parseCronInvocationMeta(new Headers());
+  assert.equal(direct.triggerLabel, 'cron');
+});
+
+test('manual heartbeat does not falsely prove natural schedule health', () => {
+  const evidence = extractSchedulerInvocationEvidence(
+    [
+      {
+        trigger: 'github-actions:workflow_dispatch',
+        startedAt: new Date(NOW - 60_000).toISOString(),
+        finishedAt: new Date(NOW - 60_000).toISOString(),
+        ok: true,
+      },
+      {
+        trigger: 'manual',
+        startedAt: new Date(NOW - 30_000).toISOString(),
+        finishedAt: new Date(NOW - 30_000).toISOString(),
+        ok: true,
+      },
+    ],
+    new Date(NOW - 30_000).toISOString(),
+  );
+  assert.equal(evidence.lastManualSuccessAt != null, true);
+  assert.equal(evidence.lastScheduledSuccessAt, null);
+  assert.equal(classifyNaturalScheduleStatus(evidence, NOW), 'unverified');
+});
+
+test('successful scheduled no-new-post run verifies natural schedule health', () => {
+  const evidence = extractSchedulerInvocationEvidence(
+    [
+      {
+        trigger: 'github-actions:schedule',
+        startedAt: new Date(NOW - 60_000).toISOString(),
+        finishedAt: new Date(NOW - 60_000).toISOString(),
+        ok: true,
+      },
+    ],
+    new Date(NOW - 60_000).toISOString(),
+  );
+  assert.equal(classifyNaturalScheduleStatus(evidence, NOW), 'verified');
+  assert.equal(
+    classifyNaturalScheduleStatus(evidence, NOW + SCHEDULER_DELAYED_AFTER_MS + 1),
+    'delayed',
+  );
 });

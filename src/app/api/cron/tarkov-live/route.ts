@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { allCollectors } from '@/lib/live/collectors';
 import { liveConfig } from '@/lib/live/config';
 import { authorizeCron } from '@/lib/live/cron-auth';
+import { parseCronInvocationMeta } from '@/lib/live/cron-invocation';
 import { runIngestion } from '@/lib/live/pipeline';
 import { getRepository } from '@/lib/live/repository-client';
 import { seedManualEntries } from '@/lib/live/seed';
@@ -55,12 +56,23 @@ export async function GET(request: Request) {
     if (only.some((source) => !allowedSources.has(source))) {
       return json({ ok: false, error: 'invalid_source' }, 400);
     }
-    const summary = await runIngestion(repo, { trigger: 'cron', only });
+    // Headers distinguish schedule vs manual vs Vercel for operator evidence.
+    // They are never used for authorization.
+    const invocation = parseCronInvocationMeta(request.headers);
+    const summary = await runIngestion(repo, { trigger: invocation.triggerLabel, only });
 
     // Status codes mirror the body so an external scheduler cannot mistake a
     // failed source run for a successful invocation.
     const status = summary.locked ? 409 : summary.ok ? 200 : 502;
-    return json(summary, status);
+    return json(
+      {
+        ...summary,
+        scheduler: invocation.scheduler,
+        triggerKind: invocation.triggerKind,
+        workflowRunId: invocation.workflowRunId,
+      },
+      status,
+    );
   } catch {
     // Deliberately opaque: an upstream error string can carry request context,
     // and this response is reachable by anyone holding the cron secret.

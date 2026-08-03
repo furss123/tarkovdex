@@ -4,6 +4,11 @@
  * monitoring table. Pure so tests can cover every branch without I/O.
  */
 
+import {
+  isManualSchedulerTrigger,
+  isNaturalScheduleTrigger,
+} from '@/lib/live/cron-invocation';
+
 /** Target cadence for the GitHub Actions scheduler (and acceptable fallback). */
 export const SCHEDULER_INTERVAL_MS = 5 * 60_000;
 
@@ -139,3 +144,92 @@ export function classifyFromSourceStates(
     delayedAfterMs,
   );
 }
+
+export interface SchedulerInvocationEvidence {
+  lastAnyInvocationAt: string | null;
+  lastScheduledInvocationAt: string | null;
+  lastManualInvocationAt: string | null;
+  lastSuccessfulSourceCheckAt: string | null;
+  lastScheduledSuccessAt: string | null;
+  lastManualSuccessAt: string | null;
+}
+
+export type NaturalScheduleStatus = 'verified' | 'unverified' | 'delayed' | 'never';
+
+/**
+ * Split ingestion-run triggers into scheduled vs manual evidence so a manual
+ * dispatch cannot falsely prove that GitHub's natural `schedule` is firing.
+ */
+export function extractSchedulerInvocationEvidence(
+  runs: Array<{
+    trigger: string;
+    startedAt: string;
+    finishedAt: string | null;
+    ok: boolean | null;
+  }>,
+  sourceLastSuccessAt: string | null,
+): SchedulerInvocationEvidence {
+  let lastAnyInvocationAt: string | null = null;
+  let lastScheduledInvocationAt: string | null = null;
+  let lastManualInvocationAt: string | null = null;
+  let lastScheduledSuccessAt: string | null = null;
+  let lastManualSuccessAt: string | null = null;
+
+  for (const run of runs) {
+    const at = run.finishedAt ?? run.startedAt;
+    if (!lastAnyInvocationAt || at > lastAnyInvocationAt) lastAnyInvocationAt = at;
+
+    if (isNaturalScheduleTrigger(run.trigger)) {
+      if (!lastScheduledInvocationAt || at > lastScheduledInvocationAt) {
+        lastScheduledInvocationAt = at;
+      }
+      if (run.ok === true && (!lastScheduledSuccessAt || at > lastScheduledSuccessAt)) {
+        lastScheduledSuccessAt = at;
+      }
+    }
+
+    if (isManualSchedulerTrigger(run.trigger)) {
+      if (!lastManualInvocationAt || at > lastManualInvocationAt) {
+        lastManualInvocationAt = at;
+      }
+      if (run.ok === true && (!lastManualSuccessAt || at > lastManualSuccessAt)) {
+        lastManualSuccessAt = at;
+      }
+    }
+  }
+
+  return {
+    lastAnyInvocationAt,
+    lastScheduledInvocationAt,
+    lastManualInvocationAt,
+    lastSuccessfulSourceCheckAt: sourceLastSuccessAt,
+    lastScheduledSuccessAt,
+    lastManualSuccessAt,
+  };
+}
+
+/**
+ * Natural GitHub `schedule` proof. Manual dispatch success leaves this
+ * `unverified` / `never` — source heartbeats alone are not enough.
+ */
+export function classifyNaturalScheduleStatus(
+  evidence: SchedulerInvocationEvidence,
+  now: number,
+  delayedAfterMs: number = SCHEDULER_DELAYED_AFTER_MS,
+): NaturalScheduleStatus {
+  if (!evidence.lastScheduledInvocationAt && !evidence.lastScheduledSuccessAt) {
+    return evidence.lastManualInvocationAt || evidence.lastAnyInvocationAt ? 'unverified' : 'never';
+  }
+
+  const successAge = ageMs(evidence.lastScheduledSuccessAt, now);
+  if (successAge == null) return 'unverified';
+  if (successAge > delayedAfterMs) return 'delayed';
+  return 'verified';
+}
+
+export const NATURAL_SCHEDULE_LABEL_KO: Record<NaturalScheduleStatus, string> = {
+  verified: '자연 스케줄 확인됨',
+  unverified: '수동 실행만 확인됨 · 자연 스케줄 미검증',
+  delayed: '자연 스케줄이 최근 실행되지 않음',
+  never: '자연 스케줄 실행 기록 없음',
+};

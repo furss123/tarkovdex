@@ -180,12 +180,16 @@ the fallback content for a deployment with no database.
 `vercel.json` keeps a daily Hobby fallback (`0 0 * * *` UTC) for
 `/api/cron/tarkov-live`. Near-real-time detection is driven by the GitHub
 Actions workflow `.github/workflows/tarkov-live-news-ingestion.yml`
-(`*/5 * * * *`, plus `workflow_dispatch`), which calls the same protected
-endpoint with `Authorization: Bearer $CRON_SECRET`.
+(staggered five-minute cron `2,7,12,...` UTC away from common `:00`/`:05`
+boundaries, plus `workflow_dispatch`), which calls the same protected endpoint
+with `Authorization: Bearer $CRON_SECRET` and non-auth metadata headers
+(`X-TarkovDex-Scheduler` / `X-TarkovDex-Trigger` / `X-TarkovDex-Workflow-Run`)
+so admin can distinguish natural `schedule` runs from manual dispatches.
 
 `LIVE_STALE_AFTER_MINUTES` defaults to `20` so a missed external schedule is
 visible within about three ticks. Overlapping calls are safe: the second gets
-`409 already_running` and does nothing.
+`409 already_running` and does nothing. A successful manual dispatch updates
+source heartbeats but does **not** by itself prove natural scheduling.
 
 ```bash
 curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://tarkovdex.dev/api/cron/tarkov-live
