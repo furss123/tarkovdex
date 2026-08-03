@@ -144,6 +144,85 @@ test('adapter output normalizes into a complete entry', () => {
   assert.equal(normalized.endsAt, null);
 });
 
+test('a localized title over an English body reports the body as untranslated', () => {
+  // The exact production shape: `news-zh.json` carries a reviewed Chinese title
+  // for "Expansions Hub 与 TarCoin" and "版本 1.0.6.0" over the untouched
+  // English body. Flagging those as translated suppressed the untranslated
+  // notice on /zh/news.
+  const normalized = toLiveEntry(
+    {
+      source: 'steam',
+      account: null,
+      postId: 'guid-title-only',
+      url: null,
+      title: 'Version 1.0.6.0',
+      content: 'The update is now available.',
+      publishedAt: new Date(NOW).toISOString(),
+      translated: { title: '版本 1.0.6.0', content: 'The update is now available.' },
+      contentTranslated: false,
+    },
+    new Date(NOW).toISOString(),
+  );
+
+  // The reviewed title is still what renders — only the flag becomes honest.
+  assert.equal(normalized.title, '版本 1.0.6.0');
+  assert.equal(normalized.content, 'The update is now available.');
+  assert.equal(normalized.translated, false);
+  assert.equal(normalized.reviewStatus, 'pending_review');
+});
+
+test('a genuinely translated body still reports translated', () => {
+  const normalized = toLiveEntry(
+    {
+      source: 'steam',
+      account: null,
+      postId: 'guid-full',
+      url: null,
+      title: '版本 1.0.6.0',
+      content: 'The update is now available.',
+      publishedAt: new Date(NOW).toISOString(),
+      translated: { title: '版本 1.0.6.0', content: '更新现已上线。' },
+      contentTranslated: true,
+    },
+    new Date(NOW).toISOString(),
+  );
+  assert.equal(normalized.translated, true);
+});
+
+test('an entry with no localization at all is untranslated', () => {
+  const normalized = toLiveEntry(
+    {
+      source: 'steam',
+      account: null,
+      postId: 'guid-none',
+      url: null,
+      title: 'Version 1.0.6.0',
+      content: 'The update is now available.',
+      publishedAt: new Date(NOW).toISOString(),
+      contentTranslated: false,
+    },
+    new Date(NOW).toISOString(),
+  );
+  assert.equal(normalized.translated, false);
+});
+
+test('an adapter that reports no content flag falls back to the translated block', () => {
+  const normalized = toLiveEntry(
+    {
+      source: 'manual',
+      account: null,
+      postId: 'curated-translated',
+      url: null,
+      title: 'Event',
+      content: 'Body',
+      publishedAt: new Date(NOW).toISOString(),
+      translated: { title: '이벤트', content: '본문' },
+    },
+    new Date(NOW).toISOString(),
+  );
+  assert.equal(normalized.translated, true);
+});
+
 test('classification and reliability map source and wording, not vibes', () => {
   assert.equal(classify('steam', 'Patch 1.2.3.4', ''), 'patch');
   assert.equal(classify('steam', 'Scheduled maintenance', 'servers will be down'), 'maintenance');

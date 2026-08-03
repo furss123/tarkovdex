@@ -1,3 +1,4 @@
+import { contentFreshness, domainPolicy } from '@/lib/data-status';
 import type {
   BarterDeal,
   CraftPartAttributes,
@@ -313,8 +314,66 @@ export function selectBestCraftsByStation(
       outputValue: result.outputGross,
       profit: result.profit,
       hourlyProfit: result.hourlyProfit,
-      updatedAt: craft.updated,
+      priceUpdatedAt: oldestPriceUpdatedAt(craft),
     }));
+}
+
+/**
+ * The oldest upstream price stamp the craft's profit actually rests on: every
+ * non-tool input plus every output. Tools are excluded because they are
+ * returned and never enter the cost.
+ *
+ * Null whenever a contributor carries no stamp — an unstamped price is not a
+ * recent one, and pretending otherwise is what let a 243-day-old Bitcoin Farm
+ * output rank as a current figure.
+ */
+function oldestPriceUpdatedAt(craft: CraftDeal): string | null {
+  const outputs = craft.productItems?.length
+    ? craft.productItems
+    : [craft.productItem];
+  const contributors = [
+    ...craft.requiredItems.filter((part) => !part.tool),
+    ...outputs,
+  ];
+  let oldest: { value: string; time: number } | null = null;
+  for (const part of contributors) {
+    const stamp = part.item.price.updated;
+    if (!stamp) return null;
+    const time = Date.parse(stamp);
+    if (!Number.isFinite(time)) return null;
+    if (!oldest || time < oldest.time) oldest = { value: stamp, time };
+  }
+  return oldest?.value ?? null;
+}
+
+/**
+ * Split leaders into what may be presented as a current ranking and what may
+ * only be shown as dated reference.
+ *
+ * Uses the `crafts` domain's already-registered thresholds (the same 12h/24h
+ * the flea market applies) via `contentFreshness()` — no new policy. `unknown`
+ * lands in `stale` on purpose: an age we cannot establish must not be sold as
+ * a current one.
+ */
+export function partitionCraftLeadersByFreshness(
+  leaders: CraftProfitLeader[],
+  now: number,
+): { current: CraftProfitLeader[]; stale: CraftProfitLeader[] } {
+  const policy = domainPolicy('crafts');
+  const current: CraftProfitLeader[] = [];
+  const stale: CraftProfitLeader[] = [];
+  for (const leader of leaders) {
+    const freshness = contentFreshness({
+      sourceUpdatedAt: leader.priceUpdatedAt,
+      warningAfterMs: policy.warningAfterMs,
+      staleAfterMs: policy.staleAfterMs,
+      now,
+    });
+    (freshness === 'fresh' || freshness === 'warning' ? current : stale).push(
+      leader,
+    );
+  }
+  return { current, stale };
 }
 
 export type PenetrationGrade = 'excellent' | 'good' | 'limited' | 'poor';

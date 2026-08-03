@@ -35,6 +35,15 @@ export interface RawPost {
   /** Pre-translated display text, when the source pipeline already has one
    * (Steam posts reuse the existing committed ko/zh translations). */
   translated?: { title: string; content: string } | null;
+  /**
+   * Whether the **body** is genuinely translated, independent of the title.
+   *
+   * Some committed entries carry a reviewed Korean/Chinese title over a body
+   * that is still the English original. Reporting those as translated is what
+   * suppressed the untranslated notice on `/zh/news`, so the flag the UI reads
+   * is derived from the content alone. Absent means "same as `translated`".
+   */
+  contentTranslated?: boolean;
   /** Manual-store overrides. Nothing else may set these. */
   overrides?: Partial<LiveEntry> | null;
 }
@@ -165,7 +174,7 @@ export function toLiveEntry(post: RawPost, now: string): LiveEntry {
     content: post.translated?.content ?? post.content,
     originalTitle: post.title,
     originalContent: post.content,
-    translated: Boolean(post.translated),
+    translated: post.contentTranslated ?? Boolean(post.translated),
     summary: null,
     playerImpact: null,
     recommendedAction: null,

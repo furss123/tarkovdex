@@ -10,8 +10,12 @@ import {
   summarizeHealth,
   type DataHealth,
   type DataDomainPolicy,
+  type DataStatusSummary,
 } from '@/lib/data-status';
-import { cachePathsForDomain, readFetchObservation } from '@/lib/data-observations';
+import {
+  getDomainStatusSnapshot,
+  type DomainStatus,
+} from '@/lib/data-status-snapshot';
 import { getLiveFeed } from '@/lib/live/feed';
 import type { LiveFeed } from '@/types/live';
 import {
@@ -40,69 +44,13 @@ function deliveryKey(delivery: DataHealth['delivery']): string {
   return delivery === 'stale-cache' ? 'staleCache' : delivery;
 }
 
-/**
- * Build health for a json.tarkov.dev domain **without fetching anything**.
- *
- * This page deliberately does not call the loaders: doing so would download
- * tens of megabytes just to render a status board, and would also make the
- * page report its own fetch rather than what the site actually served. It
- * therefore reads observations only, and says "no record on this instance"
- * where there is none — which is the honest answer for per-instance memory on
- * a platform that runs many instances.
- */
-function observedHealth(
-  policy: DataDomainPolicy,
-  locale: Locale,
-  now: number,
-): DataHealth | null {
-  const records = (['regular', 'pve'] as const)
-    .flatMap((gameMode) => cachePathsForDomain(policy.id, gameMode, locale))
-    .map(readFetchObservation)
-    .filter((record): record is NonNullable<typeof record> => record !== null);
-
-  if (records.length === 0) return null;
-
-  const servedStale = records.some((record) => record.servedStale);
-  const successes = records
-    .map((record) => record.lastSuccessAt)
-    .filter((value): value is number => value != null);
-  const failed = records.find((record) => record.errorCode !== null);
-  const usable = records.some((record) => record.lastSuccessAt != null);
-
-  return {
-    domain: policy.id,
-    availability: usable
-      ? successes.length === records.length
-        ? 'available'
-        : 'partial'
-      : 'unavailable',
-    // No upstream content stamp is reachable from here for any of these
-    // domains, so content age stays unknown rather than borrowing the fetch
-    // time and calling it a content time.
-    freshness: 'unknown',
-    delivery: servedStale
-      ? 'stale-cache'
-      : records.some((record) => record.lastServedFrom === 'network')
-        ? 'network'
-        : records.some((record) => record.lastServedFrom === 'cache')
-          ? 'cache'
-          : 'unknown',
-    timestamps: {
-      ...(successes.length ? { fetchedAt: new Date(Math.min(...successes)).toISOString() } : {}),
-      observedAt: new Date(now).toISOString(),
-    },
-    retryable: failed?.retryable ?? true,
-    ...(failed?.errorCode ? { internalErrorCode: failed.errorCode } : {}),
-  };
-}
-
 /** Tarkov Live is the one domain whose state is stored, not per-instance — its
  * `lastCheckedAt` is a real, deployment-wide "last successful collection". */
-function liveHealth(
+function liveStatus(
   policy: DataDomainPolicy,
   feed: LiveFeed | null,
   now: number,
-): DataHealth | null {
+): DomainStatus | null {
   if (!feed) return null;
   return {
     domain: policy.id,
@@ -121,7 +69,18 @@ function liveHealth(
     // Deliberately no count: the feed is one list covering both news and
     // events, so a per-domain total here would be a number nobody can act on.
     retryable: true,
+    observed: true,
   };
+}
+
+/**
+ * The badge reduces the axes to one word. An undetermined availability can only
+ * become `unknownAge` — never `ok`, which would claim an availability nobody
+ * observed.
+ */
+function summarize(status: DomainStatus | null): DataStatusSummary {
+  if (!status || status.availability === null) return 'unknownAge';
+  return summarizeHealth({ ...status, availability: status.availability });
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -147,13 +106,19 @@ export default async function StatusPage({ params }: Props) {
     // reports "no record" instead.
   }
 
-  const cards = DATA_DOMAINS.map((policy) => ({
-    policy,
-    health:
-      policy.id === 'news' || policy.id === 'events'
-        ? liveHealth(policy, feed, now)
-        : observedHealth(policy, locale, now),
-  }));
+  // Bounded, cache-reusing read: one items document resolves the real content
+  // stamp for the three price-backed domains. Everything else stays
+  // observation-only. See lib/data-status-snapshot.ts.
+  const snapshot = await getDomainStatusSnapshot({ locale, now });
+
+  const cards = DATA_DOMAINS.map((policy) => {
+    const live = policy.id === 'news' || policy.id === 'events';
+    return {
+      policy,
+      perInstance: !live,
+      status: live ? liveStatus(policy, feed, now) : (snapshot.get(policy.id) ?? null),
+    };
+  });
 
   return (
     <section className="mx-auto max-w-content px-4 py-10 sm:px-6">
@@ -175,7 +140,7 @@ export default async function StatusPage({ params }: Props) {
       </header>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {cards.map(({ policy, health }) => (
+        {cards.map(({ policy, perInstance, status }) => (
           <article
             key={policy.id}
             className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface/30 p-4"
@@ -184,31 +149,30 @@ export default async function StatusPage({ params }: Props) {
               <h2 className="min-w-0 break-words text-base font-medium text-fg">
                 {t(policy.displayNameKey)}
               </h2>
-              {health ? (
-                <DataStatusBadge health={health} />
-              ) : (
-                <DataStatusBadge summary="unknownAge" />
-              )}
+              <DataStatusBadge summary={summarize(status)} />
             </div>
 
             <dl className="space-y-1.5 text-[14px] leading-5 text-muted">
+              {/* Availability answers "can the site show this", so an absent
+                  per-instance record reports an undetermined availability here
+                  and states the absence in its own row below. */}
               <Row label={t('label.availability')}>
-                {health ? t(`availability.${health.availability}`) : t('noObservation')}
+                {status?.availability
+                  ? t(`availability.${status.availability}`)
+                  : t('unknown')}
               </Row>
               <Row label={t('label.freshness')}>
-                {health ? t(`freshness.${health.freshness}`) : t('unknown')}
+                {status ? t(`freshness.${status.freshness}`) : t('unknown')}
               </Row>
               <Row label={t('label.delivery')}>
-                {health ? t(`delivery.${deliveryKey(health.delivery)}`) : t('unknown')}
+                {status ? t(`delivery.${deliveryKey(status.delivery)}`) : t('unknown')}
               </Row>
-              {health?.totalCount != null ? (
-                <Row label={t('label.counts')}>
-                  {t('counts.total', { count: health.totalCount })}
+              {perInstance ? (
+                <Row label={t('label.observation')}>
+                  {status?.observed ? t('observationRecorded') : t('noObservation')}
                 </Row>
               ) : null}
-              <Row label={t('label.impact')}>
-                {t(`impact.${health ? summarizeHealth(health) : 'unknownAge'}`)}
-              </Row>
+              <Row label={t('label.impact')}>{t(`impact.${summarize(status)}`)}</Row>
             </dl>
 
             {/* Self-labelling, so these sit outside the definition list rather
@@ -216,7 +180,7 @@ export default async function StatusPage({ params }: Props) {
             <div className="flex flex-col gap-1">
               <LastUpdated
                 label={t('label.sourceUpdatedAt')}
-                iso={health?.timestamps.sourceUpdatedAt}
+                iso={status?.timestamps.sourceUpdatedAt}
                 locale={locale}
                 unknownLabel={
                   policy.supportsSourceTimestamp ? t('unknownTime') : t('noSourceTimestamp')
@@ -224,7 +188,7 @@ export default async function StatusPage({ params }: Props) {
               />
               <LastUpdated
                 label={t('label.fetchedAt')}
-                iso={health?.timestamps.fetchedAt}
+                iso={status?.timestamps.fetchedAt}
                 locale={locale}
                 unknownLabel={t('noObservation')}
               />

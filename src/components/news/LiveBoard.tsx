@@ -3,7 +3,7 @@
 import Script from 'next/script';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ExternalLink, Info } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { formatDate, formatDuration, formatKst, formatLocalTime } from '@/lib/format';
@@ -183,9 +183,15 @@ function Timing({
 
 function Badges({ entry, status }: { entry: LiveEntry; status: EventStatus }) {
   const t = useTranslations('live');
+  const locale = useLocale();
+  // The collapsed row shows the body text with no marker of its own, so a post
+  // whose body is still the English original needs saying here and not only in
+  // the expanded panel's translationPending line.
+  const untranslated = !entry.translated && locale !== 'en';
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <Chip className={STATUS_CLASS[status]}>{t(`status.${status}`)}</Chip>
+      {untranslated ? <Chip>{t('untranslatedBadge')}</Chip> : null}
       {entry.gameModes.map((mode) => (
         <Chip key={mode}>{t(`modes.${mode}`)}</Chip>
       ))}
