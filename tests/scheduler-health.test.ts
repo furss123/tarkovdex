@@ -11,6 +11,7 @@ import {
 import {
   isManualSchedulerTrigger,
   isNaturalScheduleTrigger,
+  isTrustedNaturalScheduleTrigger,
   parseCronInvocationMeta,
 } from '../src/lib/live/cron-invocation';
 import {
@@ -224,10 +225,21 @@ test('cron invocation metadata distinguishes schedule from manual dispatch', () 
       'x-tarkovdex-workflow-run': '123',
     }),
   );
-  assert.equal(schedule.triggerLabel, 'github-actions:schedule');
+  assert.equal(schedule.triggerLabel, 'github-actions:schedule#123');
   assert.equal(schedule.triggerKind, 'schedule');
   assert.equal(isNaturalScheduleTrigger(schedule.triggerLabel), true);
+  assert.equal(isTrustedNaturalScheduleTrigger(schedule.triggerLabel), true);
   assert.equal(isManualSchedulerTrigger(schedule.triggerLabel), false);
+
+  const probe = parseCronInvocationMeta(
+    new Headers({
+      'x-tarkovdex-scheduler': 'github-actions',
+      'x-tarkovdex-trigger': 'schedule',
+      'x-tarkovdex-workflow-run': 'header-parse-check',
+    }),
+  );
+  assert.equal(probe.triggerLabel, 'github-actions:schedule');
+  assert.equal(isTrustedNaturalScheduleTrigger(probe.triggerLabel), false);
 
   const manual = parseCronInvocationMeta(
     new Headers({
@@ -236,7 +248,7 @@ test('cron invocation metadata distinguishes schedule from manual dispatch', () 
       'x-tarkovdex-workflow-run': '456',
     }),
   );
-  assert.equal(manual.triggerLabel, 'github-actions:workflow_dispatch');
+  assert.equal(manual.triggerLabel, 'github-actions:workflow_dispatch#456');
   assert.equal(isManualSchedulerTrigger(manual.triggerLabel), true);
   assert.equal(isNaturalScheduleTrigger(manual.triggerLabel), false);
 
@@ -251,7 +263,7 @@ test('manual heartbeat does not falsely prove natural schedule health', () => {
   const evidence = extractSchedulerInvocationEvidence(
     [
       {
-        trigger: 'github-actions:workflow_dispatch',
+        trigger: 'github-actions:workflow_dispatch#1',
         startedAt: new Date(NOW - 60_000).toISOString(),
         finishedAt: new Date(NOW - 60_000).toISOString(),
         ok: true,
@@ -260,6 +272,12 @@ test('manual heartbeat does not falsely prove natural schedule health', () => {
         trigger: 'manual',
         startedAt: new Date(NOW - 30_000).toISOString(),
         finishedAt: new Date(NOW - 30_000).toISOString(),
+        ok: true,
+      },
+      {
+        trigger: 'github-actions:schedule',
+        startedAt: new Date(NOW - 10_000).toISOString(),
+        finishedAt: new Date(NOW - 10_000).toISOString(),
         ok: true,
       },
     ],
@@ -274,7 +292,7 @@ test('successful scheduled no-new-post run verifies natural schedule health', ()
   const evidence = extractSchedulerInvocationEvidence(
     [
       {
-        trigger: 'github-actions:schedule',
+        trigger: 'github-actions:schedule#999',
         startedAt: new Date(NOW - 60_000).toISOString(),
         finishedAt: new Date(NOW - 60_000).toISOString(),
         ok: true,

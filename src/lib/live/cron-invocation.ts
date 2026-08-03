@@ -1,6 +1,6 @@
 /**
  * Safe, non-auth metadata about who invoked `/api/cron/tarkov-live`.
- * Headers are informational only — authorization remains Bearer CRON_SECRET.
+ * Headers are informational only ? authorization remains Bearer CRON_SECRET.
  */
 
 export type CronSchedulerKind = 'github-actions' | 'vercel' | 'direct';
@@ -54,22 +54,37 @@ export function parseCronInvocationMeta(headers: Headers): CronInvocationMeta {
     else kind = 'cron';
   }
 
+  // Include a numeric workflow run id when present so operator evidence can
+  // distinguish a real GitHub Actions run from a bearer-holder header probe.
+  const runSuffix =
+    workflowRunId && /^\d+$/.test(workflowRunId) ? `#${workflowRunId}` : '';
+
   const triggerLabel =
     scheduler === 'direct' && kind === 'cron'
       ? 'cron'
-      : `${scheduler}:${kind}`;
+      : `${scheduler}:${kind}${runSuffix}`;
 
   return { scheduler, triggerKind: kind, workflowRunId, triggerLabel };
 }
 
 export function isNaturalScheduleTrigger(trigger: string): boolean {
-  return trigger === 'github-actions:schedule' || trigger.endsWith(':schedule');
+  return (
+    trigger === 'github-actions:schedule' ||
+    trigger.startsWith('github-actions:schedule#') ||
+    /:schedule(#|$)/.test(trigger)
+  );
+}
+
+/** Only numeric GitHub run ids prove a real Actions `schedule` invocation. */
+export function isTrustedNaturalScheduleTrigger(trigger: string): boolean {
+  return /^github-actions:schedule#\d+$/.test(trigger);
 }
 
 export function isManualSchedulerTrigger(trigger: string): boolean {
   return (
     trigger === 'manual' ||
     trigger === 'github-actions:workflow_dispatch' ||
-    trigger.endsWith(':workflow_dispatch')
+    trigger.startsWith('github-actions:workflow_dispatch#') ||
+    /:workflow_dispatch(#|$)/.test(trigger)
   );
 }

@@ -7,6 +7,7 @@
 import {
   isManualSchedulerTrigger,
   isNaturalScheduleTrigger,
+  isTrustedNaturalScheduleTrigger,
 } from '@/lib/live/cron-invocation';
 
 /** Target cadence for the GitHub Actions scheduler (and acceptable fallback). */
@@ -183,7 +184,11 @@ export function extractSchedulerInvocationEvidence(
       if (!lastScheduledInvocationAt || at > lastScheduledInvocationAt) {
         lastScheduledInvocationAt = at;
       }
-      if (run.ok === true && (!lastScheduledSuccessAt || at > lastScheduledSuccessAt)) {
+      if (
+        run.ok === true &&
+        isTrustedNaturalScheduleTrigger(run.trigger) &&
+        (!lastScheduledSuccessAt || at > lastScheduledSuccessAt)
+      ) {
         lastScheduledSuccessAt = at;
       }
     }
@@ -217,7 +222,11 @@ export function classifyNaturalScheduleStatus(
   now: number,
   delayedAfterMs: number = SCHEDULER_DELAYED_AFTER_MS,
 ): NaturalScheduleStatus {
-  if (!evidence.lastScheduledInvocationAt && !evidence.lastScheduledSuccessAt) {
+  // Trusted success requires a numeric GitHub run id in the trigger label.
+  // Bare `github-actions:schedule` probes (or other bearer-holder headers) must
+  // not mark the natural schedule verified.
+  if (!evidence.lastScheduledSuccessAt) {
+    if (evidence.lastScheduledInvocationAt) return 'unverified';
     return evidence.lastManualInvocationAt || evidence.lastAnyInvocationAt ? 'unverified' : 'never';
   }
 
