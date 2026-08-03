@@ -1,21 +1,43 @@
-import { Clock3, Database } from 'lucide-react';
+import { Database } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import type { Locale } from '@/i18n/routing';
+import type { DataHealth } from '@/lib/data-status';
+import { domainPolicy, summarizeHealth } from '@/lib/data-status';
+import {
+  DataSourcePopover,
+  DataStatusBadge,
+  LastUpdated,
+  StaleDataNotice,
+} from '@/components/status/StatusUI';
 import { GameModeBadge } from './GameModeBadge';
 
+/**
+ * Every tool page's header.
+ *
+ * The old `updatedAt` prop was dead (one caller, passing `null`) and formatted
+ * with `new Date(x).toLocaleString(locale)` — no `timeZone`, rendered on the
+ * server, so it would have printed Vercel's UTC rather than a zone any reader
+ * chose. It is replaced by `health`, which routes every timestamp through the
+ * shared, zone-pinned status components instead.
+ */
 export function ToolIntro({
   title,
   description,
-  updatedAt,
   sourceLabel,
   locale,
+  health,
   showMode = true,
 }: {
   title: string;
   description: string;
-  updatedAt?: string | null;
   sourceLabel?: string;
-  locale?: string;
+  locale?: Locale;
+  health?: DataHealth;
   showMode?: boolean;
 }) {
+  const t = useTranslations('status');
+  const policy = health ? domainPolicy(health.domain) : null;
+
   return (
     <header className="mb-6">
       <div className="flex flex-wrap items-center gap-2.5">
@@ -23,22 +45,52 @@ export function ToolIntro({
           {title}
         </h1>
         {showMode ? <GameModeBadge /> : null}
+        {health ? <DataStatusBadge health={health} /> : null}
       </div>
-      <p className="mt-2 max-w-3xl text-[15px] leading-6 text-muted">{description}</p>
-      {sourceLabel || updatedAt ? (
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[13px] leading-5 text-muted">
+      <p className="mt-2 max-w-3xl text-[16px] leading-6 text-muted">{description}</p>
+
+      {sourceLabel || health ? (
+        <div className="mt-3 flex flex-wrap items-start gap-x-4 gap-y-2 text-[14px] leading-5 text-muted">
           {sourceLabel ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Database className="size-3.5" aria-hidden="true" />
-              {sourceLabel}
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <Database className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 break-words">{sourceLabel}</span>
             </span>
           ) : null}
-          {updatedAt ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Clock3 className="size-3.5" aria-hidden="true" />
-              {new Date(updatedAt).toLocaleString(locale)}
-            </span>
+          {health && locale ? (
+            <>
+              <LastUpdated
+                label={t('label.sourceUpdatedAt')}
+                iso={health.timestamps.sourceUpdatedAt}
+                locale={locale}
+                unknownLabel={
+                  policy?.supportsSourceTimestamp ? undefined : t('noSourceTimestamp')
+                }
+              />
+              <LastUpdated
+                label={t('label.fetchedAt')}
+                iso={health.timestamps.fetchedAt}
+                locale={locale}
+                unknownLabel={t('noObservation')}
+              />
+            </>
           ) : null}
+          {policy ? (
+            <DataSourcePopover
+              provider={policy.provider}
+              sourceUrl={policy.sourceUrl}
+              cachePolicy={t(policy.cachePolicyKey)}
+              fallbackBehavior={t(policy.fallbackBehaviorKey)}
+            >
+              <p className="mt-2 break-words">{t('instanceNotice')}</p>
+            </DataSourcePopover>
+          ) : null}
+        </div>
+      ) : null}
+
+      {health && summarizeHealth(health) === 'previous' ? (
+        <div className="mt-3">
+          <StaleDataNotice />
         </div>
       ) : null}
     </header>

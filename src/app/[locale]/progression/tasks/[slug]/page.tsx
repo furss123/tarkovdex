@@ -1,10 +1,11 @@
 import { notFound, permanentRedirect } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { ChevronRight, ClipboardList, LockKeyhole, Trophy } from 'lucide-react';
+import { ChevronRight, ClipboardList, ExternalLink, LockKeyhole, Trophy } from 'lucide-react';
 import type { Locale } from '@/i18n/routing';
 import { getTasks } from '@/lib/tarkov';
 import { buildDetailPageMetadata } from '@/lib/metadata';
 import { SITE_URL } from '@/lib/site';
+import { serializeJsonLd } from '@/lib/json-ld';
 import { taskSlugFor, requirementSlugFor, parseTaskIdFromSlug } from '@/lib/task-slug';
 import { buildTaskEntry, unionTaskEntries, type TaskDiffField, type TaskEntry } from '@/lib/task-availability';
 import { Link } from '@/i18n/navigation';
@@ -174,7 +175,7 @@ export default async function TaskDetailPage({ params }: Props) {
     <section className="mx-auto max-w-content px-4 py-10 sm:px-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
 
       <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
@@ -213,6 +214,18 @@ export default async function TaskDetailPage({ params }: Props) {
       <Link href="/progression/tasks" className={RELATED_LINK_CLASS}>
         {t('allQuestsLink')}
       </Link>
+
+      {task.wikiLink ? (
+        <a
+          href={task.wikiLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-3 inline-flex min-h-touch items-center gap-2 rounded-md border border-border px-3 text-sm font-medium text-fg hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+        >
+          {t('viewWiki')}
+          <ExternalLink className="size-4" aria-hidden="true" />
+        </a>
+      ) : null}
 
       <dl className="mt-4 grid grid-cols-2 gap-4 rounded-lg border border-border bg-surface/30 p-4 text-sm sm:grid-cols-3">
         <div>

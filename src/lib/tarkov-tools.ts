@@ -6,8 +6,13 @@ import {
   getTraders,
   translate,
 } from '@/lib/tarkov';
-import { finiteNonNegative, normalizeArmorZones } from './tool-calculations';
-import { localizeTaskText } from '@/lib/game-localization';
+import {
+  finiteNonNegative,
+  finitePositive,
+  isReturnedCraftTool,
+  normalizeArmorZones,
+} from './tool-calculations';
+import { localizeArmorItemName, localizeTaskText } from '@/lib/game-localization';
 import gunsmithBuildsJson from '@/lib/gunsmith-builds.json';
 import type { GameMode } from '@/types/tarkov';
 import type {
@@ -15,6 +20,7 @@ import type {
   ArmorLayer,
   ArmorPlate,
   CombatDataset,
+  CraftPartAttributes,
   CraftDeal,
   EconomyDataset,
   GunsmithCondition,
@@ -100,7 +106,7 @@ type RawItemsDoc = { data?: { items?: Record<string, RawItem> } };
 type RawPart = {
   item?: string;
   count?: number;
-  attributes?: { tool?: boolean };
+  attributes?: CraftPartAttributes;
 };
 type RawCraft = {
   id?: string;
@@ -110,12 +116,15 @@ type RawCraft = {
   duration?: number;
   level?: number;
   productItem?: RawPart;
+  active?: boolean;
+  available?: boolean;
 };
 type RawArrayDoc<T> = { data?: T[] };
 type RawHideoutDoc = {
   data?: Record<string, {
     id?: string;
     name?: string;
+    imageLink?: string | null;
   }>;
 };
 type RawObjective = {
@@ -151,14 +160,14 @@ const gunsmithBuilds = gunsmithBuildsJson as Record<
 const DEFAULT_MODE: GameMode = 'regular';
 function minPrice(offers: RawOffer[] | undefined): number | null {
   const values = (offers ?? [])
-    .map((offer) => finiteNonNegative(offer.priceRUB))
+    .map((offer) => finitePositive(offer.priceRUB))
     .filter((value): value is number => value !== null);
   return values.length ? Math.min(...values) : null;
 }
 
 function maxPrice(offers: RawOffer[] | undefined): number | null {
   const values = (offers ?? [])
-    .map((offer) => finiteNonNegative(offer.priceRUB))
+    .map((offer) => finitePositive(offer.priceRUB))
     .filter((value): value is number => value !== null);
   return values.length ? Math.max(...values) : null;
 }
@@ -178,10 +187,13 @@ function itemIndex(
         types: raw.types ?? [],
         categories: raw.categories ?? [],
         price: {
-          flea: finiteNonNegative(raw.avg24hPrice),
+          flea: finitePositive(raw.avg24hPrice),
           traderBuy: minPrice(raw.buyFromTrader),
           traderSell: maxPrice(raw.sellToTrader),
-          updated: raw.updated ?? null,
+          updated:
+            typeof raw.updated === 'string' && Number.isFinite(Date.parse(raw.updated))
+              ? raw.updated
+              : null,
         },
       } satisfies ToolItem,
     ]),
@@ -191,12 +203,13 @@ function itemIndex(
 function validPart(
   raw: RawPart | undefined,
   items: Map<string, ToolItem>,
+  missingCount: number | null = null,
 ): { item: ToolItem; count: number; tool?: boolean } | null {
   if (!raw?.item) return null;
   const item = items.get(raw.item);
-  const count = finiteNonNegative(raw.count);
+  const count = raw.count === undefined ? missingCount : finitePositive(raw.count);
   if (!item || count === null) return null;
-  return { item, count, ...(raw.attributes?.tool ? { tool: true } : {}) };
+  return { item, count, ...(isReturnedCraftTool(raw.attributes) ? { tool: true } : {}) };
 }
 
 function latestUpdated(items: Iterable<ToolItem>): string | null {
@@ -238,31 +251,58 @@ export async function getEconomyDataset(
       fetchTarkovJson<RawHideoutDoc>(`/${gameMode}/hideout`),
       getTranslationDict('hideout', locale, gameMode),
     ]);
-  const stationNames = new Map(
+  const stations = new Map(
     Object.values(hideout.data ?? {}).map((station) => [
       station.id ?? '',
-      translate(hideoutDict, station.name),
+      {
+        name: translate(hideoutDict, station.name),
+        imageLink: station.imageLink ?? null,
+      },
     ]),
   );
   const crafts: CraftDeal[] = [];
   for (const raw of Array.isArray(craftDoc.data) ? craftDoc.data : []) {
     const productItem = validPart(raw.productItem, items);
     if (!raw.id || !raw.station || !productItem) continue;
+    const level = finiteNonNegative(raw.level);
+    const duration = finitePositive(raw.duration);
+    if (level === null || duration === null) continue;
+    const requiredItems = (raw.requiredItems ?? [])
+      .map((part) => validPart(part, items));
+    // Quest-item gates omit count in the current document. They are not
+    // consumed or priced; a default cardinality of one preserves the gate for
+    // display without fabricating a material cost.
+    const requiredQuestItems = (raw.requiredQuestItems ?? [])
+      .map((part) => validPart(part, items, 1));
+    const unresolvedQuestRequirements = (raw.requiredQuestItems ?? [])
+      .filter((_part, index) => requiredQuestItems[index] === null)
+      .map((part) => part.item)
+      .filter((id): id is string => typeof id === 'string' && id !== '');
+    // Dropping one malformed input would silently understate the cost. Skip
+    // the whole recipe instead and let the remaining valid crafts compete.
+    // An unresolved quest gate is different: it has no material cost, so keep
+    // the recipe with an explicit issue that disqualifies its profit ranking.
+    if (requiredItems.some((part) => part === null)) continue;
+    const station = stations.get(raw.station);
     crafts.push({
       id: raw.id,
       station: {
         id: raw.station,
-        name: stationNames.get(raw.station) ?? raw.station,
+        name: station?.name ?? raw.station,
+        imageLink: station?.imageLink ?? null,
       },
-      level: finiteNonNegative(raw.level) ?? 0,
-      duration: finiteNonNegative(raw.duration) ?? 0,
-      requiredItems: (raw.requiredItems ?? [])
-        .map((part) => validPart(part, items))
-        .filter((part): part is NonNullable<typeof part> => part !== null),
-      requiredQuestItems: (raw.requiredQuestItems ?? [])
-        .map((part) => validPart(part, items))
-        .filter((part): part is NonNullable<typeof part> => part !== null),
+      level,
+      duration,
+      requiredItems: requiredItems.filter(
+        (part): part is NonNullable<typeof part> => part !== null,
+      ),
+      requiredQuestItems: requiredQuestItems.filter(
+        (part): part is NonNullable<typeof part> => part !== null,
+      ),
+      unresolvedQuestRequirements,
       productItem,
+      productItems: [productItem],
+      active: raw.active !== false && raw.available !== false,
       updated: productItem.item.price.updated,
     });
   }
@@ -363,13 +403,13 @@ function slotNameIndex(
   return index;
 }
 
-function armorPlate(raw: RawItem, tool: ToolItem): ArmorPlate {
+function armorPlate(raw: RawItem, tool: ToolItem, locale: Locale): ArmorPlate {
   const properties = raw.properties ?? {};
   const zones = properties.zones ?? [];
   const normalized = normalizeArmorZones(zones);
   return {
     id: raw.id,
-    name: tool.name,
+    name: localizeArmorItemName(raw.id, tool.name, locale),
     iconLink: tool.iconLink,
     armorClass: finiteNonNegative(properties.class),
     durability: finiteNonNegative(properties.durability),
@@ -415,7 +455,7 @@ export async function getCombatDataset(
         tracer: p.tracer === true,
       });
     }
-    if (raw.types?.includes('armorPlate')) plates.set(raw.id, armorPlate(raw, tool));
+    if (raw.types?.includes('armorPlate')) plates.set(raw.id, armorPlate(raw, tool, locale));
   }
   const armor: ArmorItem[] = [];
   for (const raw of Object.values(rawItems)) {
@@ -441,7 +481,7 @@ export async function getCombatDataset(
       });
     armor.push({
       id: raw.id,
-      name: tool.name,
+      name: localizeArmorItemName(raw.id, tool.name, locale),
       iconLink: tool.iconLink,
       weight: finiteNonNegative(raw.weight),
       armorClass: finiteNonNegative(p.class),

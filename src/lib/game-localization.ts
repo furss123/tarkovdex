@@ -75,7 +75,7 @@ const MATERIAL_LABELS: Record<string, Record<string, string>> = {
   Combined: { ko: '복합 소재', en: 'Combined materials', zh: '复合材料' },
   Glass: { ko: '방탄유리', en: 'Glass', zh: '防弹玻璃' },
   Titan: { ko: '티타늄', en: 'Titanium', zh: '钛' },
-  UHMWPE: { ko: '폴리에틸렌', en: 'UHMWPE', zh: '聚乙烯' },
+  UHMWPE: { ko: '초고분자량 폴리에틸렌(UHMWPE)', en: 'UHMWPE', zh: '超高分子量聚乙烯（UHMWPE）' },
 };
 
 /** User-facing armor material label; unknown raw values pass through. */
@@ -89,20 +89,24 @@ export function localizeMaterial(raw: string | null, locale: string): string | n
  * text — the underlying dictionary keys are per-item ids, so the English
  * label is the only stable, meaningful key. Unmapped names pass through. */
 const ARMOR_LAYER_NAMES_KO: Record<string, string> = {
-  'Aramid insert': '아라미드 인서트',
+  'FR. PLATE': '앞쪽 방탄판',
+  'BK. PLATE': '뒤쪽 방탄판',
+  'L. PLATE': '왼쪽 방탄판',
+  'R. PLATE': '오른쪽 방탄판',
+  'Aramid insert': '아라미드 삽입재',
   'Hybrid composite materials': '하이브리드 복합 소재',
   'Layers of aramid fiber': '아라미드 섬유층',
   'Armor steel': '장갑강',
-  'Armor steel insert': '장갑강 인서트',
-  'Layer of UHMWPE': '폴리에틸렌층',
+  'Armor steel insert': '장갑강 삽입재',
+  'Layer of UHMWPE': '초고분자량 폴리에틸렌층',
   'Layer of plastic': '플라스틱층',
-  'Aluminum insert': '알루미늄 인서트',
+  'Aluminum insert': '알루미늄 삽입재',
   'Built-in face shield': '내장 페이스 실드',
   'Composite armor plate': '복합 장갑판',
   'Titanium alloy': '티타늄 합금',
-  '1.25 mm aramid insert and titanium plates': '1.25mm 아라미드 인서트와 티타늄 플레이트',
-  '6.5 mm aramid insert and titanium plates': '6.5mm 아라미드 인서트와 티타늄 플레이트',
-  '13 mm aramid insert and ceramic plates': '13mm 아라미드 인서트와 세라믹 플레이트',
+  '1.25 mm aramid insert and titanium plates': '1.25 mm 아라미드 삽입재 및 티타늄판',
+  '6.5 mm aramid insert and titanium plates': '6.5 mm 아라미드 삽입재 및 티타늄판',
+  '13 mm aramid insert and ceramic plates': '13 mm 아라미드 삽입재 및 세라믹판',
 };
 
 /** Localize a soft-armor layer/plate-slot display name; passthrough when
@@ -110,6 +114,50 @@ const ARMOR_LAYER_NAMES_KO: Record<string, string> = {
 export function localizeArmorLayerName(name: string, locale: string): string {
   if (locale === 'ko') return ARMOR_LAYER_NAMES_KO[name] ?? name;
   return name;
+}
+
+/**
+ * json.tarkov.dev's Korean item dictionary currently leaves every ballistic
+ * plate and several newer body armors in English. Two entries also carry an
+ * upstream factual mismatch, so those are corrected by stable item id before
+ * the conservative term-level fallback is applied.
+ */
+const ARMOR_ITEM_NAMES_KO_BY_ID: Record<string, string> = {
+  '5ab8dced86f774646209ec87': 'ANA Tactical M2 플레이트 캐리어 (OD Green)',
+  '69cfef0d6242b966d40803e7': 'FORT Redut-M 방탄복 (검정)',
+};
+
+const ARMOR_ITEM_TERMS_KO: Array<[RegExp, string]> = [
+  [/\bplate carrier\b/gi, '플레이트 캐리어'],
+  [/\bbody armor\b/gi, '방탄복'],
+  [/\bassault armor\b/gi, '강습 방탄복'],
+  [/\barmored rig\b/gi, '방탄 리그'],
+  [/\bballistic plates?\b/gi, '방탄판'],
+  [/\blevel\b/gi, '레벨'],
+  [/\(Front\)/gi, '(전면)'],
+  [/\(Back\)/gi, '(후면)'],
+  [/\(Side\)/gi, '(측면)'],
+  [/\(Replica\)/gi, '(레플리카)'],
+  [/Goons Edition/gi, '군즈 에디션'],
+  [/Christmas Edition/gi, '크리스마스 에디션'],
+  [/Head Eyes/gi, '헤드 아이즈'],
+  [/바디 아머/g, '방탄복'],
+];
+
+/** Localize body-armor and ballistic-plate item names without altering brand
+ * names, camouflage names, or already-localized Korean text. */
+export function localizeArmorItemName(
+  itemId: string,
+  translated: string,
+  locale: string,
+): string {
+  if (locale !== 'ko') return translated;
+  const corrected = ARMOR_ITEM_NAMES_KO_BY_ID[itemId];
+  if (corrected) return corrected;
+  return ARMOR_ITEM_TERMS_KO.reduce(
+    (name, [pattern, replacement]) => name.replace(pattern, replacement),
+    translated,
+  );
 }
 
 /** Korean names for the mobs json.tarkov.dev's ko dictionary leaves in

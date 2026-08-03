@@ -9,6 +9,13 @@ import type {
 } from '@/types/tarkov';
 import type { Locale } from '@/i18n/routing';
 import { localizeMobName, localizeTaskText } from '@/lib/game-localization';
+import { safeTarkovWikiUrl } from '@/lib/wiki-url';
+import {
+  recordCacheHit,
+  recordFetchError,
+  recordFetchSuccess,
+  recordStaleServed,
+} from '@/lib/data-observations';
 
 /**
  * json.tarkov.dev static JSON API client.
@@ -35,6 +42,7 @@ import { localizeMobName, localizeTaskText } from '@/lib/game-localization';
  */
 
 const BASE_URL = 'https://json.tarkov.dev';
+const REQUEST_TIMEOUT_MS = 15_000;
 
 /** `GameMode` itself now lives in types/tarkov.ts (a plain, non-server-only
  * module) so the global game-mode context can import the type without
@@ -48,6 +56,9 @@ const DEFAULT_GAME_MODE: GameMode = 'regular';
  * shorter window requested by the economy/combat tools. */
 const REVALIDATE_SECONDS = 6 * 60 * 60;
 const PRICE_REVALIDATE_SECONDS = 15 * 60;
+const RETRY_AFTER_ERROR_SECONDS = 60;
+const STRUCTURAL_STALE_IF_ERROR_SECONDS = 24 * 60 * 60;
+const PRICE_STALE_IF_ERROR_SECONDS = 2 * 60 * 60;
 
 function cacheSecondsForPath(path: string): number {
   return /\/(?:items(?:_|$)|barters$|crafts$)/.test(path)
@@ -55,8 +66,15 @@ function cacheSecondsForPath(path: string): number {
     : REVALIDATE_SECONDS;
 }
 
+function staleIfErrorSecondsForPath(path: string): number {
+  return /\/(?:items(?:_|$)|barters$|crafts$)/.test(path)
+    ? PRICE_STALE_IF_ERROR_SECONDS
+    : STRUCTURAL_STALE_IF_ERROR_SECONDS;
+}
+
 type MemoryCacheEntry = {
   expiresAt: number;
+  staleUntil: number;
   value: Promise<unknown>;
 };
 
@@ -68,32 +86,99 @@ type MemoryCacheEntry = {
  */
 const memoryCache = new Map<string, MemoryCacheEntry>();
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Minimal endpoint-aware shape gate before a response can replace a known
+ * good cache entry. Field-level normalization remains with each mapper, but a
+ * 200 response containing an error object or a missing collection is not a
+ * valid empty Tarkov document. */
+function validateTarkovDocument(path: string, value: unknown): unknown {
+  if (!isRecord(value) || !Object.hasOwn(value, 'data')) {
+    throw new Error(`json.tarkov.dev returned an invalid document for ${path}`);
+  }
+
+  const data = value.data;
+  const endpoint = path.split('/').filter(Boolean).at(-1) ?? '';
+  const translation = /_(?:ko|en|zh)$/.test(endpoint);
+  let valid = false;
+
+  if (translation || endpoint === 'traders' || endpoint === 'hideout') {
+    valid = isRecord(data);
+  } else if (endpoint === 'items') {
+    valid = isRecord(data) && isRecord(data.items);
+  } else if (endpoint === 'maps') {
+    valid = isRecord(data) && isRecord(data.maps) && isRecord(data.mobs);
+  } else if (endpoint === 'tasks') {
+    valid = isRecord(data) && isRecord(data.tasks);
+  } else if (endpoint === 'crafts' || endpoint === 'barters') {
+    valid = Array.isArray(data);
+  } else {
+    // Test/forward-compatible endpoints still need an explicit, non-null data
+    // payload even when this client has no more specific schema for them.
+    valid = data !== null && data !== undefined;
+  }
+
+  if (!valid) {
+    throw new Error(`json.tarkov.dev returned an invalid data shape for ${path}`);
+  }
+  return value;
+}
+
 export async function fetchTarkovJson<T>(path: string): Promise<T> {
   const now = Date.now();
   const cached = memoryCache.get(path);
-  if (cached && cached.expiresAt > now) return cached.value as Promise<T>;
+  if (cached && cached.expiresAt > now) {
+    recordCacheHit(path);
+    return cached.value as Promise<T>;
+  }
 
-  const value = fetch(`${BASE_URL}${path}`, { cache: 'no-store' }).then(
+  const stale = cached && cached.staleUntil > now ? cached : null;
+
+  const request = fetch(`${BASE_URL}${path}`, {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  }).then(
     async (res) => {
       if (!res.ok) {
         throw new Error(
           `json.tarkov.dev responded ${res.status} ${res.statusText} for ${path}`,
         );
       }
-      return res.json() as Promise<T>;
+      const parsed: unknown = await res.json();
+      return validateTarkovDocument(path, parsed) as T;
     },
   );
-  memoryCache.set(path, {
+  // The recorders are the only Phase 1 addition here: they observe the paths
+  // this code already takes so a page can say whether it is showing a fresh
+  // document or the previous one. Instance-scoped — see data-observations.ts.
+  const value = request.then(
+    (parsed) => {
+      recordFetchSuccess(path, Date.now());
+      return parsed;
+    },
+    (error) => {
+      if (stale) {
+        memoryCache.set(path, {
+          ...stale,
+          expiresAt: now + RETRY_AFTER_ERROR_SECONDS * 1000,
+        });
+        recordStaleServed(path, Date.now(), error);
+        return stale.value as Promise<T>;
+      }
+      if (memoryCache.get(path)?.value === value) memoryCache.delete(path);
+      recordFetchError(path, Date.now(), error);
+      throw error;
+    },
+  );
+  const replacement: MemoryCacheEntry = {
     expiresAt: now + cacheSecondsForPath(path) * 1000,
+    staleUntil: now + staleIfErrorSecondsForPath(path) * 1000,
     value,
-  });
-
-  try {
-    return await value;
-  } catch (error) {
-    memoryCache.delete(path);
-    throw error;
-  }
+  };
+  memoryCache.set(path, replacement);
+  return value as Promise<T>;
 }
 
 export type TranslationDict = Record<string, string>;
@@ -198,6 +283,7 @@ interface RawItem {
   shortName: string;
   width: number;
   height: number;
+  weight?: number | null;
   types?: string[];
   avg24hPrice: number | null;
   low24hPrice?: number | null;
@@ -219,8 +305,22 @@ interface RawItemsDoc {
 function bestVendorSellRUB(offers: RawSellOffer[] | undefined): number | null {
   const prices = (offers ?? [])
     .map((offer) => offer.priceRUB)
-    .filter((p): p is number => typeof p === 'number');
+    .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0);
   return prices.length ? Math.max(...prices) : null;
+}
+
+function positiveFinite(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value
+    : null;
+}
+
+function finiteValue(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function validTimestamp(value: unknown): string | null {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
 }
 
 export interface GetItemsParams {
@@ -258,23 +358,44 @@ export async function getItems({
     getTranslationDict('items', locale, gameMode),
   ]);
 
-  return Object.values(doc.data.items).map(
-    (raw): Item => ({
+  return Object.values(doc.data.items).flatMap((raw): Item[] => {
+    // Width/height feed the value-per-slot calculation. A malformed dimension
+    // cannot be repaired without inventing a price ranking, so discard that
+    // one record rather than silently turning it into a 1x1 item.
+    if (
+      typeof raw.id !== 'string' ||
+      raw.id === '' ||
+      !Number.isInteger(raw.width) ||
+      !Number.isInteger(raw.height) ||
+      raw.width <= 0 ||
+      raw.height <= 0
+    ) {
+      return [];
+    }
+    const avg24hPrice = positiveFinite(raw.avg24hPrice);
+    return [{
       id: raw.id,
       name: translate(dict, raw.name),
       shortName: translate(dict, raw.shortName),
-      width: Math.max(1, raw.width || 1),
-      height: Math.max(1, raw.height || 1),
-      types: raw.types ?? [],
-      avg24hPrice: raw.avg24hPrice,
-      low24hPrice: raw.low24hPrice ?? null,
-      high24hPrice: raw.high24hPrice,
-      changeLast48hPercent: raw.changeLast48hPercent,
-      updated: raw.updated,
+      width: raw.width,
+      height: raw.height,
+      weight:
+        typeof raw.weight === 'number' && Number.isFinite(raw.weight) && raw.weight >= 0
+          ? raw.weight
+          : null,
+      types: Array.isArray(raw.types)
+        ? raw.types.filter((type): type is string => typeof type === 'string')
+        : [],
+      avg24hPrice,
+      low24hPrice: positiveFinite(raw.low24hPrice),
+      high24hPrice: positiveFinite(raw.high24hPrice),
+      changeLast48hPercent:
+        avg24hPrice === null ? null : finiteValue(raw.changeLast48hPercent),
+      updated: validTimestamp(raw.updated),
       iconLink: raw.iconLink,
       bestVendorSellRUB: bestVendorSellRUB(raw.sellToTrader),
-    }),
-  );
+    }];
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -320,27 +441,67 @@ interface RawMapsDoc {
  * same boss can appear many times with different chances — e.g. Lighthouse's
  * ExUsec appears 6 times). Sorted by chance, descending. A deliberate
  * simplification for a readable guide UI — see CLAUDE.md > Maps page. */
-function dedupeBosses(
+export function dedupeBosses(
   raw: RawBossSpawn[],
   mobs: Record<string, RawMob>,
   dict: TranslationDict,
   locale: Locale,
 ): MapBossSpawn[] {
-  const bestChanceByMob = new Map<string, number>();
+  const bestChanceByMob = new Map<string, number | null>();
   for (const spawn of raw) {
     if (!spawn.mob) continue;
-    const current = bestChanceByMob.get(spawn.mob) ?? 0;
-    bestChanceByMob.set(spawn.mob, Math.max(current, spawn.spawnChance ?? 0));
+    const mobId = mobs?.[spawn.mob]?.id || spawn.mob;
+    const chance =
+      typeof spawn.spawnChance === 'number' &&
+      Number.isFinite(spawn.spawnChance) &&
+      spawn.spawnChance >= 0 &&
+      spawn.spawnChance <= 1
+        ? spawn.spawnChance
+        : null;
+    const current = bestChanceByMob.get(mobId);
+    if (current === undefined || (chance !== null && (current === null || chance > current))) {
+      bestChanceByMob.set(mobId, chance);
+    }
   }
 
-  return Array.from(bestChanceByMob, ([mobId, spawnChance]) => ({
-    spawnChance,
-    boss: {
-      id: mobId,
-      name: localizeMobName(mobId, translate(dict, mobs?.[mobId]?.name ?? mobId), locale),
-      imageLink: mobs?.[mobId]?.imagePortraitLink ?? null,
-    },
-  })).sort((a, b) => (b.spawnChance ?? 0) - (a.spawnChance ?? 0));
+  // A few upstream role ids intentionally share one display name (Terminal's
+  // vsRF/vsRFSniper both translate to "AF"). Rendering those as separate
+  // bosses is indistinguishable duplication, so collapse the normalized
+  // display name after the stable-id pass as well.
+  const byDisplayName = new Map<string, MapBossSpawn>();
+  for (const [mobId, spawnChance] of bestChanceByMob) {
+    const mob = mobs?.[mobId];
+    const translated = translate(dict, mob?.name ?? mobId) || mobId;
+    const name = localizeMobName(mobId, translated, locale) || mobId;
+    const candidate: MapBossSpawn = {
+      spawnChance,
+      boss: {
+        id: mobId,
+        name,
+        imageLink: mob?.imagePortraitLink ?? null,
+      },
+    };
+    const key = name.trim().toLocaleLowerCase(locale);
+    const current = byDisplayName.get(key);
+    const currentChance = current?.spawnChance;
+    if (
+      !current ||
+      (spawnChance !== null && (currentChance == null || spawnChance > currentChance)) ||
+      (spawnChance === currentChance && mobId < (current.boss?.id ?? ''))
+    ) {
+      byDisplayName.set(key, candidate);
+    }
+  }
+
+  return [...byDisplayName.values()].sort((a, b) => {
+    if (a.spawnChance === null && b.spawnChance !== null) return 1;
+    if (a.spawnChance !== null && b.spawnChance === null) return -1;
+    return (
+      (b.spawnChance ?? 0) - (a.spawnChance ?? 0) ||
+      (a.boss?.name ?? '').localeCompare(b.boss?.name ?? '', locale) ||
+      (a.boss?.id ?? '').localeCompare(b.boss?.id ?? '')
+    );
+  });
 }
 
 export interface GetMapsParams {
@@ -363,7 +524,7 @@ export async function getMaps({
       id: raw.id,
       name: translate(dict, raw.name),
       description: raw.description ? translate(dict, raw.description) : null,
-      wiki: raw.wiki,
+      wiki: safeTarkovWikiUrl(raw.wiki),
       players: raw.players,
       raidDuration: raw.raidDuration,
       bosses: dedupeBosses(raw.bosses ?? [], doc.data.mobs, dict, locale),
@@ -405,6 +566,7 @@ interface RawObjective {
   optional: boolean;
   count?: number | null;
   items?: string[];
+  foundInRaid?: boolean;
 }
 
 interface RawTask {
@@ -487,6 +649,7 @@ export async function getTasks({
       kappaRequired: raw.kappaRequired,
       experience: raw.experience ?? null,
       taskImageLink: raw.taskImageLink ?? null,
+      wikiLink: safeTarkovWikiUrl(raw.wikiLink),
       requirements: (raw.taskRequirements ?? []).map((requirement) => {
         const prerequisite = taskNames.get(requirement.task);
         return {
@@ -505,6 +668,8 @@ export async function getTasks({
         description: localizeTaskText(translate(dict, o.description), locale),
         optional: o.optional,
         count: o.count ?? null,
+        items: o.items && o.items.length > 0 ? o.items : null,
+        foundInRaid: typeof o.foundInRaid === 'boolean' ? o.foundInRaid : null,
       })),
     };
   });

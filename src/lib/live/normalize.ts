@@ -31,6 +31,7 @@ export interface RawPost {
   content: string;
   publishedAt: string;
   imageUrl?: string | null;
+  youtubeVideoId?: string | null;
   /** Pre-translated display text, when the source pipeline already has one
    * (Steam posts reuse the existing committed ko/zh translations). */
   translated?: { title: string; content: string } | null;
@@ -103,24 +104,15 @@ export function reliabilityFor(source: NewsSource, category: NewsCategory): Reli
   }
 }
 
-/**
- * Conservative auto-publish gate. Anything with a claimed event window, or
- * anything below official-confirmed trust, waits for a human — because a
- * wrong "진행 중" banner is worse than no banner.
- *
- * Note event windows can only come from the manual store in the first place
- * (adapters and the interpreter are both forbidden from inferring times), so
- * in practice this reads: official posts auto-publish as timeless news,
- * timed events are human-entered and human-reviewed.
- */
+/** Committed manual entries are already reviewed. Every external source waits
+ * in the private queue until an operator approves it. */
 export function decideReview(
-  reliability: ReliabilityLevel,
-  hasWindow: boolean,
+  _reliability: ReliabilityLevel,
+  _hasWindow: boolean,
   manual: boolean,
 ): ReviewStatus {
   if (manual) return 'reviewed';
-  if (hasWindow) return 'pending_review';
-  return reliability === 'official_confirmed' ? 'auto_published' : 'pending_review';
+  return 'pending_review';
 }
 
 const MODE_RULES: Array<[LiveGameMode, RegExp]> = [
@@ -194,6 +186,7 @@ export function toLiveEntry(post: RawPost, now: string): LiveEntry {
     collectedAt: now,
     lastCheckedAt: now,
     imageUrl: post.imageUrl ?? null,
+    youtubeVideoId: post.youtubeVideoId ?? null,
     contentHash: contentHash(`${post.title} ${post.content}`),
     manualFields,
     interpretation: null,
@@ -291,6 +284,9 @@ export function mergeEntries(entries: LiveEntry[]): LiveEntry[] {
       gameModes: [...new Set([...primary.gameModes, ...secondary.gameModes])].filter(
         (mode, _index, all) => mode !== 'unknown' || all.length === 1,
       ),
+      // The public profile presentation can carry safe, validated YouTube
+      // metadata even when the persisted event is the primary record.
+      youtubeVideoId: primary.youtubeVideoId ?? secondary.youtubeVideoId,
       confirmations,
       // Newest sighting wins for freshness reporting.
       lastCheckedAt:

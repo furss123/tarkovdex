@@ -320,7 +320,7 @@ async function Dashboard({ repo, csrf }: { repo: LiveRepository; csrf: string })
     repo.listSourceStates(),
     repo.listRuns(10),
     repo.listEvents({ reviewStatus: ['pending_review'], limit: 50 }),
-    repo.listEvents({ reviewStatus: ['auto_published', 'reviewed'], limit: 50 }),
+    repo.listEvents({ reviewStatus: ['reviewed'], limit: 50 }),
     repo.listAudit(15),
   ]);
 

@@ -16,7 +16,34 @@ import postgres from 'postgres';
  */
 
 export type SqlRow = Record<string, unknown>;
-export type SqlExecutor = <T = SqlRow>(text: string, params?: unknown[]) => Promise<T[]>;
+export interface SqlExecutor {
+  <T = SqlRow>(text: string, params?: unknown[]): Promise<T[]>;
+  /** True only for the executor handed to a transaction callback. */
+  inTransaction: boolean;
+  /**
+   * Runs all callback queries on one reserved connection. Nested transactions
+   * are deliberately rejected: the repository composes one outer atomic unit
+   * instead of accidentally committing an inner unit early.
+   */
+  transaction<T>(work: (sql: SqlExecutor) => Promise<T>): Promise<T>;
+}
+
+export const NESTED_TRANSACTION_ERROR = 'nested_transaction_not_supported';
+
+type QueryRunner = <T = SqlRow>(text: string, params?: unknown[]) => Promise<T[]>;
+type TransactionRunner = <T>(work: (sql: SqlExecutor) => Promise<T>) => Promise<T>;
+
+function sqlExecutor(
+  query: QueryRunner,
+  inTransaction: boolean,
+  transaction: TransactionRunner,
+): SqlExecutor {
+  const execute = (async <T = SqlRow>(text: string, params: unknown[] = []) =>
+    query<T>(text, params)) as SqlExecutor;
+  execute.inTransaction = inTransaction;
+  execute.transaction = transaction;
+  return execute;
+}
 
 let pool: postgres.Sql | null = null;
 let executor: SqlExecutor | null = null;
@@ -51,8 +78,43 @@ export function getSql(): SqlExecutor | null {
       onnotice: () => {},
     });
     const sql = pool;
-    executor = async <T>(text: string, params: unknown[] = []) =>
+    const query: QueryRunner = async <T>(text: string, params: unknown[] = []) =>
       (await sql.unsafe(text, params as never[])) as unknown as T[];
+    executor = sqlExecutor(query, false, async <T>(work: (transactionSql: SqlExecutor) => Promise<T>) => {
+      // `reserve()` is required here: BEGIN/work/COMMIT must all use the same
+      // postgres.js connection even if the pool size changes in the future.
+      const reserved = await sql.reserve();
+      const transactionQuery: QueryRunner = async <TRow>(text: string, params: unknown[] = []) =>
+        (await reserved.unsafe(text, params as never[])) as unknown as TRow[];
+      const transactionExecutor = sqlExecutor(
+        transactionQuery,
+        true,
+        async () => {
+          throw new Error(NESTED_TRANSACTION_ERROR);
+        },
+      );
+      let began = false;
+      try {
+        await transactionQuery('begin');
+        began = true;
+        const result = await work(transactionExecutor);
+        await transactionQuery('commit');
+        began = false;
+        return result;
+      } catch (error) {
+        if (began) {
+          try {
+            await transactionQuery('rollback');
+          } catch {
+            // Preserve the original failure. postgres.js will discard a broken
+            // reserved connection rather than returning it as healthy.
+          }
+        }
+        throw error;
+      } finally {
+        reserved.release();
+      }
+    });
   }
   return executor;
 }

@@ -4,15 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ChevronDown,
   ClipboardList,
+  ExternalLink,
   LockKeyhole,
   MapPin,
-  Sparkles,
   Trophy,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { Task } from '@/types/tarkov';
 import { Link } from '@/i18n/navigation';
 import { taskSlugFor } from '@/lib/task-slug';
+import { QuestStatusToggle } from '@/components/progression/QuestStatusToggle';
 
 export function TaskCard({
   task,
@@ -43,7 +44,7 @@ export function TaskCard({
       data-task-id={task.id}
       className="scroll-mt-4 border-b border-border/60 bg-bg/30 last:border-0"
     >
-      <div className="flex items-start gap-3 px-4 py-4 hover:bg-surface-2/50">
+      <div className="flex items-start gap-3 px-4 py-4">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-xs font-medium tabular-nums text-muted">
           {sequence}
         </span>
@@ -62,15 +63,28 @@ export function TaskCard({
         </span>
 
         <div className="min-w-0 flex-1">
-          <Link
-            href={`/progression/tasks/${taskSlugFor(task)}`}
-            className="block min-w-0 rounded text-sm font-medium text-fg underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-          >
-            {task.name}
-            {task.nameEn ? (
-              <span className="ml-1 font-normal text-muted">({task.nameEn})</span>
-            ) : null}
-          </Link>
+          <h2>
+            <Link
+              href={`/progression/tasks/${taskSlugFor(task)}`}
+              className="flex min-h-touch min-w-0 items-center rounded text-sm font-medium text-fg underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            >
+              {task.name}
+              {task.nameEn ? (
+                <span className="ml-1 font-normal text-muted">({task.nameEn})</span>
+              ) : null}
+            </Link>
+          </h2>
+          {task.wikiLink ? (
+            <a
+              href={task.wikiLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex min-h-touch items-center gap-1.5 text-xs text-muted underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            >
+              {t('viewWiki')}
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+            </a>
+          ) : null}
           <button
             type="button"
             aria-expanded={expanded}
@@ -96,6 +110,9 @@ export function TaskCard({
               />
             </span>
           </button>
+          <div className="mt-2">
+            <QuestStatusToggle questId={task.id} />
+          </div>
         </div>
       </div>
 
@@ -117,14 +134,17 @@ export function TaskCard({
                       key={objective.id}
                       className="flex gap-3 rounded-md border border-border/70 bg-bg/60 p-3 text-sm"
                     >
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-medium text-accent">
+                      <span
+                        aria-hidden="true"
+                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-medium text-accent"
+                      >
                         {index + 1}
                       </span>
                       <div className="min-w-0">
                         <p className="leading-relaxed text-fg">{objective.description}</p>
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {objective.optional ? (
-                            <span className="rounded-full border border-border px-2 py-0.5 text-[12px] leading-4 text-muted">
+                            <span className="rounded-full border border-border px-2 py-0.5 text-[14px] leading-5 text-muted">
                               {t('optional')}
                             </span>
                           ) : null}
@@ -153,7 +173,7 @@ export function TaskCard({
                             onClick={() =>
                               onOpenTask?.(requirement.taskId, requirement.taskName)
                             }
-                            className="text-left text-fg underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+                            className="inline-flex min-h-touch items-center text-left text-fg underline-offset-4 hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
                           >
                             · {requirement.taskName}
                             {requirement.taskNameEn ? (
@@ -171,17 +191,6 @@ export function TaskCard({
                 </div>
               </section>
 
-              <aside className="rounded-md border border-accent/25 bg-accent/5 p-3">
-                <h3 className="flex items-center gap-2 text-sm font-medium text-accent">
-                  <Sparkles className="size-4" aria-hidden="true" />
-                  {t('guideTipTitle')}
-                </h3>
-                <p className="mt-1 text-xs leading-relaxed text-muted">
-                  {t('guideTip', {
-                    map: task.map?.name ?? t('anyMap'),
-                  })}
-                </p>
-              </aside>
             </div>
 
             <aside className="space-y-3">

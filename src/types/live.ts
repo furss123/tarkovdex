@@ -130,6 +130,8 @@ export interface LiveEntry {
   lastCheckedAt: string;
 
   imageUrl: string | null;
+  /** Validated YouTube id used to build a privacy-enhanced embed URL. */
+  youtubeVideoId: string | null;
 
   /** FNV-1a hash of the normalized original text — the dedup key that catches
    * the same announcement copy-pasted across Steam/X/Telegram. */

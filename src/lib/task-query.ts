@@ -69,6 +69,27 @@ function questDepth(
   return depth;
 }
 
+/** Every field the item-aggregation / raid-planner UI needs for a set of
+ * saved quest ids, regardless of what the current search/pagination view
+ * shows — the tracker's active list can span many pages of `/progression/tasks`
+ * at once. Order follows `ids`; unknown ids are simply absent from the
+ * result (never a placeholder), so the caller can diff `ids.length` against
+ * the result to find orphaned references. Capped defensively — `ids` is
+ * already bounded by `MAX_ACTIVE_QUESTS` (1000) at the storage layer, but a
+ * hand-crafted request should not be able to force an unbounded lookup. */
+export const MAX_TASK_IDS_PER_LOOKUP = 1000;
+
+export function tasksByIds(tasks: Task[], ids: string[]): Task[] {
+  const wanted = new Set(ids.slice(0, MAX_TASK_IDS_PER_LOOKUP));
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const found: Task[] = [];
+  for (const id of wanted) {
+    const task = byId.get(id);
+    if (task) found.push(task);
+  }
+  return found;
+}
+
 export function queryTasks(
   tasks: Task[],
   gameMode: GameMode,

@@ -35,13 +35,8 @@ export interface PublicationDecision {
 }
 
 /**
- * Conservative auto-publish gate.
- *
- * Auto-publishes only an official-confirmed post that declares something
- * plainly and either claims no schedule at all or backs every claimed time with
- * source text. Everything else — a developer's personal account, a teaser, an
- * official post that only hints, an unevidenced "this weekend" — waits for a
- * human, and sits in the feed with its reliability badge in the meantime.
+ * Conservative review gate. Classification can explain why an item needs
+ * extra caution, but only an operator may grant publication.
  */
 export function decidePublication(input: PublicationInput): PublicationDecision {
   if (input.source === 'nikita_x') {
@@ -62,7 +57,7 @@ export function decidePublication(input: PublicationInput): PublicationDecision 
   if (input.requiresReview) {
     return { reviewStatus: 'pending_review', reason: 'interpreter_flagged' };
   }
-  return { reviewStatus: 'auto_published', reason: null };
+  return { reviewStatus: 'pending_review', reason: 'operator_approval_required' };
 }
 
 export interface LinkCandidate {

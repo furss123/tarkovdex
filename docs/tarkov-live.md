@@ -16,6 +16,22 @@ Question 6 is the one that shapes the architecture: **the board never guesses.**
 An event window that no official source stated is shown as `종료 시각 미확인`,
 never as an estimate.
 
+### Phase 7 — PatchImpact (projection, not a second board)
+
+`src/lib/live/patch-impact.ts` projects each public `LiveEntry` into a
+`PatchImpact` view: impact areas, mode scope, event state, review/confidence,
+optional short summary, and a conservative TarkovDex data-sync status. Human
+overrides live in `patch-impact-overrides.ts` keyed by stable entry id. The
+existing LiveBoard cards render an impact block and an impact-area URL filter
+(`?area=`); there is no `/updates` duplicate route.
+
+### Phase 8 — offline news pages
+
+Visited `/[locale]/news` HTML may be runtime-cached (network-first). When
+served from Cache Storage, UI must treat event “active” and data-sync claims
+as possibly stale and show offline/cached notices. SW does not invent new
+PatchImpact or collection freshness. Ops: `docs/operations/tarkovdex-pwa.md`.
+
 This document is for whoever operates it. Design rationale lives in `CLAUDE.md`;
 what follows is how to set it up, run it, review content, and fix it when a
 source breaks.
@@ -31,8 +47,8 @@ Vercel Cron (or any scheduler)
       → acquire cross-instance lock
       → per source: collect → store raw posts → advance cursor
       → interpret up to N new posts (Gemini; one call covers ko/en/zh)
-      → classify → auto-publish or queue for review → link to existing events
-      → revalidatePath('/[locale]/news')
+      → classify → queue for operator review → link to existing events
+      → revalidatePath('/[locale]/news') + revalidatePath('/[locale]')
                                    ↓
                               PostgreSQL
                                    ↓
@@ -90,12 +106,13 @@ Vercel's own Postgres integration injects) to the **pooled** connection string.
 The driver is `postgres` (postgres.js) configured for serverless: one
 connection, no prepared statements, so transaction-mode poolers accept it.
 
-There is no ORM and no migration CLI. Migrations are an ordered list of
-statements in `src/lib/live/db/migrations.ts`, applied by `repo.migrate()` at
-the start of every cron run and every manual admin collection. They are
-idempotent twice over: the `live_migrations` ledger skips applied ids, and every
-statement is `if not exists`, so even a database whose ledger was lost converges
-instead of failing.
+There is no ORM. Migrations are an ordered list of statements in
+`src/lib/live/db/migrations.ts`; `npm run db:migrate` applies them through a
+direct `DATABASE_URL_UNPOOLED` connection before a production deployment.
+`repo.migrate()` remains a cold-start safety net for cron and admin collection.
+Each migration runs atomically under an exclusive ledger lock, the
+`live_migrations` ledger skips applied ids, and every schema statement is `if
+not exists`, so a retry converges instead of leaving a partial schema.
 
 **Never edit a shipped migration — append a new one.**
 
@@ -124,23 +141,26 @@ the fallback content for a deployment with no database.
 
 ## Deploying it
 
-1. Provision a Postgres and copy the **pooled** connection string.
+1. Provision a Postgres and copy both the **pooled** runtime connection string
+   and the direct migration connection string.
 2. In Vercel → Project → Settings → Environment Variables (Production), set:
    - `DATABASE_URL`
+   - `DATABASE_URL_UNPOOLED` (direct connection; migration command only)
    - `CRON_SECRET` — `openssl rand -hex 32`
    - `TARKOV_LIVE_ADMIN_SECRET` — `openssl rand -hex 32`, and optionally
      `TARKOV_LIVE_SESSION_SECRET` (a second random value; defaults to the admin
      secret)
    - `GEMINI_API_KEY` — optional, enables the interpretation layer
    - `X_API_ENABLED=1` and `X_BEARER_TOKEN` — optional, enables the X collectors
-3. Deploy (`vercel deploy --prod`). This repository has no git remote wired to
+3. Apply the forward-only production migration before switching application
+   traffic: `vercel env run -e production -- npm run db:migrate`.
+4. Deploy (`vercel deploy --prod`). This repository has no git remote wired to
    Vercel, so deploys are manual CLI invocations.
-4. Trigger the first run by hand and read the response:
+5. Trigger the first run by hand and read the response:
    ```bash
    curl -H "Authorization: Bearer $CRON_SECRET" https://tarkovdex.dev/api/cron/tarkov-live
    ```
-   Migrations run inside this call; there is no separate migration step.
-5. Open `https://tarkovdex.dev/ko/admin/live`, log in, confirm the source table
+6. Open `https://tarkovdex.dev/ko/admin/live`, log in, confirm the source table
    shows a recent success and the review queue is populated.
 
 > `NEXT_PUBLIC_SITE_URL` is set as a **dashboard** environment variable, which
@@ -150,15 +170,13 @@ the fallback content for a deployment with no database.
 
 ### Cron schedule
 
-`vercel.json` requests `*/10 * * * *`.
+`vercel.json` requests `0 0 * * *`: once per day at 00:00 UTC (09:00 KST).
+`LIVE_STALE_AFTER_MINUTES=1560` allows that daily run 26 hours before the board
+marks it stale.
 
-- **Pro plan**: runs every 10 minutes as written.
-- **Hobby plan**: Vercel triggers cron jobs roughly **once per day** regardless
-  of the expression. The deployment still succeeds; the schedule is just much
-  coarser than requested.
-
-If a 5–10 minute cadence is needed on Hobby, point any external scheduler at the
-same endpoint — it is a plain authenticated HTTP call:
+If a 5–10 minute cadence is needed, change the Vercel schedule on a plan that
+supports that frequency or point an external scheduler at the same endpoint —
+it is a plain authenticated HTTP call:
 
 ```bash
 curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://tarkovdex.dev/api/cron/tarkov-live
@@ -270,7 +288,8 @@ response would be a lie.
 
 ## What the machine is allowed to assert
 
-Auto-publish requires **all** of:
+The machine may classify an item as lower-risk only when **all** of these are
+true:
 
 - an official source (Steam, the official X account, the official site) —
   Nikita's personal account never qualifies;
@@ -279,8 +298,11 @@ Auto-publish requires **all** of:
 - either no claimed schedule, or every claimed time backed by source text;
 - no ambiguity flag from the interpreter.
 
-Everything else waits for a human and sits in the feed with its reliability
-badge in the meantime.
+These checks control the review explanation only; they never publish content.
+Every collected external post waits for a human in the private admin review
+queue. Only `reviewed` rows are returned by the public database query, and
+pending source text is filtered again at the server boundary so it never enters
+the public feed or RSC payload.
 
 An **event window can only be stored** when the source text states an explicit
 date, time *and* timezone (parsed as full ISO-8601), or when an operator entered
@@ -417,8 +439,9 @@ redeploy — the cursor and everything collected so far survive.
 
 **Rotating a key.** `X_BEARER_TOKEN`, `GEMINI_API_KEY`, `CRON_SECRET` and
 `TARKOV_LIVE_ADMIN_SECRET` are all replaceable in Vercel followed by a redeploy.
-Rotating the admin or session secret invalidates every open admin session, which
-is the intended way to log everyone out.
+When a separate `TARKOV_LIVE_SESSION_SECRET` is configured, rotate that value as
+well to invalidate every open admin session; rotating only the login secret does
+not invalidate cookies signed by the unchanged session key.
 
 **A post is stuck in English on the board.** Either no `GEMINI_API_KEY`, or its
 interpretation failed three times. Use **AI 해석 다시 실행**, then 지금 전체 수집.
@@ -426,9 +449,10 @@ interpretation failed three times. Use **AI 해석 다시 실행**, then 지금 
 **Something wrong is published.** Open it under 게시 중 and press 거절. It
 disappears from `/news` immediately.
 
-**Backup and restore.** Everything lives in Postgres — use the provider's own
-snapshots (Neon and Supabase both do point-in-time restore). Nothing else needs
-backing up: raw posts are re-collectable, and `manual-entries.json`,
+**Backup and restore.** Everything lives in Postgres. Neon Free currently
+provides a limited restore window; do not enable a paid retention or snapshot
+option without approval. Nothing else needs backing up: raw posts are
+re-collectable, and `manual-entries.json`,
 `news-ko.json` and `news-zh.json` are in git. After a restore, run the cron once
 to re-seed and revalidate.
 
@@ -470,7 +494,7 @@ what happens when it is unset. Summary:
 
 | required for full operation | optional | development only |
 | --- | --- | --- |
-| `DATABASE_URL` | `GEMINI_API_KEY` | `LIVE_FIXTURES` |
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED` | `GEMINI_API_KEY` | `LIVE_FIXTURES` |
 | `CRON_SECRET` | `X_API_ENABLED`, `X_BEARER_TOKEN` | |
 | `TARKOV_LIVE_ADMIN_SECRET` | tuning: `X_*`, `LIVE_*`, `TARKOV_LIVE_SESSION_*` | |
 
@@ -480,15 +504,36 @@ what happens when it is unset. Summary:
 
 1. `npm run typecheck && npm run lint && npm test && npm run build` all pass.
 2. `DATABASE_URL` points at the **pooled** connection string.
-3. `CRON_SECRET` and `TARKOV_LIVE_ADMIN_SECRET` are long random values set in
+3. `DATABASE_URL_UNPOOLED` points at the direct connection and `npm run
+   db:migrate` succeeds before deployment.
+4. `CRON_SECRET` and `TARKOV_LIVE_ADMIN_SECRET` are long random values set in
    Vercel's Production scope (not only in `vercel.json`).
-4. Deploy, then run the cron once by hand and read the JSON summary.
-5. Admin screen: log in, confirm sources show a recent success.
-6. `/ko/news`, `/en/news`, `/zh/news` render, and `마지막 확인` shows a real time
+5. Deploy, then run the cron once by hand and read the JSON summary.
+6. Admin screen: log in, confirm sources show a recent success.
+7. `/ko/news`, `/en/news`, `/zh/news` render, and `마지막 확인` shows a real time
    rather than 수집 기록 없음.
-7. `robots.txt` disallows `/api/` and `/*/admin`; `sitemap.xml` contains no admin
+8. `robots.txt` disallows `/api/` and `/*/admin`; `sitemap.xml` contains no admin
    URL.
-8. If on Hobby, point an external scheduler at the cron endpoint.
+9. If on Hobby, point an external scheduler at the cron endpoint.
+
+## Production rollback
+
+- Record the current and immediately previous READY deployment IDs before each
+  release. Roll the application back with `vercel rollback <previous-id>` and
+  confirm with `vercel rollback status tarkovdex`.
+- Migrations are forward-only and additive. A committed schema migration has no
+  automatic down migration; the previous application must remain compatible
+  with the additive schema before it is used as a rollback target.
+- Pause collection by setting `LIVE_INGESTION_ENABLED=false` in Production and
+  redeploying. An authenticated cron then fails closed with 503 and performs no
+  writes. The Vercel cron can also be removed from `vercel.json` in an emergency
+  release.
+- Disconnecting the Marketplace resource or removing `DATABASE_URL` requires a
+  redeploy. Public pages then degrade to the file-backed board, while cron and
+  admin storage writes stay disabled.
+- Do not bulk-delete a failed run first. Identify its `live_ingestion_runs` row,
+  reject affected events through the admin audit path, and rotate any exposed
+  cron/admin/session secret before re-enabling collection.
 
 ## Incident checklist
 

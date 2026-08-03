@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getItems } from '@/lib/tarkov';
 import { isValidLocale } from '@/i18n/routing';
-import { queryMarketItems } from '@/lib/market-items-query';
+import { marketItemsByIds, queryMarketItems } from '@/lib/market-items-query';
+import { domainHealth } from '@/lib/data-observations';
 import type { GameMode } from '@/types/tarkov';
 
 const VALID_MODES = new Set<GameMode>(['regular', 'pve']);
@@ -26,7 +27,9 @@ const VALID_CATEGORIES = new Set([
 
 function numberParam(value: string | null, fallback: number, min: number, max: number) {
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+  return Number.isFinite(parsed)
+    ? Math.min(max, Math.max(min, Math.floor(parsed)))
+    : fallback;
 }
 
 export async function GET(request: Request) {
@@ -48,7 +51,56 @@ export async function GET(request: Request) {
 
   try {
     const items = await getItems({ locale, gameMode });
-    const response = queryMarketItems(items, gameMode, {
+
+    // Resolves a bounded set of item ids. Default: name/icon for quest
+    // requirement labels. `detail=market` returns MarketItem rows for the
+    // watchlist batch path (same feeRate as the flea page).
+    const idsParam = searchParams.get('ids');
+    if (idsParam !== null) {
+      const ids = idsParam
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .slice(0, 1000);
+      if (searchParams.get('detail') === 'market') {
+        const found = marketItemsByIds(items, ids, feeRate);
+        const { delivery } = domainHealth({
+          domain: 'itemPrices',
+          gameMode,
+          locale,
+          availability: 'available',
+          sourceUpdatedAt: found.reduce<string | null>((latest, item) => {
+            if (!item.updated) return latest;
+            if (!latest) return item.updated;
+            return Date.parse(item.updated) > Date.parse(latest) ? item.updated : latest;
+          }, null),
+        });
+        return NextResponse.json(
+          {
+            items: found,
+            meta: {
+              gameMode,
+              feeRate,
+              delivery,
+              generatedAt: new Date().toISOString(),
+              requested: ids.length,
+              found: found.length,
+            },
+          },
+          { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' } },
+        );
+      }
+      const wanted = new Set(ids);
+      const found = items
+        .filter((item) => wanted.has(item.id))
+        .map(({ id, name, shortName, iconLink }) => ({ id, name, shortName, iconLink }));
+      return NextResponse.json(
+        { items: found },
+        { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' } },
+      );
+    }
+
+    const base = queryMarketItems(items, gameMode, {
       query,
       locale,
       sort,
@@ -58,6 +110,14 @@ export async function GET(request: Request) {
       page,
       feeRate,
     });
+    const { delivery } = domainHealth({
+      domain: 'itemPrices',
+      gameMode,
+      locale,
+      availability: 'available',
+      sourceUpdatedAt: base.meta.sourceUpdatedAt,
+    });
+    const response = { ...base, meta: { ...base.meta, delivery } };
     return NextResponse.json(response, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' },
     });

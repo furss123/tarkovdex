@@ -5,6 +5,10 @@ import { X_DEFAULT_LOCALE } from '@/lib/metadata';
 import { getTasks } from '@/lib/tarkov';
 import { unionTaskEntries } from '@/lib/task-availability';
 import { taskSlugFor } from '@/lib/task-slug';
+import { settleModePair } from '@/lib/settle-mode-pair';
+
+export const dynamic = 'force-static';
+export const revalidate = 21600;
 
 /** Every static route in the app, relative to a locale segment. */
 const ROUTES = [
@@ -18,6 +22,8 @@ const ROUTES = [
   '/combat/ammo',
   '/combat/armor',
   '/maps',
+  '/status',
+  '/beginner',
   '/support',
 ] as const;
 
@@ -44,9 +50,9 @@ function alternatesFor(route: string) {
  * always built from the English name (see lib/task-slug.ts), so it's
  * identical across en/ko/zh and doesn't need fetching per-locale. Regular and
  * PvE are deduped by id via the same `unionTaskEntries` helper the detail
- * route's `generateStaticParams` uses, so this list can never disagree with
- * what's actually prerendered — see CLAUDE.md > Phase 2B for the 524-unique
- * (501 regular + 23 PvE-only) count this produces.
+ * route's `generateStaticParams` uses. The two requests settle independently,
+ * so a transient one-mode outage keeps the other mode's known task URLs;
+ * under normal operation this produces the full 524-entry union.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const categoryEntries: MetadataRoute.Sitemap = ROUTES.flatMap((route) =>
@@ -57,11 +63,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
-  const [regularTasks, pveTasks] = await Promise.all([
-    getTasks({ locale: 'en', gameMode: 'regular' }),
-    getTasks({ locale: 'en', gameMode: 'pve' }),
-  ]);
-  const taskRoutes = unionTaskEntries(regularTasks, pveTasks).map(
+  const tasks = await settleModePair({
+    regular: getTasks({ locale: 'en', gameMode: 'regular' }),
+    pve: getTasks({ locale: 'en', gameMode: 'pve' }),
+  });
+  // A one-mode outage should not remove the other mode's valid quest URLs.
+  // If both fail, the essential category routes above still remain available.
+  const taskRoutes = unionTaskEntries(tasks.regular ?? [], tasks.pve ?? []).map(
     (entry) => `/progression/tasks/${taskSlugFor(entry.task)}`,
   );
 

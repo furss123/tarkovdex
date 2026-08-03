@@ -52,30 +52,30 @@ function ClockReading({
   const night = isNight(hours);
   return (
     <div
-      className="flex min-w-0 flex-col items-center justify-center"
+      className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-border/80 bg-bg/35 px-3 py-4 sm:px-4 sm:py-5"
       aria-label={label}
     >
-      <span className="mb-1 text-[13px] leading-4 text-muted" aria-hidden="true">
+      <span className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
         {label}
       </span>
-      <div className="flex items-center justify-center gap-2 sm:gap-3">
+      <div className="flex min-w-0 items-center justify-center gap-2 sm:gap-3">
         {night ? (
           <Moon
-            className="size-4 shrink-0 text-accent sm:size-6 md:size-7"
+            className="size-5 shrink-0 text-accent sm:size-6"
             aria-hidden="true"
           />
         ) : (
           <Sun
-            className="size-4 shrink-0 text-muted sm:size-6 md:size-7"
+            className="size-5 shrink-0 text-muted sm:size-6"
             aria-hidden="true"
           />
         )}
-        <span className="font-mono text-base tabular-nums text-fg sm:text-xl md:text-2xl">
+        <span className="min-w-[8ch] whitespace-nowrap text-center font-mono text-2xl tabular-nums tracking-tight text-fg md:text-3xl">
           {pad(hours)}:{pad(minutes)}:{pad(seconds)}
         </span>
       </div>
       <span
-        className={`mt-1 text-xs text-accent sm:text-sm ${night ? '' : 'invisible'}`}
+        className={`mt-2 text-xs text-accent ${night ? '' : 'invisible'}`}
         aria-hidden={!night}
       >
         {nightLabel}
@@ -85,10 +85,9 @@ function ClockReading({
 }
 
 /**
- * Centered two-column raid clock. The A/B labels stay available to assistive
- * technology, but are visually omitted because the 12-hour-apart readings
- * are self-explanatory in this compact dashboard context. Pure client-side
- * math (see BASE_OFFSET_MS comment) — no API call.
+ * Two-card raid clock. Pure client-side math (see BASE_OFFSET_MS comment) —
+ * no API call. The first render is a dimension-matched placeholder so the
+ * server and browser agree during hydration and the layout never jumps.
  */
 export function InGameClock() {
   const t = useTranslations('home');
@@ -104,42 +103,51 @@ export function InGameClock() {
   }, []);
 
   return (
-    <section className="rounded-lg border border-border px-3 py-4 sm:px-6 sm:py-5">
-      <h2 className="text-center text-xs font-medium uppercase tracking-wide text-muted">
-        {t('raidTimeTitle')}
+    <section
+      aria-labelledby="raid-time-heading"
+      className="rounded-lg border border-border bg-surface/40 p-3 sm:p-4"
+    >
+      <h2 id="raid-time-heading" className="text-base font-medium text-fg">
+        {t('raidTimeAria')}
       </h2>
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:divide-x sm:divide-border">
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {now == null ? (
           <>
-            <div className="flex min-w-0 flex-col items-center justify-center sm:flex-1 sm:px-3 md:px-4">
-              <span className="mb-1 text-[13px] leading-4 text-muted">{t('raidTimeA')}</span>
-              <span className="font-mono text-base tabular-nums text-muted sm:text-xl md:text-2xl">
+            <div className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-border/80 bg-bg/35 px-3 py-4 sm:px-4 sm:py-5">
+              <span className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+                {t('raidTimeA')}
+              </span>
+              <span className="min-w-[8ch] whitespace-nowrap text-center font-mono text-2xl tabular-nums tracking-tight text-muted md:text-3xl">
                 --:--:--
               </span>
+              <span className="invisible mt-2 text-xs" aria-hidden="true">
+                {t('nightHint')}
+              </span>
             </div>
-            <div className="flex min-w-0 flex-col items-center justify-center sm:flex-1 sm:px-3 md:px-4">
-              <span className="mb-1 text-[13px] leading-4 text-muted">{t('raidTimeB')}</span>
-              <span className="font-mono text-base tabular-nums text-muted sm:text-xl md:text-2xl">
+            <div className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-border/80 bg-bg/35 px-3 py-4 sm:px-4 sm:py-5">
+              <span className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+                {t('raidTimeB')}
+              </span>
+              <span className="min-w-[8ch] whitespace-nowrap text-center font-mono text-2xl tabular-nums tracking-tight text-muted md:text-3xl">
                 --:--:--
+              </span>
+              <span className="invisible mt-2 text-xs" aria-hidden="true">
+                {t('nightHint')}
               </span>
             </div>
           </>
         ) : (
           <>
-            <div className="flex min-w-0 flex-col items-center justify-center sm:flex-1 sm:px-3 md:px-4">
-              <ClockReading
-                label={t('raidTimeA')}
-                {...gameTimeOfDay(now, true)}
-                nightLabel={t('nightHint')}
-              />
-            </div>
-            <div className="flex min-w-0 flex-col items-center justify-center sm:flex-1 sm:px-3 md:px-4">
-              <ClockReading
-                label={t('raidTimeB')}
-                {...gameTimeOfDay(now, false)}
-                nightLabel={t('nightHint')}
-              />
-            </div>
+            <ClockReading
+              label={t('raidTimeA')}
+              {...gameTimeOfDay(now, true)}
+              nightLabel={t('nightHint')}
+            />
+            <ClockReading
+              label={t('raidTimeB')}
+              {...gameTimeOfDay(now, false)}
+              nightLabel={t('nightHint')}
+            />
           </>
         )}
       </div>

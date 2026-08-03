@@ -1,5 +1,9 @@
 import { PGlite } from '@electric-sql/pglite';
-import type { SqlExecutor } from '../../src/lib/live/db/sql';
+import {
+  NESTED_TRANSACTION_ERROR,
+  type SqlExecutor,
+  type SqlRow,
+} from '../../src/lib/live/db/sql';
 import { createRepository, type LiveRepository } from '../../src/lib/live/repository';
 
 /**
@@ -15,12 +19,48 @@ export interface TestDb {
   close: () => Promise<void>;
 }
 
-export async function createTestDb(): Promise<TestDb> {
-  const db = new PGlite();
-  const sql: SqlExecutor = async <T>(text: string, params: unknown[] = []) => {
+function pgliteExecutor(db: PGlite, inTransaction = false): SqlExecutor {
+  const sql = (async <T = SqlRow>(text: string, params: unknown[] = []) => {
     const result = await db.query(text, params as unknown[]);
     return result.rows as T[];
+  }) as SqlExecutor;
+  sql.inTransaction = inTransaction;
+  sql.transaction = async <T>(work: (transactionSql: SqlExecutor) => Promise<T>) => {
+    if (inTransaction) throw new Error(NESTED_TRANSACTION_ERROR);
+    await sql('begin');
+    try {
+      const result = await work(pgliteExecutor(db, true));
+      await sql('commit');
+      return result;
+    } catch (error) {
+      await sql('rollback');
+      throw error;
+    }
   };
+  return sql;
+}
+
+/** Wraps the real PGlite executor while preserving its transaction semantics. */
+export function withQueryHook(
+  base: SqlExecutor,
+  beforeQuery: (text: string, params: unknown[]) => void | Promise<void>,
+): SqlExecutor {
+  const wrap = (current: SqlExecutor): SqlExecutor => {
+    const sql = (async <T = SqlRow>(text: string, params: unknown[] = []) => {
+      await beforeQuery(text, params);
+      return current<T>(text, params);
+    }) as SqlExecutor;
+    sql.inTransaction = current.inTransaction;
+    sql.transaction = async <T>(work: (transactionSql: SqlExecutor) => Promise<T>) =>
+      current.transaction((transactionSql) => work(wrap(transactionSql)));
+    return sql;
+  };
+  return wrap(base);
+}
+
+export async function createTestDb(): Promise<TestDb> {
+  const db = new PGlite();
+  const sql = pgliteExecutor(db);
   const repo = createRepository(sql);
   await repo.migrate();
   return { sql, repo, close: () => db.close() };

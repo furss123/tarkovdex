@@ -22,6 +22,7 @@ function bestEffectiveClass(round: AmmoRound): number {
 }
 
 type SortKey = 'penetration' | 'damage' | 'armorDamage' | 'speed';
+const SORT_KEYS: readonly SortKey[] = ['penetration', 'damage', 'armorDamage', 'speed'];
 const SORT_VALUE: Record<SortKey, (round: AmmoRound) => number | null> = {
   penetration: (round) => round.penetrationPower,
   damage: (round) => round.damage,
@@ -54,21 +55,34 @@ export function AmmoChart({ regular, pve }: { regular: CombatDataset; pve: Comba
   const [pinned, setPinned] = useState<string[]>([]);
   const [pinLimitHit, setPinLimitHit] = useState(false);
   const [limit, setLimit] = useState(60);
+  const [queryReady, setQueryReady] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const initialSort = params.get('sort');
     setQuery(params.get('q') ?? '');
     setCaliber(params.get('caliber') ?? '');
+    if (initialSort && SORT_KEYS.includes(initialSort as SortKey)) {
+      setSort(initialSort as SortKey);
+    }
+    setQueryReady(true);
   }, []);
+
   useEffect(() => {
+    if (!queryReady) return;
     const params = new URLSearchParams(window.location.search);
     if (query) params.set('q', query);
     else params.delete('q');
     if (caliber) params.set('caliber', caliber);
     else params.delete('caliber');
     params.set('sort', sort);
-    window.history.replaceState(null, '', `${window.location.pathname}?${params}`);
-  }, [caliber, query, sort]);
+    const nextQuery = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`,
+    );
+  }, [caliber, query, queryReady, sort]);
   // Filter changes reset paging so results never look truncated mid-list.
   useEffect(() => {
     setLimit(60);
@@ -108,7 +122,17 @@ export function AmmoChart({ regular, pve }: { regular: CombatDataset; pve: Comba
         <label className="col-span-2 text-xs text-muted md:col-span-1"><span className="mb-1 block">{t('search')}</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg" /></label>
         <label className="text-xs text-muted"><span className="mb-1 block">{t('caliber')}</span><select value={caliber} onChange={(event) => setCaliber(event.target.value)} className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg"><option value="">{t('all')}</option>{calibers.map((value) => <option key={value} value={value}>{formatCaliber(value, locale)}</option>)}</select></label>
         <label className="text-xs text-muted"><span className="mb-1 block">{t('sort')}</span><select value={sort} onChange={(event) => setSort(event.target.value as SortKey)} className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg"><option value="penetration">{t('penetration')}</option><option value="damage">{t('damage')}</option><option value="armorDamage">{t('armorDamage')}</option><option value="speed">{t('speed')}</option></select></label>
-        <label className="col-span-2 flex min-h-touch items-center gap-2 text-xs text-muted md:col-span-1 md:self-end"><input type="checkbox" checked={tracerOnly} onChange={(event) => setTracerOnly(event.target.checked)} className="size-4 accent-accent" />{t('tracerOnly')}</label>
+        <label className="col-span-2 flex min-h-touch cursor-pointer items-center gap-2 text-xs text-muted md:col-span-1 md:self-end">
+          <span className="inline-flex size-touch shrink-0 items-center justify-center">
+            <input
+              type="checkbox"
+              checked={tracerOnly}
+              onChange={(event) => setTracerOnly(event.target.checked)}
+              className="size-4 accent-accent"
+            />
+          </span>
+          {t('tracerOnly')}
+        </label>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
         <span aria-live="polite">{t('resultCount', { count: visible.length })}</span>
@@ -119,15 +143,15 @@ export function AmmoChart({ regular, pve }: { regular: CombatDataset; pve: Comba
       <p className="mt-3 text-xs leading-relaxed text-muted">{t('method')}</p>
 
       <div className="mt-5 hidden max-w-full overflow-x-auto rounded-lg border border-border lg:block">
-        <table className="w-full min-w-[1160px] table-fixed border-collapse text-xs">
+        <table className="w-full min-w-[1170px] table-fixed border-collapse text-[14px] leading-5">
           <colgroup>
             <col className="w-[56px]" />
-            <col className="w-[264px]" />
-            <col className="w-[76px]" />
-            <col className="w-[76px]" />
-            <col className="w-[104px]" />
-            <col className="w-[92px]" />
-            {ARMOR_CLASSES.map((armorClass) => <col key={armorClass} className="w-[82px]" />)}
+            <col className="w-[230px]" />
+            <col className="w-[84px]" />
+            <col className="w-[108px]" />
+            <col className="w-[116px]" />
+            <col className="w-[96px]" />
+            {ARMOR_CLASSES.map((armorClass) => <col key={armorClass} className="w-[80px]" />)}
           </colgroup>
           <thead className="bg-surface-2 text-muted">
             <tr>
@@ -136,7 +160,7 @@ export function AmmoChart({ regular, pve }: { regular: CombatDataset; pve: Comba
               <th className="whitespace-nowrap border-b border-border px-2 py-3 text-center font-medium">{t('damage')}</th>
               <th className="whitespace-nowrap border-b border-border px-2 py-3 text-center font-medium">{t('penetration')}</th>
               <th className="whitespace-nowrap border-b border-border px-2 py-3 text-center font-medium">{t('armorDamage')}</th>
-              <th className="whitespace-nowrap border-b border-border px-2 py-3 text-center font-medium">{t('speed')}</th>
+              <th className="whitespace-nowrap border-b border-l border-border px-2 py-3 text-center font-medium">{t('speed')}</th>
               {ARMOR_CLASSES.map((value) => <th key={value} className="whitespace-nowrap border-b border-border px-2 py-3 text-center font-medium">{t('class')} {value}</th>)}
             </tr>
           </thead>
@@ -146,7 +170,7 @@ export function AmmoChart({ regular, pve }: { regular: CombatDataset; pve: Comba
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={round.iconLink} alt="" width={32} height={32} loading="lazy" className="size-8 shrink-0 object-contain" />
             </> : null}<div className="min-w-0"><p className="line-clamp-2 text-fg">{round.name}</p><p className="truncate text-muted">{formatCaliber(round.caliber, locale)}{round.tracer ? ` · ${t('tracer')}` : ''}</p></div></div></td>
-            <td className="whitespace-nowrap border-b border-border px-2 text-center tabular-nums">{round.damage ?? '—'}</td><td className="whitespace-nowrap border-b border-border px-2 text-center tabular-nums">{round.penetrationPower ?? '—'}</td><td className="whitespace-nowrap border-b border-border px-2 text-center tabular-nums">{round.armorDamage === null ? '—' : `${round.armorDamage}%`}</td><td className="whitespace-nowrap border-b border-border px-2 text-center tabular-nums">{round.initialSpeed === null ? '—' : `${round.initialSpeed} m/s`}</td>
+            <td className="whitespace-nowrap border-b border-border px-2 text-center tabular-nums">{round.damage ?? '—'}</td><td className="whitespace-nowrap border-b border-border px-2 text-center tabular-nums">{round.penetrationPower ?? '—'}</td><td className="whitespace-nowrap border-b border-border px-2 text-center tabular-nums">{round.armorDamage === null ? '—' : `${round.armorDamage}%`}</td><td className="whitespace-nowrap border-b border-l border-border px-2 text-center tabular-nums">{round.initialSpeed === null ? '—' : `${round.initialSpeed} m/s`}</td>
             {ARMOR_CLASSES.map((armorClass) => <td key={armorClass} className="border-b border-border px-2 py-2 text-center"><Grade round={round} armorClass={armorClass} /></td>)}
           </tr>)}</tbody>
         </table>
@@ -155,7 +179,7 @@ export function AmmoChart({ regular, pve }: { regular: CombatDataset; pve: Comba
       <div className="mt-5 lg:hidden">
         {pinnedRounds.length ? (
           <section aria-label={t('pinnedCompare')} className="mb-5 rounded-lg border border-accent/40 p-3">
-            <h2 className="text-[13px] font-medium leading-5 text-accent">{t('pinnedCompare')}</h2>
+            <h2 className="text-[16px] font-medium leading-6 text-accent">{t('pinnedCompare')}</h2>
             <div className="mt-2 space-y-3">
               {pinnedRounds.map((round) => (
                 <MobileAmmoCard key={`pinned-${round.id}`} round={round} isPinned onTogglePin={togglePin} locale={locale} alwaysShowGrades />
@@ -199,7 +223,7 @@ function MobileAmmoCard({
     <div className="grid grid-cols-3 gap-2">
       {ARMOR_CLASSES.map((armorClass) => (
         <div key={armorClass} className="text-center">
-          <p className="mb-1 text-[12px] leading-4 text-muted">{t('class')} {armorClass}</p>
+          <p className="mb-1 text-[14px] leading-5 text-muted">{t('class')} {armorClass}</p>
           <Grade round={round} armorClass={armorClass} />
         </div>
       ))}
@@ -222,12 +246,12 @@ function MobileAmmoCard({
         </button>
       </div>
 
-      <p className="mt-3 whitespace-nowrap text-[14px] leading-5 text-muted">
+      <p className="mt-3 whitespace-nowrap text-[16px] leading-6 text-muted">
         {t('damage')} <span className="font-medium tabular-nums text-fg">{round.damage ?? '—'}</span>
         {' · '}
         {t('penetration')} <span className="font-medium tabular-nums text-fg">{round.penetrationPower ?? '—'}</span>
       </p>
-      <p className="mt-1.5 text-[13px] leading-5 text-muted">
+      <p className="mt-1.5 text-[16px] leading-6 text-muted">
         {t('bestClass')}:{' '}
         {best > 0 ? (
           <span className="font-medium text-fg">{t('class')} {best}</span>
@@ -238,7 +262,7 @@ function MobileAmmoCard({
 
       {alwaysShowGrades ? (
         <div className="mt-3 border-t border-border/60 pt-3">
-          <p className="mb-2 text-[13px] leading-5 text-muted">
+          <p className="mb-2 text-[14px] leading-5 text-muted">
             {t('armorDamage')} <span className="tabular-nums text-fg">{round.armorDamage === null ? '—' : `${round.armorDamage}%`}</span>
             {' · '}
             {t('speed')} <span className="tabular-nums text-fg">{round.initialSpeed === null ? '—' : `${round.initialSpeed} m/s`}</span>
@@ -247,11 +271,11 @@ function MobileAmmoCard({
         </div>
       ) : (
         <details className="group mt-3 border-t border-border/60 pt-2">
-          <summary className="flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-[13px] leading-5 text-muted">
+          <summary className="flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-[16px] leading-6 text-muted">
             <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
             {t('gradeDetails')}
           </summary>
-          <p className="mb-2 mt-1 text-[13px] leading-5 text-muted">
+          <p className="mb-2 mt-1 text-[14px] leading-5 text-muted">
             {t('armorDamage')} <span className="tabular-nums text-fg">{round.armorDamage === null ? '—' : `${round.armorDamage}%`}</span>
             {' · '}
             {t('speed')} <span className="tabular-nums text-fg">{round.initialSpeed === null ? '—' : `${round.initialSpeed} m/s`}</span>

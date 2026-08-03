@@ -185,11 +185,20 @@ export const MIGRATIONS: Migration[] = [
       )`,
     ],
   },
+  {
+    id: '0002_require_operator_review',
+    statements: [
+      `update live_events
+          set review_status = 'pending_review', published_at = null, updated_at = now()
+        where review_status = 'auto_published'`,
+    ],
+  },
 ];
 
 /**
- * Idempotent by construction: the ledger skips applied ids, and every
- * statement is `if not exists` anyway. Safe to call on every cold start.
+ * Idempotent by construction: the ledger skips applied ids, and schema DDL uses
+ * `if not exists` while data migrations are written to converge on re-run.
+ * Safe to call on every cold start.
  */
 export async function migrate(sql: SqlExecutor): Promise<string[]> {
   await sql(`create table if not exists live_migrations (
@@ -197,16 +206,27 @@ export async function migrate(sql: SqlExecutor): Promise<string[]> {
     applied_at timestamptz not null default now()
   )`);
 
-  const applied = new Set(
-    (await sql<{ id: string }>('select id from live_migrations')).map((row) => row.id),
-  );
+  if (!sql.transaction) throw new Error('transactions_not_supported');
 
   const ran: string[] = [];
   for (const migration of MIGRATIONS) {
-    if (applied.has(migration.id)) continue;
-    for (const statement of migration.statements) await sql(statement);
-    await sql('insert into live_migrations (id) values ($1) on conflict do nothing', [migration.id]);
-    ran.push(migration.id);
+    const appliedNow = await sql.transaction(async (transactionSql) => {
+      // Serialize a deployment migration with any cold-start migration from
+      // another instance. Re-check the ledger after taking the lock because a
+      // waiter may have observed the old state before the first runner
+      // committed.
+      await transactionSql('lock table live_migrations in exclusive mode');
+      const [applied] = await transactionSql<{ id: string }>(
+        'select id from live_migrations where id = $1',
+        [migration.id],
+      );
+
+      if (applied) return false;
+      for (const statement of migration.statements) await transactionSql(statement);
+      await transactionSql('insert into live_migrations (id) values ($1)', [migration.id]);
+      return true;
+    });
+    if (appliedNow) ran.push(migration.id);
   }
   return ran;
 }

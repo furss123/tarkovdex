@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-/** Clamps long text to a few lines with a show-more toggle. Used by MapCard
- * (a Server Component) for map descriptions, so the toggle state lives here. */
+/** Clamps long map descriptions while keeping the complete text one keyboard
+ * or touch action away. Short descriptions remain plain text. */
 export function ExpandableText({
   text,
   moreLabel,
@@ -15,13 +15,17 @@ export function ExpandableText({
   lessLabel: string;
 }) {
   const [open, setOpen] = useState(false);
-  // ponytail: clamp always renders the toggle for text over ~120 chars
-  // instead of measuring real overflow; short texts skip the toggle.
+  const descriptionId = useId();
   const needsToggle = text.length > 120;
 
   return (
     <div>
-      <p className={`text-sm leading-relaxed text-muted ${open ? '' : 'line-clamp-2'}`}>
+      <p
+        id={descriptionId}
+        className={`text-sm leading-relaxed text-muted ${
+          needsToggle && !open ? 'line-clamp-2' : ''
+        }`}
+      >
         {text}
       </p>
       {needsToggle ? (
@@ -29,6 +33,7 @@ export function ExpandableText({
           type="button"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
+          aria-controls={descriptionId}
           className="mt-1 inline-flex min-h-touch items-center gap-1 rounded text-[13px] leading-5 text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
         >
           {open ? lessLabel : moreLabel}

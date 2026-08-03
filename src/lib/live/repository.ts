@@ -197,6 +197,7 @@ export interface AuditEntry {
 }
 
 export interface LiveRepository {
+  transaction<T>(work: (repo: LiveRepository) => Promise<T>): Promise<T>;
   migrate(): Promise<string[]>;
 
   getSourceState(sourceKey: string): Promise<SourceState | null>;
@@ -381,6 +382,10 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
   }
 
   const repo: LiveRepository = {
+    async transaction(work) {
+      return sql.transaction((transactionSql) => work(createRepository(transactionSql)));
+    },
+
     async migrate() {
       const { migrate } = await import('./db/migrations');
       return migrate(sql);
@@ -399,41 +404,39 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
     },
 
     async saveSourceState(state) {
+      // Patch semantics matter here. An omitted cursor/error/retry field means
+      // "leave it alone" while an explicit null means "clear it". Building the
+      // INSERT from own properties preserves that distinction without sentinel
+      // values that could leak into the stored row.
+      const columns = ['source_key', 'source_type'];
+      const params: unknown[] = [state.sourceKey, state.sourceType];
+      const updates = ['source_type = excluded.source_type'];
+      const fields: Array<[keyof SourceState, string]> = [
+        ['account', 'account'],
+        ['externalId', 'external_id'],
+        ['active', 'active'],
+        ['sinceId', 'since_id'],
+        ['cursor', 'cursor'],
+        ['lastSuccessAt', 'last_success_at'],
+        ['lastAttemptAt', 'last_attempt_at'],
+        ['lastError', 'last_error'],
+        ['lastErrorAt', 'last_error_at'],
+        ['consecutiveFailures', 'consecutive_failures'],
+        ['nextRetryAt', 'next_retry_at'],
+      ];
+      for (const [key, column] of fields) {
+        if (!Object.hasOwn(state, key) || state[key] === undefined) continue;
+        columns.push(column);
+        params.push(state[key]);
+        updates.push(`${column} = excluded.${column}`);
+      }
+      const placeholders = params.map((_, index) => `$${index + 1}`);
       await sql(
-        `insert into live_source_states
-           (source_key, source_type, account, external_id, active, since_id, cursor,
-            last_success_at, last_attempt_at, last_error, last_error_at,
-            consecutive_failures, next_retry_at, updated_at)
-         values ($1,$2,$3,$4,coalesce($5,true),$6,$7,$8,$9,$10,$11,coalesce($12,0),$13, now())
+        `insert into live_source_states (${columns.join(', ')})
+         values (${placeholders.join(', ')})
          on conflict (source_key) do update set
-           source_type = excluded.source_type,
-           account = excluded.account,
-           external_id = coalesce(excluded.external_id, live_source_states.external_id),
-           active = excluded.active,
-           since_id = coalesce(excluded.since_id, live_source_states.since_id),
-           cursor = excluded.cursor,
-           last_success_at = coalesce(excluded.last_success_at, live_source_states.last_success_at),
-           last_attempt_at = coalesce(excluded.last_attempt_at, live_source_states.last_attempt_at),
-           last_error = excluded.last_error,
-           last_error_at = excluded.last_error_at,
-           consecutive_failures = excluded.consecutive_failures,
-           next_retry_at = excluded.next_retry_at,
-           updated_at = now()`,
-        [
-          state.sourceKey,
-          state.sourceType,
-          state.account ?? '',
-          state.externalId ?? null,
-          state.active ?? true,
-          state.sinceId ?? null,
-          state.cursor ?? null,
-          state.lastSuccessAt ?? null,
-          state.lastAttemptAt ?? null,
-          state.lastError ?? null,
-          state.lastErrorAt ?? null,
-          state.consecutiveFailures ?? 0,
-          state.nextRetryAt ?? null,
-        ],
+           ${updates.join(', ')}, updated_at = now()`,
+        params,
       );
     },
 
@@ -456,7 +459,16 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
            -- Edited upstream => re-interpret; otherwise keep whatever we had.
            interpret_status = case
              when live_raw_posts.content_hash is distinct from excluded.content_hash then 'pending'
-             else live_raw_posts.interpret_status end
+             else live_raw_posts.interpret_status end,
+           interpret_attempts = case
+             when live_raw_posts.content_hash is distinct from excluded.content_hash then 0
+             else live_raw_posts.interpret_attempts end,
+           interpret_error = case
+             when live_raw_posts.content_hash is distinct from excluded.content_hash then null
+             else live_raw_posts.interpret_error end,
+           processed_at = case
+             when live_raw_posts.content_hash is distinct from excluded.content_hash then null
+             else live_raw_posts.processed_at end
          returning id, (xmax = 0) as inserted, edited`,
         [
           id,
@@ -496,7 +508,7 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
     async getPendingInterpretations(limit) {
       const rows = await sql<SqlRowLike>(
         `select * from live_raw_posts
-          where revoked = false and interpret_status = 'pending' and interpret_attempts < 3
+          where revoked = false and interpret_status in ('pending', 'failed') and interpret_attempts < 3
           order by published_at desc limit $1`,
         [limit],
       );
@@ -507,9 +519,15 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
       await sql(
         `update live_raw_posts set
            interpret_status = $2,
-           interpret_error = $3,
-           interpret_attempts = interpret_attempts + case when $2 = 'failed' then 1 else 0 end,
-           processed_at = case when $2 = 'done' then now() else processed_at end
+           interpret_error = case when $2 in ('pending', 'done') then null else $3 end,
+           interpret_attempts = case
+             when $2 = 'pending' then 0
+             when $2 = 'failed' then interpret_attempts + 1
+             else interpret_attempts end,
+           processed_at = case
+             when $2 = 'done' then now()
+             when $2 = 'pending' then null
+             else processed_at end
          where id = $1`,
         [id, status, error],
       );
@@ -696,7 +714,14 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
     },
 
     async updateEventFields(eventId, patch, options) {
-      const [before] = await sql<SqlRowLike>('select * from live_events where id = $1', [eventId]);
+      if (!sql.inTransaction) {
+        return repo.transaction((transactionRepo) =>
+          transactionRepo.updateEventFields(eventId, patch, options),
+        );
+      }
+      const [before] = await sql<SqlRowLike>('select * from live_events where id = $1 for update', [
+        eventId,
+      ]);
       if (!before) return null;
 
       if (options.manual) {
@@ -748,13 +773,39 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
     },
 
     async clearEventOverride(eventId, field, actor) {
-      const [before] = await sql<SqlRowLike>('select overrides from live_events where id = $1', [eventId]);
+      if (!sql.inTransaction) {
+        return repo.transaction((transactionRepo) =>
+          transactionRepo.clearEventOverride(eventId, field, actor),
+        );
+      }
+      const [before] = await sql<SqlRowLike>('select overrides from live_events where id = $1 for update', [
+        eventId,
+      ]);
       if (!before) return null;
       const overrides = obj(json(before.overrides));
       delete overrides[field];
+      const resets: Record<string, Array<[string, unknown]>> = {
+        reviewStatus: [['review_status', 'pending_review']],
+        reviewNote: [['review_note', null]],
+        publishedAt: [['published_at', null]],
+        endedAt: [['ended_at', null]],
+        status: [['status', 'unknown']],
+        startsAt: [['starts_at', null]],
+        endsAt: [
+          ['ends_at', null],
+          ['end_confirmed', false],
+        ],
+        endConfirmed: [['end_confirmed', false]],
+      };
+      const params: unknown[] = [eventId, JSON.stringify(overrides), Object.keys(overrides)];
+      const assignments = ['overrides = $2::jsonb', 'manual_fields = $3', 'updated_at = now()'];
+      for (const [column, value] of resets[field] ?? []) {
+        params.push(value);
+        assignments.push(`${column} = $${params.length}`);
+      }
       await sql(
-        'update live_events set overrides = $2::jsonb, manual_fields = $3, updated_at = now() where id = $1',
-        [eventId, JSON.stringify(overrides), Object.keys(overrides)],
+        `update live_events set ${assignments.join(', ')} where id = $1`,
+        params,
       );
       await repo.appendAudit({
         targetType: 'event',
@@ -767,6 +818,9 @@ export function createRepository(sql: SqlExecutor): LiveRepository {
     },
 
     async deleteEvent(eventId, actor) {
+      if (!sql.inTransaction) {
+        return repo.transaction((transactionRepo) => transactionRepo.deleteEvent(eventId, actor));
+      }
       await sql('delete from live_events where id = $1', [eventId]);
       await repo.appendAudit({ targetType: 'event', targetId: eventId, action: 'delete', actor });
     },

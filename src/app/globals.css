@@ -21,7 +21,7 @@
   --color-accent: 226 164 56; /* #e2a438 — amber, the only accent */
   --color-accent-fg: 23 24 27; /* text on accent surfaces */
   --color-positive: 88 179 104; /* #58b368 — price up (muted green) */
-  --color-negative: 208 100 95; /* #d0645f — price down (muted red) */
+  --color-negative: 229 139 134; /* #e58b86 — price down, AA on dark surfaces */
 
   /*
    * Font stack. Pretendard covers Korean + Latin; Noto Sans SC covers
@@ -39,6 +39,10 @@ html[lang='zh'] {
 }
 
 @layer base {
+  html {
+    scroll-padding-top: 5rem;
+  }
+
   body {
     @apply bg-bg text-fg font-sans font-normal antialiased;
   }

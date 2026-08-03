@@ -8,6 +8,7 @@ import { ToolIntro } from '@/components/tools/ToolShell';
 import { Link } from '@/i18n/navigation';
 import { RELATED_LINK_CLASS } from '@/components/tools/relatedLinkClass';
 import type { TasksResponse } from '@/types/tarkov';
+import { domainHealth } from '@/lib/data-observations';
 type Props = { params: Promise<{ locale: string }> };
 // Structural quest data (not price data) — matches the 6h cadence getTasks()
 // already caches at, so the SSR'd first page doesn't go stale between builds.
@@ -46,10 +47,28 @@ export default async function TasksPage({ params }: Props) {
     // client fetch (and its existing error/retry UI) still runs if this fails.
   }
 
+  // Quests carry no upstream content timestamp at all, so the badge reports
+  // observation and availability only. A failed server render is `partial`
+  // rather than `unavailable` because TasksExplorer's own client fetch still
+  // has a chance to fill the list in.
+  const health = domainHealth({
+    domain: 'quests',
+    gameMode: 'regular',
+    locale,
+    availability: initialResponse ? 'available' : 'partial',
+    ...(initialResponse ? { totalCount: initialResponse.total } : {}),
+  });
+
   return (
     <section className="mx-auto max-w-content px-4 py-10 sm:px-6">
-      <ToolIntro title={t('title')} description={t('subtitle')} />
+      <ToolIntro
+        title={t('title')}
+        description={t('subtitle')}
+        locale={locale}
+        health={health}
+      />
       <Link href="/progression/gunsmith" className={RELATED_LINK_CLASS}>{t('relatedLink')}</Link>
+      <Link href="/progression/tasks/tracker" className={RELATED_LINK_CLASS}>{t('trackerLink')}</Link>
       <TasksExplorer locale={locale} initialResponse={initialResponse} />
     </section>
   );

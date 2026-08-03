@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { allCollectors } from '@/lib/live/collectors';
 import { liveConfig } from '@/lib/live/config';
 import { authorizeCron } from '@/lib/live/cron-auth';
 import { runIngestion } from '@/lib/live/pipeline';
@@ -22,19 +23,27 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+const RESPONSE_INIT = {
+  headers: { 'Cache-Control': 'private, no-store, max-age=0' },
+} as const;
+
+function json(body: unknown, status: number) {
+  return NextResponse.json(body, { ...RESPONSE_INIT, status });
+}
+
 export async function GET(request: Request) {
   if (!authorizeCron(request.headers.get('authorization'), liveConfig.ingestion.cronSecret)) {
     // No hint about whether a secret is configured, wrong, or malformed.
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return json({ error: 'unauthorized' }, 401);
   }
 
   if (!liveConfig.ingestion.enabled) {
-    return NextResponse.json({ ok: false, error: 'ingestion_disabled' }, { status: 503 });
+    return json({ ok: false, error: 'ingestion_disabled' }, 503);
   }
 
   const repo = getRepository();
   if (!repo) {
-    return NextResponse.json({ ok: false, error: 'database_not_configured' }, { status: 503 });
+    return json({ ok: false, error: 'database_not_configured' }, 503);
   }
 
   try {
@@ -42,15 +51,20 @@ export async function GET(request: Request) {
     await seedManualEntries(repo);
     const url = new URL(request.url);
     const only = url.searchParams.getAll('source').filter(Boolean);
+    const allowedSources = new Set(allCollectors().map((collector) => collector.key));
+    if (only.some((source) => !allowedSources.has(source))) {
+      return json({ ok: false, error: 'invalid_source' }, 400);
+    }
     const summary = await runIngestion(repo, { trigger: 'cron', only });
 
-    // 409 rather than 200 so an external scheduler's own alerting can see that
-    // an overlapping run was refused, without treating it as a failure.
-    return NextResponse.json(summary, { status: summary.locked ? 409 : 200 });
+    // Status codes mirror the body so an external scheduler cannot mistake a
+    // failed source run for a successful invocation.
+    const status = summary.locked ? 409 : summary.ok ? 200 : 502;
+    return json(summary, status);
   } catch {
     // Deliberately opaque: an upstream error string can carry request context,
     // and this response is reachable by anyone holding the cron secret.
-    return NextResponse.json({ ok: false, error: 'ingestion_failed' }, { status: 500 });
+    return json({ ok: false, error: 'ingestion_failed' }, 500);
   }
 }
 

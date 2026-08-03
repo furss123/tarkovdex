@@ -10,7 +10,7 @@ export function GameModeBadge() {
   const t = useTranslations('common');
   const { gameMode } = useGameMode();
   return (
-    <span className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-[12px] font-medium leading-none text-accent">
+    <span className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-[14px] font-medium leading-5 text-accent">
       {gameMode === 'pve' ? t('pveShort') : t('pvpShort')}
     </span>
   );

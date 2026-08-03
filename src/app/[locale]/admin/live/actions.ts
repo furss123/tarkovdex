@@ -136,10 +136,16 @@ export async function updateEventAction(_prev: ActionState, form: FormData): Pro
     patch.endedAt = null;
   }
 
-  await repo.updateEventFields(id, patch, { manual: true, actor: actorFor(session), note: note ?? null });
-  if (!statusValue && event.manualFields.includes('status')) {
-    await repo.clearEventOverride(id, 'status', actorFor(session));
-  }
+  await repo.transaction(async (transactionRepo) => {
+    await transactionRepo.updateEventFields(id, patch, {
+      manual: true,
+      actor: actorFor(session),
+      note: note ?? null,
+    });
+    if (!statusValue && event.manualFields.includes('status')) {
+      await transactionRepo.clearEventOverride(id, 'status', actorFor(session));
+    }
+  });
   const revalidated = revalidateNews();
   revalidatePath('/[locale]/admin/live', 'page');
   return {
@@ -172,17 +178,19 @@ export async function mergeEventAction(_prev: ActionState, form: FormData): Prom
   const target = await repo.getEvent(targetId);
   if (!source || !target) return { ok: false, message: '병합 대상 항목을 찾을 수 없습니다.' };
 
-  for (const item of source.sources) {
-    await repo.linkPostToEvent(targetId, `${item.source}:${item.postId}`, role);
-  }
-  await repo.deleteEvent(id, actorFor(session));
-  if (role === 'end') {
-    await repo.updateEventFields(
-      targetId,
-      { status: 'ended', endedAt: new Date().toISOString(), reviewStatus: 'reviewed' },
-      { manual: true, actor: actorFor(session), note: `merged_end:${id}` },
-    );
-  }
+  await repo.transaction(async (transactionRepo) => {
+    for (const item of source.sources) {
+      await transactionRepo.linkPostToEvent(targetId, `${item.source}:${item.postId}`, role);
+    }
+    await transactionRepo.deleteEvent(id, actorFor(session));
+    if (role === 'end') {
+      await transactionRepo.updateEventFields(
+        targetId,
+        { status: 'ended', endedAt: new Date().toISOString(), reviewStatus: 'reviewed' },
+        { manual: true, actor: actorFor(session), note: `merged_end:${id}` },
+      );
+    }
+  });
   revalidateNews();
   revalidatePath('/[locale]/admin/live', 'page');
   return { ok: true, message: '기존 이벤트에 연결했습니다.' };
@@ -215,12 +223,14 @@ export async function reinterpretAction(_prev: ActionState, form: FormData): Pro
   const session = await requireSession(form);
   const repo = repoOrThrow();
   const postId = String(form.get('postId') ?? '');
-  await repo.setInterpretStatus(postId, 'pending');
-  await repo.appendAudit({
-    targetType: 'raw_post',
-    targetId: postId,
-    action: 'reinterpret',
-    actor: actorFor(session),
+  await repo.transaction(async (transactionRepo) => {
+    await transactionRepo.setInterpretStatus(postId, 'pending');
+    await transactionRepo.appendAudit({
+      targetType: 'raw_post',
+      targetId: postId,
+      action: 'reinterpret',
+      actor: actorFor(session),
+    });
   });
   revalidatePath('/[locale]/admin/live', 'page');
   return { ok: true, message: '다음 수집 때 다시 해석합니다.' };

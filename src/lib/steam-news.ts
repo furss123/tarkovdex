@@ -23,11 +23,13 @@ import 'server-only';
  */
 
 const STEAM_NEWS_URL = 'https://store.steampowered.com/feeds/news/app/3932890/';
+const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_FEED_BYTES = 5 * 1024 * 1024;
 
-/** News/events change far more often than the game's static data dumps, so
- * this uses a much shorter window than `REVALIDATE_SECONDS` in `tarkov.ts`
- * (6h) — an hour keeps the page reasonably fresh without hammering Steam. */
-const REVALIDATE_SECONDS = 60 * 60;
+/** News/events change far more often than the game's static data dumps. Five
+ * minutes keeps maintenance and server notices useful while Next still
+ * collapses traffic from every locale into one cached Steam request. */
+const REVALIDATE_SECONDS = 5 * 60;
 
 export interface NewsItem {
   id: string;
@@ -97,13 +99,22 @@ function isPatchNote(title: string): boolean {
 export async function getSteamNews(): Promise<SteamNewsFeed> {
   const res = await fetch(STEAM_NEWS_URL, {
     next: { revalidate: REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
     throw new Error(`Steam news feed responded ${res.status} ${res.statusText}`);
   }
 
+  const declaredLength = Number(res.headers.get('content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_FEED_BYTES) {
+    throw new Error('Steam news feed exceeded the maximum allowed size');
+  }
+
   const xml = await res.text();
+  if (new TextEncoder().encode(xml).byteLength > MAX_FEED_BYTES) {
+    throw new Error('Steam news feed exceeded the maximum allowed size');
+  }
   const blocks = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
 
   const items: NewsItem[] = [];
@@ -118,7 +129,9 @@ export async function getSteamNews(): Promise<SteamNewsFeed> {
 
     const title = decodeEntities(unwrapCdata(rawTitle)).trim();
     const url = unwrapCdata(rawLink).trim();
-    const publishedAt = new Date(rawPubDate).toISOString();
+    const publishedAtMs = Date.parse(rawPubDate);
+    if (!Number.isFinite(publishedAtMs)) continue;
+    const publishedAt = new Date(publishedAtMs).toISOString();
 
     const content = rawDescription
       ? stripHtml(decodeEntities(unwrapCdata(rawDescription)))

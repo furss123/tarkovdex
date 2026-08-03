@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   formatCaliber,
+  localizeArmorItemName,
   localizeArmorLayerName,
   localizeMaterial,
   localizeMobName,
@@ -30,7 +31,7 @@ test('unknown calibers degrade to a readable generic form, never the raw enum', 
 test('armor materials are localized with a safe passthrough for unknowns', () => {
   assert.equal(localizeMaterial('Aramid', 'ko'), '아라미드');
   assert.equal(localizeMaterial('ArmoredSteel', 'ko'), '장갑강');
-  assert.equal(localizeMaterial('UHMWPE', 'ko'), '폴리에틸렌');
+  assert.equal(localizeMaterial('UHMWPE', 'ko'), '초고분자량 폴리에틸렌(UHMWPE)');
   assert.equal(localizeMaterial('Titan', 'en'), 'Titanium');
   assert.equal(localizeMaterial('Ceramic', 'zh'), '陶瓷');
   assert.equal(localizeMaterial('FutureMaterial', 'ko'), 'FutureMaterial');
@@ -38,10 +39,49 @@ test('armor materials are localized with a safe passthrough for unknowns', () =>
 });
 
 test('soft-armor layer names are localized in Korean with safe passthrough', () => {
-  assert.equal(localizeArmorLayerName('Aramid insert', 'ko'), '아라미드 인서트');
-  assert.equal(localizeArmorLayerName('Layer of UHMWPE', 'ko'), '폴리에틸렌층');
-  assert.equal(localizeArmorLayerName('BK. PLATE', 'ko'), 'BK. PLATE');
+  assert.equal(localizeArmorLayerName('Aramid insert', 'ko'), '아라미드 삽입재');
+  assert.equal(localizeArmorLayerName('Layer of UHMWPE', 'ko'), '초고분자량 폴리에틸렌층');
+  assert.equal(localizeArmorLayerName('BK. PLATE', 'ko'), '뒤쪽 방탄판');
   assert.equal(localizeArmorLayerName('Aramid insert', 'en'), 'Aramid insert');
+});
+
+test('armor and plate names fill Korean dictionary gaps and fix known mismatches', () => {
+  assert.equal(
+    localizeArmorItemName(
+      '628b9784bcf6e2659e09b8a2',
+      'S&S Precision PlateFrame plate carrier (Goons Edition)',
+      'ko',
+    ),
+    'S&S Precision PlateFrame 플레이트 캐리어 (군즈 에디션)',
+  );
+  assert.equal(
+    localizeArmorItemName(
+      '64afc71497cf3a403c01ff38',
+      'Granit Br5 ballistic plate',
+      'ko',
+    ),
+    'Granit Br5 방탄판',
+  );
+  assert.equal(
+    localizeArmorItemName(
+      '5ab8dced86f774646209ec87',
+      'ANA Tactical M2 플레이트 캐리어 (Digital Flora)',
+      'ko',
+    ),
+    'ANA Tactical M2 플레이트 캐리어 (OD Green)',
+  );
+  assert.equal(
+    localizeArmorItemName(
+      '69cfef0d6242b966d40803e7',
+      'FORT Redut-T5 방탄복 (흑색)',
+      'ko',
+    ),
+    'FORT Redut-M 방탄복 (검정)',
+  );
+  assert.equal(
+    localizeArmorItemName('id', 'Granit ballistic plate (Side)', 'en'),
+    'Granit ballistic plate (Side)',
+  );
 });
 
 test('boss glossary fills only the Korean gaps the API dictionary leaves in English', () => {

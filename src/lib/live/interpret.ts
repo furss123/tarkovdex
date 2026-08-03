@@ -18,7 +18,7 @@ import {
  *    (`interpret-schema.ts`);
  *  - the model may raise `requiresReview`, never clear it;
  *  - nothing it returns is ever presented as confirmed fact on its own — the
- *    auto-publish gate in `normalize.ts` decides that, from source trust.
+ *    publication gate never bypasses operator review.
  *
  * One call produces all three languages. The alternative (one call per locale)
  * tripled spend against the same free-tier quota this project has already been

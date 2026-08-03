@@ -1,5 +1,14 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { ChartNoAxesColumn, ListChecks, Map, Newspaper, Scale, Search, Shield } from 'lucide-react';
+import {
+  ChartNoAxesColumn,
+  ListChecks,
+  Map,
+  Newspaper,
+  Scale,
+  Search,
+  Shield,
+  Wrench,
+} from 'lucide-react';
 import { SITE_AUTHOR } from '@/lib/site';
 import { buildPageMetadata } from '@/lib/metadata';
 import type { Locale } from '@/i18n/routing';
@@ -63,6 +72,16 @@ export default async function AboutPage({
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 {t('tasksBody')}
+              </p>
+            </article>
+
+            <article className="rounded-lg border border-border bg-surface/30 p-4">
+              <Wrench className="size-5 text-accent" aria-hidden="true" />
+              <h3 className="mt-3 text-sm font-medium text-fg">
+                <Link href="/progression/gunsmith" className={FEATURE_LINK_CLASS}>{t('gunsmithTitle')}</Link>
+              </h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">
+                {t('gunsmithBody')}
               </p>
             </article>
 

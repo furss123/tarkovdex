@@ -5,7 +5,10 @@ import { getMaps } from '@/lib/tarkov';
 import type { GameMap } from '@/types/tarkov';
 import { MapCard } from '@/components/maps/MapCard';
 import { MapsModeBoard } from '@/components/maps/MapsModeBoard';
-import { ToolIntro } from '@/components/tools/ToolShell';
+import { ModeAvailabilityBoundary } from '@/components/tools/ModeAvailabilityBoundary';
+import { DataError, ToolIntro } from '@/components/tools/ToolShell';
+import { settleModePair } from '@/lib/settle-mode-pair';
+import { domainHealth } from '@/lib/data-observations';
 
 type PageProps = {
   params: Promise<{ locale: string }>;
@@ -41,26 +44,43 @@ export default async function MapsPage({ params }: PageProps) {
 
   const t = await getTranslations('maps');
 
-  let regularMaps: GameMap[] = [];
-  let pveMaps: GameMap[] = [];
-  let failed = false;
-  try {
-    [regularMaps, pveMaps] = await Promise.all([
-      getMaps({ locale, gameMode: 'regular' }),
-      getMaps({ locale, gameMode: 'pve' }),
-    ]);
-  } catch {
-    failed = true;
+  const maps = await settleModePair<GameMap[]>({
+    regular: getMaps({ locale, gameMode: 'regular' }),
+    pve: getMaps({ locale, gameMode: 'pve' }),
+  });
+
+  if (!maps.regular && !maps.pve) {
+    return (
+      <section className="mx-auto max-w-content px-4 py-10 sm:px-6">
+        <DataError message={t('error')} />
+      </section>
+    );
   }
+
+  const regularMaps = maps.regular ?? [];
+  const pveMaps = maps.pve ?? [];
+
+  const health = domainHealth({
+    domain: 'maps',
+    gameMode: maps.regular ? 'regular' : 'pve',
+    locale,
+    availability: maps.regular && maps.pve ? 'available' : 'partial',
+    totalCount: (maps.regular ?? maps.pve ?? []).length,
+  });
 
   return (
     <section className="mx-auto max-w-content px-4 py-10 sm:px-6">
-      <ToolIntro title={t('title')} description={t('subtitle')} />
-      {failed ? (
-        <div className="rounded-lg border border-border px-4 py-12 text-center text-sm text-muted">
-          {t('error')}
-        </div>
-      ) : (
+      <ToolIntro
+        title={t('title')}
+        description={t('subtitle')}
+        locale={locale}
+        health={health}
+      />
+      <ModeAvailabilityBoundary
+        regularAvailable={maps.regular !== null}
+        pveAvailable={maps.pve !== null}
+        errorMessage={t('error')}
+      >
         <MapsModeBoard
           regularCount={regularMaps.length}
           pveCount={pveMaps.length}
@@ -71,7 +91,7 @@ export default async function MapsPage({ params }: PageProps) {
             <MapCard key={map.id} map={map} locale={locale} />
           ))}
         />
-      )}
+      </ModeAvailabilityBoundary>
     </section>
   );
 }

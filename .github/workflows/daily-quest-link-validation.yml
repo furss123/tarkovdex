@@ -1,0 +1,140 @@
+name: Daily Quest Link Validation
+
+on:
+  schedule:
+    # 19:17 UTC is 04:17 KST on the following calendar day.
+    - cron: "17 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-quest-link-validation
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate quest links
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      REPORT_DIR: artifacts/quest-link-validation
+      ARTIFACT_NAME: daily-quest-link-validation-results
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare validation report
+        shell: bash
+        run: |
+          mkdir -p "$REPORT_DIR"
+          echo "VALIDATION_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
+      - name: Validate quest link structure and allowed origin
+        id: static
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate:quest-links 2>&1 | tee "$REPORT_DIR/static-validation.log"
+
+      - name: Validate quest links over the network
+        id: network
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate:quest-links:network 2>&1 | tee "$REPORT_DIR/network-validation.log"
+
+      - name: Upload validation logs
+        id: artifact
+        if: ${{ always() && hashFiles('artifacts/quest-link-validation/*.log') != '' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: artifacts/quest-link-validation/*.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Write validation summary
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          TRIGGER: ${{ github.event_name }}
+          STATIC_OUTCOME: ${{ steps.static.outcome }}
+          NETWORK_OUTCOME: ${{ steps.network.outcome }}
+          ARTIFACT_OUTCOME: ${{ steps.artifact.outcome }}
+        run: |
+          value_from_log() {
+            local key="$1"
+            local file="$2"
+            if [[ -f "$file" ]]; then
+              sed -n "s/.*${key}=\([0-9][0-9]*\).*/\1/p" "$file" | tail -n 1
+            fi
+          }
+
+          network_log="$REPORT_DIR/network-validation.log"
+          static_log="$REPORT_DIR/static-validation.log"
+          task_references="$(value_from_log task-references "$network_log")"
+          unique_tasks="$(value_from_log unique-tasks "$network_log")"
+          unique_urls="$(value_from_log unique-urls "$network_log")"
+          active_references="$(value_from_log active-references "$network_log")"
+          active_urls="$(value_from_log active-urls "$network_log")"
+          needs_review_references="$(value_from_log needs-review-references "$network_log")"
+          needs_review_urls="$(value_from_log needs-review-urls "$network_log")"
+          unverified_references="$(value_from_log unverified-references "$network_log")"
+          unverified_urls="$(value_from_log unverified-urls "$network_log")"
+          broken_references="$(value_from_log broken-references "$network_log")"
+          broken_urls="$(value_from_log broken-urls "$network_log")"
+
+          if [[ -z "$task_references" ]]; then
+            task_references="$(value_from_log task-references "$static_log")"
+            unique_tasks="$(value_from_log unique-tasks "$static_log")"
+            unique_urls="$(value_from_log unique-urls "$static_log")"
+            active_references="$(value_from_log active-references "$static_log")"
+            active_urls="$(value_from_log active-urls "$static_log")"
+            needs_review_references="$(value_from_log needs-review-references "$static_log")"
+            needs_review_urls="$(value_from_log needs-review-urls "$static_log")"
+            unverified_references="$(value_from_log unverified-references "$static_log")"
+            unverified_urls="$(value_from_log unverified-urls "$static_log")"
+            broken_references="$(value_from_log broken-references "$static_log")"
+            broken_urls="$(value_from_log broken-urls "$static_log")"
+          fi
+
+          trigger_label="manual"
+          if [[ "$TRIGGER" == "schedule" ]]; then
+            trigger_label="schedule"
+          fi
+
+          {
+            echo "## Daily Quest Link Validation"
+            echo
+            echo "- Started (UTC): \`${VALIDATION_STARTED_AT:-unavailable}\`"
+            echo "- Trigger: \`${trigger_label}\`"
+            echo "- Static validation: \`${STATIC_OUTCOME:-not-run}\`"
+            echo "- Network validation: \`${NETWORK_OUTCOME:-not-run}\`"
+            echo "- Task references: \`${task_references:-unavailable}\`"
+            echo "- Unique tasks across PvP/PvE: \`${unique_tasks:-unavailable}\`"
+            echo "- Unique URLs: \`${unique_urls:-unavailable}\`"
+            echo "- Verified active: \`${active_urls:-unavailable}\` URLs / \`${active_references:-unavailable}\` references"
+            echo "- Known unavailable (suppressed): \`${needs_review_urls:-unavailable}\` URLs / \`${needs_review_references:-unavailable}\` references"
+            echo "- Network unverified: \`${unverified_urls:-unavailable}\` URLs / \`${unverified_references:-unavailable}\` references"
+            echo "- Broken: \`${broken_urls:-unavailable}\` URLs / \`${broken_references:-unavailable}\` references"
+            if [[ "$ARTIFACT_OUTCOME" == "success" ]]; then
+              echo "- Logs artifact: \`${ARTIFACT_NAME}\` (retained for 14 days)"
+            else
+              echo "- Logs artifact: unavailable (upload outcome: \`${ARTIFACT_OUTCOME:-not-run}\`)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

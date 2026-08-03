@@ -11,13 +11,11 @@ type PageProps = {
 };
 
 /**
- * Regenerated every 10 minutes — the shortest window any source needs (X's
- * default poll interval). The individual sources keep their own, longer fetch
- * caches (Steam's RSS is still 1h), so a regeneration is cheap: it re-sorts
- * and re-computes event status against the current clock without necessarily
- * re-hitting anything external.
+ * Regenerated every 5 minutes. The client refreshes this Server Component on
+ * the same cadence, while event status/countdowns continue to update locally
+ * every second between source checks.
  */
-export const revalidate = 600;
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: PageProps) {
   const locale = (await params).locale as Locale;
@@ -33,6 +31,9 @@ export async function generateMetadata({ params }: PageProps) {
  * source and still uses the committed ko/zh translations; X, Telegram and
  * hand-curated entries merge into the same board through
  * `lib/live/sources.ts`. See CLAUDE.md > "Tarkov Live".
+ *
+ * Phase 7 adds a PatchImpact projection over the same entries (impact areas,
+ * review/confidence, conservative data-sync status) without a second pipeline.
  */
 export default async function NewsPage({ params }: PageProps) {
   const locale = (await params).locale as Locale;

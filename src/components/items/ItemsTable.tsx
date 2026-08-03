@@ -5,6 +5,12 @@ import { useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
 import type { MarketItem } from '@/types/tarkov';
 import { formatPercent, formatRelativeTime, formatRoubles } from '@/lib/format';
+import { contentFreshness, domainPolicy } from '@/lib/data-status';
+import { WatchlistToggle } from '@/components/economy/WatchlistToggle';
+import { AddToBudgetButton } from '@/components/combat/AddToBudgetButton';
+import { defaultWatchPriceType, priceForType } from '@/lib/watchlist';
+
+const ITEM_PRICE_POLICY = domainPolicy('itemPrices');
 
 export type ItemSort =
   | 'valuePerSlot'
@@ -43,17 +49,22 @@ function FreshnessBadge({
   locale: Locale;
   now: number;
 }) {
-  const t = useTranslations('items.freshness');
-  const hours = item.freshnessHours;
-  const state =
-    hours == null ? 'unknown' : hours <= 12 ? 'fresh' : hours <= 24 ? 'aging' : 'stale';
+  // Same vocabulary and same thresholds as the page badge and /status — the row
+  // signal is only rendered more compactly, it is not a second status model.
+  const t = useTranslations('status.freshness');
+  const state = contentFreshness({
+    sourceUpdatedAt: item.updated,
+    warningAfterMs: ITEM_PRICE_POLICY.warningAfterMs,
+    staleAfterMs: ITEM_PRICE_POLICY.staleAfterMs,
+    now,
+  });
 
   return (
     <span
-      className={`inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[12px] leading-none ${
+      className={`inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[14px] leading-5 ${
         state === 'fresh'
           ? 'border-positive/50 bg-positive/10 text-positive'
-          : state === 'aging'
+          : state === 'warning'
             ? 'border-accent/50 bg-accent/10 text-accent'
             : state === 'stale'
               ? 'border-negative/50 bg-negative/10 text-negative'
@@ -95,7 +106,7 @@ function ItemIdentity({
       </span>
       <div className="min-w-0">
         <div className="line-clamp-2 text-[14px] font-medium leading-5 text-fg">{item.name}</div>
-        <div className="truncate text-[12px] leading-4 text-muted">{item.shortName}</div>
+        <div className="truncate text-[14px] leading-5 text-muted">{item.shortName}</div>
       </div>
     </div>
   );
@@ -134,7 +145,7 @@ export function ItemsTable({
       <button
         type="button"
         onClick={() => onSort(field)}
-        className={`inline-flex min-h-[44px] items-center gap-1 rounded px-1 text-[12px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+        className={`inline-flex min-h-[44px] items-center gap-1 rounded px-1 text-[14px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           active ? 'text-accent' : 'text-muted hover:text-fg'
         } ${align === 'left' ? '-ml-1' : ''}`}
         aria-label={t('sortBy', { field: label })}
@@ -151,21 +162,34 @@ export function ItemsTable({
         {items.map((item) => (
           <article
             key={item.id}
-            tabIndex={0}
-            className="rounded-lg border border-border bg-surface p-[14px] transition-colors hover:border-muted/60 hover:bg-surface-2/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="rounded-lg border border-border bg-surface p-[14px]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <ItemIdentity item={item} compact />
               </div>
-              <span className="shrink-0 rounded border border-border bg-bg px-2 py-1 text-[12px] leading-none text-muted">
-                {item.valueSource === 'trader' ? t('traderShort') : t('fleaShort')}
-              </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <WatchlistToggle
+                  itemId={item.id}
+                  priceType={defaultWatchPriceType(item)}
+                  baselinePrice={priceForType(item, defaultWatchPriceType(item))}
+                  baselineUpdatedAt={item.updated}
+                  compact
+                />
+                <AddToBudgetButton
+                  itemId={item.id}
+                  types={item.types}
+                  priceType={defaultWatchPriceType(item)}
+                />
+                <span className="rounded border border-border bg-bg px-2 py-1 text-[14px] leading-5 text-muted">
+                  {item.valueSource === 'trader' ? t('traderShort') : t('fleaShort')}
+                </span>
+              </div>
             </div>
 
             <div className="mt-2 flex items-end justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[12px] leading-4 text-muted">{col('valuePerSlot')}</p>
+                <p className="text-[14px] leading-5 text-muted">{col('valuePerSlot')}</p>
                 <p className="truncate text-[21px] font-medium leading-7 tabular-nums text-accent">
                   {formatRoubles(item.valuePerSlot, locale)}
                 </p>
@@ -177,20 +201,20 @@ export function ItemsTable({
 
             <div className="mt-2 grid grid-cols-3 gap-2 border-t border-border/80 pt-2">
               <div className="min-w-0">
-                <p className="text-[12px] leading-4 text-muted">{col('referenceValue')}</p>
-                <p className="truncate text-[13px] leading-5 tabular-nums text-fg">
+                <p className="text-[14px] leading-5 text-muted">{col('referenceValue')}</p>
+                <p className="truncate text-[16px] leading-6 tabular-nums text-fg">
                   {formatRoubles(item.referenceValue, locale)}
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-[12px] leading-4 text-muted">{col('size')}</p>
-                <p className="text-[13px] leading-5 text-fg">
+                <p className="text-[14px] leading-5 text-muted">{col('size')}</p>
+                <p className="text-[16px] leading-6 text-fg">
                   {item.width}×{item.height} · {t('slots', { count: item.slotCount })}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[12px] leading-4 text-muted">{col('change48h')}</p>
-                <p className="text-[13px] leading-5 tabular-nums">
+                <p className="text-[14px] leading-5 text-muted">{col('change48h')}</p>
+                <p className="text-[16px] leading-6 tabular-nums">
                   <PriceChange value={item.changeLast48hPercent} locale={locale} />
                 </p>
               </div>
@@ -202,15 +226,19 @@ export function ItemsTable({
       <div className="hidden max-w-full rounded-lg border border-border lg:block">
         <table className="w-full min-w-[900px] table-fixed border-collapse text-[14px] leading-5">
           <colgroup>
-            <col className="w-[36%]" />
+            <col className="w-[5%]" />
+            <col className="w-[33%]" />
             <col className="w-[8%]" />
-            <col className="w-[18%]" />
             <col className="w-[17%]" />
+            <col className="w-[16%]" />
             <col className="w-[10%]" />
             <col className="w-[11%]" />
           </colgroup>
           <thead className="sticky top-[68px] z-10">
             <tr className="h-[48px] border-b border-border bg-surface-2 text-left">
+              <th className="px-2" scope="col">
+                <span className="sr-only">Watchlist</span>
+              </th>
               <th
                 className="px-3 text-left"
                 aria-sort={
@@ -219,7 +247,7 @@ export function ItemsTable({
               >
                 <SortLabel field="name" label={col('item')} align="left" />
               </th>
-              <th className="whitespace-nowrap px-3 text-right text-[12px] font-medium text-muted">
+              <th className="whitespace-nowrap px-3 text-right text-[14px] font-medium text-muted">
                 {col('size')}
               </th>
               <th
@@ -276,25 +304,40 @@ export function ItemsTable({
             {items.map((item) => (
               <tr
                 key={item.id}
-                tabIndex={0}
-                className="h-[68px] border-b border-border/70 bg-surface last:border-0 hover:bg-surface-2/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+                className="h-[68px] border-b border-border/70 bg-surface last:border-0"
               >
+                <td className="px-2 py-2">
+                  <div className="flex flex-col items-center gap-1">
+                    <WatchlistToggle
+                      itemId={item.id}
+                      priceType={defaultWatchPriceType(item)}
+                      baselinePrice={priceForType(item, defaultWatchPriceType(item))}
+                      baselineUpdatedAt={item.updated}
+                      compact
+                    />
+                    <AddToBudgetButton
+                      itemId={item.id}
+                      types={item.types}
+                      priceType={defaultWatchPriceType(item)}
+                    />
+                  </div>
+                </td>
                 <td className="max-w-0 px-3 py-2">
                   <ItemIdentity item={item} />
                 </td>
-                <td className="whitespace-nowrap px-3 py-2 text-right text-[13px] text-muted">
+                <td className="whitespace-nowrap px-3 py-2 text-right text-[14px] text-muted">
                   {item.width}×{item.height}
                 </td>
                 <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-fg">
                   {formatRoubles(item.referenceValue, locale)}
-                  <div className="text-[12px] leading-4 text-muted">
+                  <div className="text-[14px] leading-5 text-muted">
                     {item.valueSource === 'trader' ? t('traderValue') : t('fleaNetValue')}
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-3 py-2 text-right font-medium tabular-nums text-accent">
                   {formatRoubles(item.valuePerSlot, locale)}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2 text-right text-[13px] tabular-nums">
+                <td className="whitespace-nowrap px-3 py-2 text-right text-[14px] tabular-nums">
                   <PriceChange value={item.changeLast48hPercent} locale={locale} />
                 </td>
                 <td className="whitespace-nowrap px-3 py-2 text-right">

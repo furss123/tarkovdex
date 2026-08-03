@@ -12,11 +12,22 @@ function walk(dir: string): string[] {
   });
 }
 
-test('no FIR feature references remain anywhere in src/', () => {
-  const pattern = /\bFIR\b|foundInRaid|Found in Raid|progression\/fir|ProgressionChecklist/;
+/**
+ * Originally banned `foundInRaid` outright, guarding against a specific
+ * abandoned feature (a `progression/fir` route backed by a
+ * `ProgressionChecklist` component — neither of which this project has).
+ * Phase 3 (quest tracker + raid planner) legitimately reintroduces
+ * `foundInRaid` as `TaskObjective.foundInRaid`: a real, live-audited
+ * upstream field (json.tarkov.dev's raw task objectives — see
+ * docs/architecture/tarkovdex-data-flow.md's task-data audit), not a
+ * resurrection of the old feature. The narrower guard below still fails if
+ * that old route or component name ever reappears.
+ */
+test('no dead FIR-progression-checklist feature references remain anywhere in src/', () => {
+  const pattern = /progression\/fir|ProgressionChecklist/;
   for (const file of walk(SRC)) {
     const text = readFileSync(file, 'utf8');
-    assert.ok(!pattern.test(text), `FIR reference found in ${file}`);
+    assert.ok(!pattern.test(text), `dead FIR-checklist reference found in ${file}`);
   }
 });
 

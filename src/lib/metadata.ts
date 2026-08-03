@@ -8,6 +8,8 @@ type PageMetadataKey =
   | 'home'
   | 'items'
   | 'barters'
+  | 'craftCalculator'
+  | 'budgetBuilder'
   | 'tasks'
   | 'gunsmith'
   | 'ammo'
@@ -15,7 +17,13 @@ type PageMetadataKey =
   | 'maps'
   | 'news'
   | 'about'
-  | 'support';
+  | 'support'
+  | 'status'
+  | 'localData'
+  | 'questTracker'
+  | 'search'
+  | 'watchlist'
+  | 'beginner';
 
 const OG_LOCALE: Record<Locale, string> = {
   ko: 'ko_KR',

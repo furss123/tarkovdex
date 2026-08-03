@@ -8,16 +8,16 @@ import { mergeEntries, toLiveEntry } from './normalize';
 import { getRepository } from './repository-client';
 import type { LiveEventRow, LiveRepository } from './repository';
 import { ADAPTERS } from './sources';
-import { SOURCE_PRIORITY, sortLiveEntries } from './status';
+import { isPublishable, SOURCE_PRIORITY, sortLiveEntries } from './status';
+import { getOfficialXEntries } from './official-x-profile';
 
 /**
  * The **read** side, and nothing else.
  *
- * This module talks to the database and to committed files. It does not call X,
- * it does not call Gemini, and it does not collect anything — that is the whole
- * point of the split. Rendering `/ko/news`, `/en/news` and `/zh/news` therefore
- * costs three database reads, not three sets of metered API calls, and a page
- * that nobody visits still gets fresh data because the cron does the work.
+ * This module talks to the database, committed files, and the cached public X
+ * profile presentation. It never calls the metered X API or Gemini and never
+ * runs ingestion. Rendering `/ko/news`, `/en/news` and `/zh/news` therefore
+ * cannot spend provider quota; scheduled ingestion owns that work.
  */
 
 /** Page payload ceiling. The board is a situation dashboard, not an archive. */
@@ -70,6 +70,7 @@ function toEntry(event: LiveEventRow, locale: Locale): LiveEntry {
     collectedAt: event.firstSeenAt,
     lastCheckedAt: event.updatedAt,
     imageUrl: null,
+    youtubeVideoId: null,
     contentHash: event.slug,
     manualFields: event.manualFields,
     interpretation: null,
@@ -100,7 +101,7 @@ function healthOf(states: Awaited<ReturnType<LiveRepository['listSourceStates']>
 
 async function fromDatabase(repo: LiveRepository, locale: Locale): Promise<LiveFeed> {
   const [events, states] = await Promise.all([
-    repo.listEvents({ reviewStatus: ['auto_published', 'reviewed', 'pending_review'], limit: 120 }),
+    repo.listEvents({ reviewStatus: ['reviewed'], limit: 120 }),
     repo.listSourceStates(),
   ]);
 
@@ -148,14 +149,47 @@ async function fromFiles(locale: Locale): Promise<LiveFeed> {
   };
 }
 
+/** Final server-side publication boundary. Client selectors repeat the same
+ * rule for UI state, but unreviewed source text must never enter the RSC
+ * payload in the first place. */
+export function sanitizePublicFeed(feed: LiveFeed): LiveFeed {
+  return { ...feed, entries: feed.entries.filter(isPublishable) };
+}
+
+/** Add the official public @tarkov posts stream to either storage mode.
+ * Persisted/reviewed entries come first so a presentation-only profile copy
+ * can enrich them without downgrading their stored review decision. */
+async function withOfficialX(feed: LiveFeed, locale: Locale): Promise<LiveFeed> {
+  // Sanitize on the server boundary as well as in the client selectors. This
+  // prevents pending source text from ever entering an RSC payload when the
+  // database is absent or temporarily unavailable.
+  const publicFeed = sanitizePublicFeed(feed);
+  try {
+    const officialX = await getOfficialXEntries(locale, publicFeed.renderedAt);
+    // Profile-only copies have not passed through persistence or review. They
+    // may enrich an already-published stored post after merge, but unmatched
+    // pending copies must never create a new public card on their own.
+    const merged = mergeEntries([...publicFeed.entries, ...officialX]).filter(isPublishable);
+    return {
+      ...publicFeed,
+      entries: sortLiveEntries(
+        merged,
+        Date.parse(publicFeed.renderedAt),
+      ).slice(0, MAX_ENTRIES),
+    };
+  } catch {
+    return publicFeed;
+  }
+}
+
 export async function getLiveFeed(locale: Locale): Promise<LiveFeed> {
   const repo = getRepository();
-  if (!repo) return fromFiles(locale);
+  if (!repo) return withOfficialX(await fromFiles(locale), locale);
   try {
-    return await fromDatabase(repo, locale);
+    return withOfficialX(await fromDatabase(repo, locale), locale);
   } catch {
     // A database outage must not take the news page down with it — fall through
     // to the file-backed board rather than rendering an error state.
-    return fromFiles(locale);
+    return withOfficialX(await fromFiles(locale), locale);
   }
 }

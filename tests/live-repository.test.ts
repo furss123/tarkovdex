@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createTestDb } from './helpers/pglite';
+import { createTestDb, withQueryHook } from './helpers/pglite';
 import { MIGRATIONS } from '../src/lib/live/db/migrations';
-import type { RawSourcePost } from '../src/lib/live/repository';
+import { NESTED_TRANSACTION_ERROR } from '../src/lib/live/db/sql';
+import { createRepository, type RawSourcePost } from '../src/lib/live/repository';
 
 const NOW = Date.parse('2030-05-01T12:00:00.000Z');
 const HOUR = 60 * 60 * 1000;
@@ -75,6 +76,22 @@ test('migrations converge even when the ledger was lost', async () => {
   }
 });
 
+test('repository transactions roll back all writes and reject nesting', async () => {
+  const db = await createTestDb();
+  try {
+    await assert.rejects(
+      db.repo.transaction(async (transactionRepo) => {
+        await transactionRepo.upsertRawPost(post());
+        await transactionRepo.transaction(async () => undefined);
+      }),
+      new RegExp(NESTED_TRANSACTION_ERROR),
+    );
+    assert.equal((await db.repo.listRawPosts(10)).length, 0, 'the outer insert rolls back too');
+  } finally {
+    await db.close();
+  }
+});
+
 // --- raw posts --------------------------------------------------------------
 
 test('the same post collected twice is stored once', async () => {
@@ -118,10 +135,60 @@ test('repeatedly failing interpretation stops being retried', async () => {
   const db = await createTestDb();
   try {
     const { id } = await db.repo.upsertRawPost(post());
-    for (let i = 0; i < 3; i++) await db.repo.setInterpretStatus(id, 'failed', 'provider_error');
+    await db.repo.setInterpretStatus(id, 'failed', 'provider_error');
+    assert.equal((await db.repo.getPendingInterpretations(10)).length, 1, 'failure one is retried');
+    await db.repo.setInterpretStatus(id, 'failed', 'provider_error');
+    assert.equal((await db.repo.getPendingInterpretations(10)).length, 1, 'failure two is retried');
+    await db.repo.setInterpretStatus(id, 'failed', 'provider_error');
     assert.equal((await db.repo.getPendingInterpretations(10)).length, 0);
     const stored = await db.repo.getRawPost(id);
     assert.equal(stored?.interpretAttempts, 3);
+
+    await db.repo.setInterpretStatus(id, 'pending');
+    assert.equal((await db.repo.getRawPost(id))?.interpretAttempts, 0, 'manual requeue gets a fresh budget');
+    assert.deepEqual((await db.repo.getPendingInterpretations(10)).map((row) => row.id), [id]);
+  } finally {
+    await db.close();
+  }
+});
+
+test('interpretation content and its done marker commit or roll back together', async () => {
+  const db = await createTestDb();
+  try {
+    const { id } = await db.repo.upsertRawPost(post());
+    await assert.rejects(
+      db.repo.transaction(async (transactionRepo) => {
+        await transactionRepo.saveInterpretation({
+          rawPostId: id,
+          provider: 'test',
+          model: 'test-model',
+          promptVersion: 'test-prompt',
+          schemaVersion: 'test-schema',
+          content: {},
+          gameModes: [],
+          category: null,
+          eventIntent: null,
+          maps: [],
+          bosses: [],
+          traders: [],
+          items: [],
+          quests: [],
+          startsAt: null,
+          startsAtEvidence: null,
+          endsAt: null,
+          endsAtEvidence: null,
+          reliabilitySuggestion: null,
+          requiresReview: true,
+          reviewReason: null,
+          ambiguity: [],
+        });
+        await transactionRepo.setInterpretStatus(id, 'done');
+        throw new Error('after_status');
+      }),
+      /after_status/,
+    );
+    assert.equal(await db.repo.getInterpretation(id, 'test-prompt'), null);
+    assert.equal((await db.repo.getRawPost(id))?.interpretStatus, 'pending');
   } finally {
     await db.close();
   }
@@ -170,6 +237,54 @@ test('source cursors persist per account and survive a cold start', async () => 
     assert.equal(afterFailure?.externalId, '111');
     assert.equal(afterFailure?.consecutiveFailures, 1);
     assert.equal(afterFailure?.lastSuccessAt, new Date(at(0)).toISOString());
+  } finally {
+    await db.close();
+  }
+});
+
+test('partial source-state patches preserve omitted fields and explicit null clears them', async () => {
+  const db = await createTestDb();
+  try {
+    await db.repo.saveSourceState({
+      sourceKey: 'official_x:tarkov',
+      sourceType: 'official_x',
+      account: 'tarkov',
+      active: false,
+      sinceId: '900',
+      cursor: 'page-2',
+      lastError: 'x_rate_limited_429',
+      lastErrorAt: at(HOUR),
+      consecutiveFailures: 2,
+      nextRetryAt: at(2 * HOUR),
+    });
+
+    await db.repo.saveSourceState({
+      sourceKey: 'official_x:tarkov',
+      sourceType: 'official_x',
+      lastAttemptAt: at(3 * HOUR),
+    });
+    const patched = await db.repo.getSourceState('official_x:tarkov');
+    assert.equal(patched?.active, false);
+    assert.equal(patched?.sinceId, '900');
+    assert.equal(patched?.cursor, 'page-2');
+    assert.equal(patched?.lastError, 'x_rate_limited_429');
+    assert.equal(patched?.consecutiveFailures, 2);
+    assert.equal(patched?.nextRetryAt, new Date(at(2 * HOUR)).toISOString());
+
+    await db.repo.saveSourceState({
+      sourceKey: 'official_x:tarkov',
+      sourceType: 'official_x',
+      cursor: null,
+      lastError: null,
+      lastErrorAt: null,
+      nextRetryAt: null,
+    });
+    const cleared = await db.repo.getSourceState('official_x:tarkov');
+    assert.equal(cleared?.cursor, null);
+    assert.equal(cleared?.lastError, null);
+    assert.equal(cleared?.lastErrorAt, null);
+    assert.equal(cleared?.nextRetryAt, null);
+    assert.equal(cleared?.consecutiveFailures, 2, 'an omitted counter is still preserved');
   } finally {
     await db.close();
   }
@@ -265,6 +380,68 @@ test('a manual edit survives re-collection and can be reverted', async () => {
   }
 });
 
+test('clearing real-column overrides restores conservative database defaults', async () => {
+  const db = await createTestDb();
+  try {
+    const { event } = await seedEvent(db);
+    await db.repo.updateEventFields(
+      event.id,
+      {
+        reviewStatus: 'reviewed',
+        publishedAt: at(0),
+        status: 'ended',
+        endsAt: at(24 * HOUR),
+      },
+      { manual: true, actor: 'admin' },
+    );
+
+    await db.repo.clearEventOverride(event.id, 'reviewStatus', 'admin');
+    await db.repo.clearEventOverride(event.id, 'status', 'admin');
+    await db.repo.clearEventOverride(event.id, 'endsAt', 'admin');
+    const cleared = await db.repo.getEvent(event.id);
+    assert.equal(cleared?.reviewStatus, 'pending_review');
+    assert.equal(cleared?.status, 'unknown');
+    assert.equal(cleared?.endsAt, null);
+    assert.equal(cleared?.endConfirmed, false);
+    assert.ok(!cleared?.manualFields.includes('reviewStatus'));
+    assert.ok(!cleared?.manualFields.includes('status'));
+    assert.ok(!cleared?.manualFields.includes('endsAt'));
+  } finally {
+    await db.close();
+  }
+});
+
+test('a failed audit insert rolls the event edit back with it', async () => {
+  const db = await createTestDb();
+  try {
+    const { event } = await seedEvent(db);
+    let failed = false;
+    const faultSql = withQueryHook(db.sql, (text) => {
+      if (!failed && text.includes('insert into live_audit_logs')) {
+        failed = true;
+        throw new Error('audit_write_failed');
+      }
+    });
+    const faultRepo = createRepository(faultSql);
+    await assert.rejects(
+      faultRepo.updateEventFields(
+        event.id,
+        { reviewStatus: 'reviewed', status: 'ended' },
+        { manual: true, actor: 'admin' },
+      ),
+      /audit_write_failed/,
+    );
+
+    const stored = await db.repo.getEvent(event.id);
+    assert.equal(stored?.reviewStatus, 'pending_review');
+    assert.equal(stored?.status, 'unknown');
+    assert.deepEqual(stored?.manualFields, []);
+    assert.equal((await db.repo.listAudit(10)).length, 0);
+  } finally {
+    await db.close();
+  }
+});
+
 test('every review action is written to the audit log', async () => {
   const db = await createTestDb();
   try {
@@ -292,7 +469,7 @@ test('pending reviews are listable and separated from published items', async ()
       slug: 'published',
       category: 'patch',
       reliability: 'official_confirmed',
-      reviewStatus: 'auto_published',
+      reviewStatus: 'reviewed',
       gameModes: [],
       affects: [],
       content: { original: { title: 'Patch 1.2.3', content: 'notes' } },
@@ -301,7 +478,7 @@ test('pending reviews are listable and separated from published items', async ()
     });
 
     const pending = await db.repo.listEvents({ reviewStatus: ['pending_review'] });
-    const published = await db.repo.listEvents({ reviewStatus: ['auto_published', 'reviewed'] });
+    const published = await db.repo.listEvents({ reviewStatus: ['reviewed'] });
     assert.deepEqual(pending.map((row) => row.id), ['evt-1']);
     assert.deepEqual(published.map((row) => row.id), ['evt-pub']);
   } finally {

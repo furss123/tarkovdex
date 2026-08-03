@@ -9,8 +9,10 @@ import {
 import { isValidLocale, routing } from '@/i18n/routing';
 import { SITE_AUTHOR, SITE_URL } from '@/lib/site';
 import { GameModeProvider } from '@/contexts/GameModeContext';
+import { ConnectivityProvider } from '@/contexts/ConnectivityContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { ServiceWorkerManager } from '@/components/pwa/ServiceWorkerManager';
 import '../globals.css';
 
 type LayoutProps = {
@@ -37,6 +39,13 @@ export async function generateMetadata({
     title: t('title'),
     description: t('description'),
     authors: [{ name: SITE_AUTHOR }],
+    themeColor: '#17181b',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'TarkovDex',
+    },
+    manifest: '/manifest.webmanifest',
     icons: {
       icon: [
         { url: '/favicon.ico' },
@@ -80,36 +89,65 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
   // Opt this layout (and its pages) into static rendering.
   setRequestLocale(locale);
 
-  const messages = await getMessages();
+  const [messages, t] = await Promise.all([
+    getMessages(),
+    getTranslations('common'),
+  ]);
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         {/* Pretendard (KR + Latin) and Noto Sans SC (Simplified Chinese). */}
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500&display=swap"
-        />
+        {locale === 'zh' ? (
+          <>
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link
+              rel="preconnect"
+              href="https://fonts.gstatic.com"
+              crossOrigin=""
+            />
+            <link
+              rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500&display=swap"
+            />
+          </>
+        ) : (
+          <>
+            <link
+              rel="preconnect"
+              href="https://cdn.jsdelivr.net"
+              crossOrigin=""
+            />
+            <link
+              rel="stylesheet"
+              href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"
+            />
+          </>
+        )}
       </head>
       <body>
+        <a
+          href="#main-content"
+          className="fixed left-4 top-3 z-[60] -translate-y-24 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-fg"
+        >
+          {t('skipToContent')}
+        </a>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <GameModeProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="min-w-0 flex-1">{children}</main>
-              <Footer />
-            </div>
+            <ConnectivityProvider>
+              <ServiceWorkerManager locale={locale} />
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main
+                  id="main-content"
+                  tabIndex={-1}
+                  className="min-w-0 flex-1 focus:outline-none"
+                >
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </ConnectivityProvider>
           </GameModeProvider>
         </NextIntlClientProvider>
       </body>

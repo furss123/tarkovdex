@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, extname, join, relative, resolve } from 'node:path';
 import { authorizeCron } from '../src/lib/live/cron-auth';
 import {
   csrfFor,
@@ -16,9 +16,61 @@ import { decidePublication, linkPost, type PublicationInput } from '../src/lib/l
 import { parseEnvelope, parseExplicitInstant } from '../src/lib/live/interpret-schema';
 import { freshnessOf } from '../src/lib/live/feed-freshness';
 import { instantToKstInput, kstInputToInstant } from '../src/lib/live/status';
+import { localizeNewsFromFiles } from '../src/lib/static-news-localization';
 
 const SECRET = 'a'.repeat(64);
 const NOW = Date.parse('2030-05-01T12:00:00.000Z');
+const ROOT = process.cwd();
+
+function resolveLocalImport(fromFile: string, specifier: string): string | null {
+  let target: string;
+  if (specifier.startsWith('@/')) {
+    target = join(ROOT, 'src', specifier.slice(2));
+  } else if (specifier.startsWith('.')) {
+    target = resolve(dirname(join(ROOT, fromFile)), specifier);
+  } else {
+    return null;
+  }
+
+  const candidates = extname(target)
+    ? [target]
+    : [
+        `${target}.ts`,
+        `${target}.tsx`,
+        `${target}.json`,
+        join(target, 'index.ts'),
+        join(target, 'index.tsx'),
+      ];
+  const match = candidates.find((candidate) => existsSync(candidate));
+  return match ? relative(ROOT, match).replaceAll('\\', '/') : null;
+}
+
+/** Conservative local dependency walk for public Server Component entrypoints.
+ * It follows both value and type imports; over-reporting is safer than letting
+ * a provider SDK slip into a render path through an innocent-looking helper. */
+function localDependencyClosure(entries: string[]): Set<string> {
+  const seen = new Set<string>();
+  const pending = [...entries];
+
+  while (pending.length > 0) {
+    const file = pending.pop();
+    if (!file || seen.has(file)) continue;
+    seen.add(file);
+
+    const source = readFileSync(join(ROOT, file), 'utf8');
+    const statements = source.match(/^(?:import|export)\s+[\s\S]*?;/gm) ?? [];
+    for (const statement of statements) {
+      const specifier =
+        statement.match(/\bfrom\s+['"]([^'"]+)['"]/)?.[1] ??
+        statement.match(/^import\s+['"]([^'"]+)['"]/)?.[1];
+      if (!specifier) continue;
+      const dependency = resolveLocalImport(file, specifier);
+      if (dependency && !seen.has(dependency)) pending.push(dependency);
+    }
+  }
+
+  return seen;
+}
 
 // --- cron authorization -----------------------------------------------------
 
@@ -112,25 +164,45 @@ test('no secret-bearing module can be pulled into a client bundle', () => {
 });
 
 test('the news read path cannot reach a metered API', () => {
-  const feed = readFileSync(join(process.cwd(), 'src/lib/live/feed.ts'), 'utf8');
-  const sources = readFileSync(join(process.cwd(), 'src/lib/live/sources.ts'), 'utf8');
-  const page = readFileSync(join(process.cwd(), 'src/app/[locale]/news/page.tsx'), 'utf8');
+  const graph = localDependencyClosure([
+    'src/app/[locale]/news/page.tsx',
+    'src/app/[locale]/page.tsx',
+  ]);
+  const forbidden = [
+    'src/lib/translate-news.ts',
+    'src/lib/live/interpret.ts',
+    'src/lib/live/collectors.ts',
+    'src/lib/live/pipeline.ts',
+    'src/lib/live/x.ts',
+  ];
 
-  for (const [name, source] of [
-    ['feed.ts', feed],
-    ['sources.ts', sources],
-    ['news/page.tsx', page],
-  ] as const) {
-    assert.ok(!/from '\.\/x'|from '@\/lib\/live\/x'/.test(source), `${name} imports the X collector`);
-    assert.ok(
-      !/from '\.\/interpret'|from '@\/lib\/live\/interpret'/.test(source),
-      `${name} imports the interpreter`,
-    );
-    assert.ok(
-      !/from '\.\/collectors'|from '\.\/pipeline'/.test(source),
-      `${name} imports the collection pipeline`,
-    );
+  for (const file of forbidden) {
+    assert.ok(!graph.has(file), `${file} is reachable from a public news render`);
   }
+  for (const file of graph) {
+    if (!/\.[cm]?[jt]sx?$/.test(file)) continue;
+    const source = readFileSync(join(ROOT, file), 'utf8');
+    assert.ok(!source.includes('@google/genai'), `${file} imports the Gemini SDK`);
+  }
+});
+
+test('file-backed localization never invents a provider fallback', () => {
+  const item = {
+    id: 'not-in-the-reviewed-translation-files',
+    title: 'New official post',
+    content: 'Original English body',
+    url: 'https://example.invalid/post',
+    publishedAt: '2030-05-01T12:00:00.000Z',
+  };
+  const localized = localizeNewsFromFiles({ patchNotes: [], events: [item] }, 'ko');
+
+  assert.deepEqual(localized.events, [item]);
+});
+
+test('news updates invalidate both the full board and the home preview', () => {
+  const pipeline = readFileSync(join(process.cwd(), 'src/lib/live/pipeline.ts'), 'utf8');
+  assert.ok(pipeline.includes("revalidatePath('/[locale]/news', 'page')"));
+  assert.ok(pipeline.includes("revalidatePath('/[locale]', 'page')"));
 });
 
 test('fixtures never default on in a production build', () => {
@@ -139,6 +211,16 @@ test('fixtures never default on in a production build', () => {
     config.includes("flag('LIVE_FIXTURES', process.env.NODE_ENV !== 'production')"),
     'LIVE_FIXTURES must default to off in production',
   );
+});
+
+test('the committed manual news store contains no test posts', () => {
+  const manualStore = JSON.parse(
+    readFileSync(join(process.cwd(), 'src/lib/live/manual-entries.json'), 'utf8'),
+  ) as { entries?: Array<{ postId?: string }> };
+  const testPostIds = (manualStore.entries ?? [])
+    .map((entry) => entry.postId ?? '')
+    .filter((postId) => postId.startsWith('test-'));
+  assert.deepEqual(testPostIds, [], 'test posts must never be shipped as real news');
 });
 
 // --- what a machine may assert ---------------------------------------------
@@ -157,8 +239,8 @@ function decision(overrides: Partial<PublicationInput> = {}) {
   });
 }
 
-test('only an unambiguous official post auto-publishes', () => {
-  assert.equal(decision().reviewStatus, 'auto_published');
+test('every collected post waits for operator approval', () => {
+  assert.equal(decision().reviewStatus, 'pending_review');
   assert.equal(decision({ source: 'nikita_x' }).reviewStatus, 'pending_review');
   assert.equal(decision({ reliability: 'official_statement' }).reviewStatus, 'pending_review');
   assert.equal(decision({ intent: 'teaser' }).reviewStatus, 'pending_review');
@@ -168,7 +250,7 @@ test('only an unambiguous official post auto-publishes', () => {
     'pending_review',
     'a claimed schedule with no source text behind it waits for a human',
   );
-  assert.equal(decision({ hasWindow: true, windowEvidenced: true }).reviewStatus, 'auto_published');
+  assert.equal(decision({ hasWindow: true, windowEvidenced: true }).reviewStatus, 'pending_review');
   assert.equal(
     decision({ intent: 'unknown', category: 'event' }).reviewStatus,
     'pending_review',
@@ -176,8 +258,8 @@ test('only an unambiguous official post auto-publishes', () => {
   );
   assert.equal(
     decision({ intent: 'unknown', category: 'event', interpreted: false }).reviewStatus,
-    'auto_published',
-    'but an absent interpretation is not itself a red flag',
+    'pending_review',
+    'an absent interpretation still cannot bypass operator approval',
   );
 });
 

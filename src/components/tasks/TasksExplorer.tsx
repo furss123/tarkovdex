@@ -37,19 +37,24 @@ export function TasksExplorer({
   const { gameMode } = useGameMode();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchComposing, setSearchComposing] = useState(false);
   const [traderId, setTraderId] = useState('');
   const [mapId, setMapId] = useState('');
   const [focusTaskId, setFocusTaskId] = useState('');
   const [data, setData] = useState<TasksResponse>(initialResponse ?? EMPTY_RESPONSE);
   const [loading, setLoading] = useState(!initialResponse);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false);
   const [failed, setFailed] = useState(false);
   const skippableInitialFetch = useRef(Boolean(initialResponse));
+  const loadMoreControllerRef = useRef<AbortController | null>(null);
+  const activeQueryKeyRef = useRef('');
 
   useEffect(() => {
+    if (searchComposing) return;
     const timer = window.setTimeout(() => setDebouncedSearch(search), 250);
     return () => window.clearTimeout(timer);
-  }, [search]);
+  }, [search, searchComposing]);
 
   /**
    * Jump to a prerequisite quest from an open quest's requirement list: search
@@ -76,8 +81,22 @@ export function TasksExplorer({
       }),
     [locale, gameMode, debouncedSearch, traderId, mapId],
   );
+  const queryKey = baseParams.toString();
+  activeQueryKeyRef.current = queryKey;
+
+  useEffect(
+    () => () => {
+      loadMoreControllerRef.current?.abort();
+    },
+    [],
+  );
 
   useEffect(() => {
+    loadMoreControllerRef.current?.abort();
+    loadMoreControllerRef.current = null;
+    setLoadingMore(false);
+    setLoadMoreFailed(false);
+
     if (skippableInitialFetch.current) {
       skippableInitialFetch.current = false;
       const isDefaultQuery =
@@ -101,7 +120,9 @@ export function TasksExplorer({
         if (!response.ok) throw new Error('task request failed');
         return response.json() as Promise<TasksResponse>;
       })
-      .then(setData)
+      .then((next) => {
+        if (activeQueryKeyRef.current === queryKey) setData(next);
+      })
       .catch((error: unknown) => {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           setFailed(true);
@@ -112,25 +133,46 @@ export function TasksExplorer({
       });
 
     return () => controller.abort();
-  }, [baseParams]);
+  }, [baseParams, queryKey]);
 
   async function loadMore() {
     if (!data.hasMore || loadingMore) return;
+    const requestQueryKey = queryKey;
+    const controller = new AbortController();
+    loadMoreControllerRef.current?.abort();
+    loadMoreControllerRef.current = controller;
     setLoadingMore(true);
+    setLoadMoreFailed(false);
     const params = new URLSearchParams(baseParams);
     params.set('page', String(data.page + 1));
     try {
-      const response = await fetch(`/api/tasks?${params.toString()}`);
+      const response = await fetch(`/api/tasks?${params.toString()}`, {
+        signal: controller.signal,
+      });
       if (!response.ok) throw new Error('task request failed');
       const next = (await response.json()) as TasksResponse;
-      setData((current) => ({
-        ...next,
-        tasks: [...current.tasks, ...next.tasks],
-      }));
-    } catch {
-      setFailed(true);
+      if (controller.signal.aborted || activeQueryKeyRef.current !== requestQueryKey) {
+        return;
+      }
+      setData((current) => {
+        if (current.page + 1 !== next.page) return current;
+        return {
+          ...next,
+          tasks: [...current.tasks, ...next.tasks],
+        };
+      });
+    } catch (error: unknown) {
+      if (
+        !(error instanceof DOMException && error.name === 'AbortError') &&
+        activeQueryKeyRef.current === requestQueryKey
+      ) {
+        setLoadMoreFailed(true);
+      }
     } finally {
-      setLoadingMore(false);
+      if (loadMoreControllerRef.current === controller) {
+        loadMoreControllerRef.current = null;
+        if (activeQueryKeyRef.current === requestQueryKey) setLoadingMore(false);
+      }
     }
   }
 
@@ -161,6 +203,8 @@ export function TasksExplorer({
                 setSearch(value);
                 setFocusTaskId('');
               }}
+              onCompositionStart={() => setSearchComposing(true)}
+              onCompositionEnd={() => setSearchComposing(false)}
             />
             <TaskFilters
               maps={data.filters.maps}
@@ -190,13 +234,27 @@ export function TasksExplorer({
                   <TaskCard
                     key={task.id}
                     task={task}
-                    sequence={(data.page - 1) * data.pageSize + index + 1}
+                    sequence={index + 1}
                     focused={task.id === focusTaskId}
                     onOpenTask={openTask}
                   />
                 ))}
               </div>
-              {data.hasMore ? (
+              {loadMoreFailed ? (
+                <div
+                  role="alert"
+                  className="mt-4 flex flex-wrap items-center justify-center gap-3 rounded-md border border-negative/40 px-4 py-3 text-sm text-muted"
+                >
+                  <span>{t('error')}</span>
+                  <button
+                    type="button"
+                    onClick={loadMore}
+                    className="min-h-touch rounded-md border border-border px-4 text-fg hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+                  >
+                    {t('retry')}
+                  </button>
+                </div>
+              ) : data.hasMore ? (
                 <div className="mt-4 text-center">
                   <button
                     type="button"

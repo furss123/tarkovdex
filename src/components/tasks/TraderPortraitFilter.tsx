@@ -49,10 +49,10 @@ export function TraderPortraitFilter({
             <Users className="size-5" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="line-clamp-2 text-[13px] font-medium leading-4 lg:line-clamp-1">
+            <span className="line-clamp-2 text-[16px] font-medium leading-5 lg:line-clamp-1">
               {t('allTraders')}
             </span>
-            <span className="mt-0.5 block text-[12px] leading-4 tabular-nums opacity-80">{total}</span>
+            <span className="mt-0.5 block text-[14px] leading-5 tabular-nums opacity-80">{total}</span>
           </span>
         </button>
         {traders.map((trader) => {
@@ -85,10 +85,10 @@ export function TraderPortraitFilter({
                 )}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="line-clamp-2 text-[13px] font-medium leading-4 lg:line-clamp-1">
+                <span className="line-clamp-2 text-[16px] font-medium leading-5 lg:line-clamp-1">
                   {trader.name}
                 </span>
-                <span className="mt-0.5 block text-[12px] leading-4 tabular-nums opacity-80">
+                <span className="mt-0.5 block text-[14px] leading-5 tabular-nums opacity-80">
                   {trader.taskCount ?? 0}
                 </span>
               </span>

@@ -3,8 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { GoogleGenAI } from '@google/genai';
 import type { NewsItem, SteamNewsFeed } from './steam-news';
 import { getSteamNews } from './steam-news';
-import newsKo from './news-ko.json';
-import newsZh from './news-zh.json';
+import { getStoredNewsTranslation } from './static-news-localization';
 
 /**
  * Real translation of Steam's English-only news posts into ko/zh — Steam
@@ -34,11 +33,6 @@ import newsZh from './news-zh.json';
  * vars) for that fallback path. Without it, an untranslated post silently
  * falls back to the original English text.
  */
-
-const STATIC_TRANSLATIONS: Record<'ko' | 'zh', Record<string, Translated>> = {
-  ko: newsKo,
-  zh: newsZh,
-};
 
 const MODEL = 'gemini-3.5-flash-lite';
 const TRANSLATION_DEADLINE_MS = 40_000;
@@ -188,7 +182,7 @@ const translateCached = unstable_cache(translateUncached, ['news-translation'], 
 });
 
 async function translateItem(item: NewsItem, locale: 'ko' | 'zh'): Promise<NewsItem> {
-  const stored = STATIC_TRANSLATIONS[locale][item.id];
+  const stored = getStoredNewsTranslation(locale, item.id);
   if (stored) return { ...item, ...stored };
 
   try {
@@ -214,10 +208,14 @@ async function translateFeed(feed: SteamNewsFeed, locale: 'ko' | 'zh'): Promise<
 /**
  * Steam news, localized: English passes through untouched; ko/zh get
  * translated (or fall back to English if `GEMINI_API_KEY` is unset or a
- * call fails). This is the function the news page actually calls.
+ * call fails). This provider-capable function belongs to ingestion and offline
+ * tooling; public render fallbacks use `static-news-localization.ts` instead.
  */
-export async function getLocalizedNews(locale: 'ko' | 'zh' | 'en'): Promise<SteamNewsFeed> {
-  const feed = await getSteamNews();
+export async function getLocalizedNews(
+  locale: 'ko' | 'zh' | 'en',
+  sourceFeed?: SteamNewsFeed,
+): Promise<SteamNewsFeed> {
+  const feed = sourceFeed ?? await getSteamNews();
   if (locale === 'en') return feed;
 
   // Next's static page worker aborts a page after 60 seconds. Gemini can

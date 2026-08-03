@@ -55,11 +55,12 @@ export interface IngestionSummary {
 const LOCK_KEY = 'tarkov-live:ingestion';
 const LOCALES = ['ko', 'en', 'zh'] as const;
 
-/** Invalidates all three locale pages in one call — they are the same route,
- * so an operator's approval reaches ko, en and zh together. */
+/** Invalidates the full board and its home-page preview for every locale, so
+ * an operator's approval reaches both public surfaces at the same time. */
 export function revalidateNews(): boolean {
   try {
     revalidatePath('/[locale]/news', 'page');
+    revalidatePath('/[locale]', 'page');
     return true;
   } catch {
     // A failed revalidation is a staleness problem, never a reason to roll back
@@ -143,16 +144,18 @@ async function buildEventForPost(
   );
 
   if (verdict.kind === 'same') {
-    await repo.linkPostToEvent(verdict.eventId, post.id, verdict.role);
-    if (verdict.role === 'end') {
-      // An end notice that matched exactly still goes to a human before the
-      // board says an event is over — matching text is not a schedule.
-      await repo.updateEventFields(
-        verdict.eventId,
-        { reviewStatus: 'pending_review', reviewNote: `end_notice:${post.id}` },
-        { manual: false, actor: 'pipeline' },
-      );
-    }
+    await repo.transaction(async (transactionRepo) => {
+      await transactionRepo.linkPostToEvent(verdict.eventId, post.id, verdict.role);
+      if (verdict.role === 'end') {
+        // An end notice that matched exactly still goes to a human before the
+        // board says an event is over — matching text is not a schedule.
+        await transactionRepo.updateEventFields(
+          verdict.eventId,
+          { reviewStatus: 'pending_review', reviewNote: `end_notice:${post.id}` },
+          { manual: false, actor: 'pipeline' },
+        );
+      }
+    });
     return null;
   }
 
@@ -179,41 +182,49 @@ async function buildEventForPost(
     ? interpretation.gameModes
     : detectModes(post.title, post.content)) as LiveGameMode[];
 
-  const event = await repo.createOrUpdateEvent({
-    id: post.id,
-    slug: slugFor(post),
-    category,
-    reliability,
-    reviewStatus: suggestion ? 'pending_review' : decision.reviewStatus,
-    gameModes,
-    affects: detectAffects(post.title, post.content) as AffectedArea[],
-    maps: interpretation?.maps ?? [],
-    bosses: interpretation?.bosses ?? [],
-    traders: interpretation?.traders ?? [],
-    items: interpretation?.items ?? [],
-    quests: interpretation?.quests ?? [],
-    startsAt,
-    endsAt,
-    endConfirmed: Boolean(endsAt),
-    content: buildContent(post, interpretation),
-    primaryPostId: post.id,
-    publishedAt: decision.reviewStatus === 'auto_published' && !suggestion ? new Date().toISOString() : null,
-  });
-  await repo.linkPostToEvent(event.id, post.id, 'initial');
-
   const note = suggestion
     ? `link_candidate:${suggestion.eventId}:${suggestion.role}`
     : decision.reason;
-  if (note) {
-    await repo.updateEventFields(event.id, { reviewNote: note }, { manual: false, actor: 'pipeline' });
-  }
-
   const overrides = fixtureOverrides(post);
-  if (overrides) {
-    await repo.updateEventFields(event.id, overrides, { manual: true, actor: 'fixtures', note: 'seed' });
-  }
-
-  return repo.getEvent(event.id);
+  return repo.transaction(async (transactionRepo) => {
+    const event = await transactionRepo.createOrUpdateEvent({
+      id: post.id,
+      slug: slugFor(post),
+      category,
+      reliability,
+      reviewStatus: suggestion ? 'pending_review' : decision.reviewStatus,
+      gameModes,
+      affects: detectAffects(post.title, post.content) as AffectedArea[],
+      maps: interpretation?.maps ?? [],
+      bosses: interpretation?.bosses ?? [],
+      traders: interpretation?.traders ?? [],
+      items: interpretation?.items ?? [],
+      quests: interpretation?.quests ?? [],
+      startsAt,
+      endsAt,
+      endConfirmed: Boolean(endsAt),
+      content: buildContent(post, interpretation),
+      primaryPostId: post.id,
+      publishedAt:
+        decision.reviewStatus === 'auto_published' && !suggestion ? new Date().toISOString() : null,
+    });
+    await transactionRepo.linkPostToEvent(event.id, post.id, 'initial');
+    if (note) {
+      await transactionRepo.updateEventFields(
+        event.id,
+        { reviewNote: note },
+        { manual: false, actor: 'pipeline' },
+      );
+    }
+    if (overrides) {
+      await transactionRepo.updateEventFields(event.id, overrides, {
+        manual: true,
+        actor: 'fixtures',
+        note: 'seed',
+      });
+    }
+    return transactionRepo.getEvent(event.id);
+  });
 }
 
 function toCandidate(event: LiveEventRow): LinkCandidate {
@@ -263,31 +274,33 @@ async function interpretPending(
         category: classify(post.source, post.title, post.content),
         openEvents,
       });
-      await repo.saveInterpretation({
-        rawPostId: post.id,
-        provider: interpreter.provider,
-        model: interpreter.model,
-        promptVersion: interpreter.promptVersion,
-        schemaVersion: interpreter.schemaVersion,
-        content: envelope.locales,
-        gameModes: envelope.gameModes,
-        category: null,
-        eventIntent: envelope.eventIntent,
-        maps: envelope.maps,
-        bosses: envelope.bosses,
-        traders: envelope.traders,
-        items: envelope.items,
-        quests: envelope.quests,
-        startsAt: envelope.startsAt.value,
-        startsAtEvidence: envelope.startsAt.evidenceText,
-        endsAt: envelope.endsAt.value,
-        endsAtEvidence: envelope.endsAt.evidenceText,
-        reliabilitySuggestion: envelope.reliabilitySuggestion,
-        requiresReview: envelope.requiresReview,
-        reviewReason: envelope.reviewReason,
-        ambiguity: envelope.ambiguity,
+      await repo.transaction(async (transactionRepo) => {
+        await transactionRepo.saveInterpretation({
+          rawPostId: post.id,
+          provider: interpreter.provider,
+          model: interpreter.model,
+          promptVersion: interpreter.promptVersion,
+          schemaVersion: interpreter.schemaVersion,
+          content: envelope.locales,
+          gameModes: envelope.gameModes,
+          category: null,
+          eventIntent: envelope.eventIntent,
+          maps: envelope.maps,
+          bosses: envelope.bosses,
+          traders: envelope.traders,
+          items: envelope.items,
+          quests: envelope.quests,
+          startsAt: envelope.startsAt.value,
+          startsAtEvidence: envelope.startsAt.evidenceText,
+          endsAt: envelope.endsAt.value,
+          endsAtEvidence: envelope.endsAt.evidenceText,
+          reliabilitySuggestion: envelope.reliabilitySuggestion,
+          requiresReview: envelope.requiresReview,
+          reviewReason: envelope.reviewReason,
+          ambiguity: envelope.ambiguity,
+        });
+        await transactionRepo.setInterpretStatus(post.id, 'done');
       });
-      await repo.setInterpretStatus(post.id, 'done');
       interpreted += 1;
     } catch (error) {
       failures += 1;
@@ -322,74 +335,88 @@ async function runCollector(
   const state = await repo.getSourceState(collector.key);
   const runId = await repo.startRun(collector.key, trigger);
   const startedAt = Date.now();
+  const attemptedAt = new Date().toISOString();
 
   try {
-    await repo.saveSourceState({
-      sourceKey: collector.key,
-      sourceType: collector.source,
-      account: collector.account,
-      lastAttemptAt: new Date().toISOString(),
-    });
-
     const result = await collector.collect(state);
     outcome.requests = result.requests;
     outcome.fetched = result.posts.length;
 
     if (result.skipped) {
       outcome.skipped = result.skipped;
+      await repo.transaction(async (transactionRepo) => {
+        await transactionRepo.saveSourceState({
+          sourceKey: collector.key,
+          sourceType: collector.source,
+          account: collector.account,
+        });
+        await transactionRepo.finishRun(runId, {
+          ok: true,
+          requests: outcome.requests,
+          fetched: outcome.fetched,
+          durationMs: Date.now() - startedAt,
+        });
+      });
     } else {
-      for (const post of result.posts) {
-        const stored = await repo.upsertRawPost(post);
-        if (stored.inserted) outcome.newPosts += 1;
-        else outcome.duplicates += 1;
-      }
-      // The cursor moves only now, after every post is durably stored — a crash
-      // mid-write costs a re-read, never a skipped announcement.
-      await repo.saveSourceState({
-        sourceKey: collector.key,
-        sourceType: collector.source,
-        account: collector.account,
-        // Recorded here rather than left to each collector: freshness is
-        // computed from this column, so a collector that forgets it would make
-        // the whole board look like it had never been checked.
-        lastSuccessAt: new Date().toISOString(),
-        ...result.nextState,
-        lastError: null,
-        lastErrorAt: null,
-        consecutiveFailures: 0,
-        nextRetryAt: null,
+      await repo.transaction(async (transactionRepo) => {
+        for (const post of result.posts) {
+          const stored = await transactionRepo.upsertRawPost(post);
+          if (stored.inserted) outcome.newPosts += 1;
+          else outcome.duplicates += 1;
+        }
+        // The cursor moves only now, after every post is durably stored — a crash
+        // mid-write costs a re-read, never a skipped announcement.
+        await transactionRepo.saveSourceState({
+          sourceKey: collector.key,
+          sourceType: collector.source,
+          account: collector.account,
+          // Recorded here rather than left to each collector: freshness is
+          // computed from this column, so a collector that forgets it would make
+          // the whole board look like it had never been checked.
+          ...result.nextState,
+          lastAttemptAt: attemptedAt,
+          lastSuccessAt: new Date().toISOString(),
+          lastError: null,
+          lastErrorAt: null,
+          consecutiveFailures: 0,
+          nextRetryAt: null,
+        });
+        await transactionRepo.finishRun(runId, {
+          ok: true,
+          requests: outcome.requests,
+          fetched: outcome.fetched,
+          newPosts: outcome.newPosts,
+          duplicates: outcome.duplicates,
+          durationMs: Date.now() - startedAt,
+        });
       });
     }
-
-    await repo.finishRun(runId, {
-      ok: true,
-      requests: outcome.requests,
-      fetched: outcome.fetched,
-      newPosts: outcome.newPosts,
-      duplicates: outcome.duplicates,
-      durationMs: Date.now() - startedAt,
-    });
   } catch (error) {
     outcome.ok = false;
     outcome.errorCode = errorCode(error);
+    outcome.newPosts = 0;
+    outcome.duplicates = 0;
     const failures = (state?.consecutiveFailures ?? 0) + 1;
-    await repo.saveSourceState({
-      sourceKey: collector.key,
-      sourceType: collector.source,
-      account: collector.account,
-      lastError: outcome.errorCode,
-      lastErrorAt: new Date().toISOString(),
-      consecutiveFailures: failures,
-      nextRetryAt: new Date(Date.now() + backoffMs(failures, error)).toISOString(),
-    });
-    await repo.finishRun(runId, {
-      ok: false,
-      requests: outcome.requests,
-      errorCode: outcome.errorCode,
-      // Only a classified code is stored — an upstream message can echo request
-      // details, and this string is shown in the admin UI.
-      errorMessage: outcome.errorCode,
-      durationMs: Date.now() - startedAt,
+    await repo.transaction(async (transactionRepo) => {
+      await transactionRepo.saveSourceState({
+        sourceKey: collector.key,
+        sourceType: collector.source,
+        account: collector.account,
+        lastAttemptAt: attemptedAt,
+        lastError: outcome.errorCode,
+        lastErrorAt: new Date().toISOString(),
+        consecutiveFailures: failures,
+        nextRetryAt: new Date(Date.now() + backoffMs(failures, error)).toISOString(),
+      });
+      await transactionRepo.finishRun(runId, {
+        ok: false,
+        requests: outcome.requests,
+        errorCode: outcome.errorCode,
+        // Only a classified code is stored — an upstream message can echo request
+        // details, and this string is shown in the admin UI.
+        errorMessage: outcome.errorCode,
+        durationMs: Date.now() - startedAt,
+      });
     });
   }
 

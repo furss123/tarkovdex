@@ -31,7 +31,7 @@ export function GameModeSwitcher() {
             type="button"
             onClick={() => setGameMode(mode)}
             aria-pressed={isActive}
-            className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded px-2 py-1 text-[12px] leading-4 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded px-1.5 py-1 text-[15px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               isActive ? 'bg-accent text-accent-fg' : 'text-muted hover:text-fg'
             }`}
           >

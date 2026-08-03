@@ -90,11 +90,10 @@ export function remainingMs(
   return diff > 0 ? diff : null;
 }
 
-/** Publishable = safe to present as fact on the situation panel. Anything a
- * human hasn't signed off on and that isn't a plain official post stays in
- * the feed with its reliability badge instead. */
+/** Publishable = safe to present on every public surface. Pending and rejected
+ * rows remain available only to the admin review desk. */
 export function isPublishable(entry: LiveEntry): boolean {
-  return entry.reviewStatus === 'auto_published' || entry.reviewStatus === 'reviewed';
+  return entry.reviewStatus === 'reviewed';
 }
 
 const CATEGORY_RANK: Record<NewsCategory, number> = {
@@ -147,6 +146,42 @@ export function sortLiveEntries(entries: LiveEntry[], now: number): LiveEntry[] 
   });
 }
 
+/**
+ * The public feed shared by the news page and compact home-page preview.
+ * Only rows explicitly approved by an operator are public.
+ * Keeping the filter and ordering in one selector prevents the full board and
+ * home preview from drifting apart.
+ */
+export function publicFeedEntries(entries: LiveEntry[], now: number): LiveEntry[] {
+  return sortLiveEntries(
+    entries.filter(isPublishable),
+    now,
+  );
+}
+
+/** The home-page preview is chronological, unlike the situation-aware news
+ * feed. It answers "what was posted most recently?" without allowing an older
+ * active event to outrank a newly published announcement. */
+export function latestPublicFeedEntries(entries: LiveEntry[]): LiveEntry[] {
+  return entries
+    .filter(isPublishable)
+    .sort(
+      (a, b) =>
+        (timestamp(b.publishedAt) ?? Number.NEGATIVE_INFINITY) -
+        (timestamp(a.publishedAt) ?? Number.NEGATIVE_INFINITY),
+    );
+}
+
+/** Stable, URL-safe target shared by the home cards and the full news feed. */
+export function newsEntryAnchorId(entryId: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < entryId.length; index += 1) {
+    hash ^= entryId.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `news-entry-${(hash >>> 0).toString(36)}`;
+}
+
 /** True for the three states that mean "something is happening (or about to)". */
 export function isCurrentEvent(status: EventStatus): boolean {
   return status === 'active' || status === 'ending_soon' || status === 'scheduled';
@@ -185,7 +220,7 @@ export function situationEntries(entries: LiveEntry[], now: number): LiveEntry[]
 export type FeedFilter =
   | 'all'
   | 'active_events'
-  | 'developer'
+  | 'twitter'
   | 'official'
   | 'status'
   | 'ended';
@@ -197,8 +232,8 @@ export function matchesFilter(entry: LiveEntry, filter: FeedFilter, now: number)
       return true;
     case 'active_events':
       return status === 'active' || status === 'ending_soon' || status === 'scheduled';
-    case 'developer':
-      return entry.category === 'developer_comment' || entry.source === 'nikita_x';
+    case 'twitter':
+      return entry.source === 'official_x' || entry.source === 'nikita_x';
     case 'official':
       return entry.category === 'patch' || entry.category === 'announcement' || entry.category === 'sale';
     case 'status':

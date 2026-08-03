@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, TriangleAlert, Wrench } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useGameMode } from '@/contexts/GameModeContext';
@@ -32,6 +32,17 @@ function conditionValue(key: string, value: number) {
   return `${value}${unit}`;
 }
 
+function taskButtonLabel(task: GunsmithTask) {
+  if (task.part !== null) return task.part;
+
+  const englishName = task.nameEn ?? task.name;
+  if (englishName.startsWith('Gunsmith - ')) {
+    return task.name.split(' - ').slice(1).join(' - ') || task.name;
+  }
+
+  return task.name.replace(' - ', ' ');
+}
+
 export function GunsmithExplorer({
   regular,
   pve,
@@ -44,6 +55,13 @@ export function GunsmithExplorer({
   const tasks = gameMode === 'pve' ? pve : regular;
   const [taskId, setTaskId] = useState(tasks[0]?.id ?? '');
   const task = tasks.find((item) => item.id === taskId) ?? tasks[0];
+
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, '');
+    if (!hash.startsWith('gunsmith-')) return;
+    const id = hash.slice('gunsmith-'.length);
+    if (tasks.some((item) => item.id === id)) setTaskId(id);
+  }, [tasks]);
 
   if (!task) {
     return <p className="py-12 text-center text-sm text-muted">{t('empty')}</p>;
@@ -65,7 +83,7 @@ export function GunsmithExplorer({
       <div
         role="group"
         aria-label={t('task')}
-        className="flex flex-wrap gap-2 rounded-lg border border-border bg-surface/30 p-3"
+        className="grid grid-cols-4 gap-2 rounded-lg border border-border bg-surface/30 p-3 sm:grid-cols-6 lg:grid-cols-9"
       >
         {tasks.map((item) => {
           const active = item.id === task.id;
@@ -73,18 +91,23 @@ export function GunsmithExplorer({
             <button
               key={item.id}
               type="button"
+              aria-label={item.name}
               aria-pressed={active}
               onClick={() => setTaskId(item.id)}
-              className={`flex min-h-touch min-w-touch flex-col items-center justify-center rounded-md border px-3 py-1 leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+              className={`flex h-14 w-full min-w-0 flex-col items-center justify-center rounded-md border px-2 py-1 text-center leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
                 active
                   ? 'border-accent bg-accent/10 text-accent'
                   : 'border-border bg-surface text-muted hover:border-accent/50 hover:text-fg'
               }`}
             >
-              <span className="text-sm font-medium tabular-nums">{item.part ?? item.name}</span>
+              <span
+                className={`${item.part !== null ? 'text-sm' : 'text-[14px]'} max-w-full break-words font-medium tabular-nums`}
+              >
+                {taskButtonLabel(item)}
+              </span>
               {item.minPlayerLevel ? (
                 <span
-                  className={`text-[11px] tabular-nums ${active ? 'text-accent/70' : 'text-muted'}`}
+                  className={`text-[14px] leading-5 tabular-nums ${active ? 'text-accent/80' : 'text-muted'}`}
                 >
                   Lv.{item.minPlayerLevel}
                 </span>
@@ -94,7 +117,10 @@ export function GunsmithExplorer({
         })}
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+      <div
+        id={`gunsmith-${task.id}`}
+        className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]"
+      >
         <section className="min-w-0 rounded-lg border border-border bg-surface/20 p-4 sm:p-5">
           <div className="flex items-center gap-3 border-b border-border pb-4">
             {task.weapon.iconLink ? (
@@ -147,7 +173,14 @@ export function GunsmithExplorer({
                   />
                 ) : null}
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-accent">{part.slot}</p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="min-w-0 break-words text-xs text-accent">{part.slot}</p>
+                    {part.required ? (
+                      <span className="inline-flex max-w-full shrink-0 rounded border border-accent/40 px-2 py-0.5 text-xs text-accent">
+                        {t('questPart')}
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 break-words text-sm font-medium text-fg">{part.item.name}</p>
                   <p className="mt-1 break-words text-xs leading-relaxed text-muted">
                     {part.parent
@@ -155,11 +188,6 @@ export function GunsmithExplorer({
                       : t('attachToWeapon', { weapon: task.weapon.name })}
                   </p>
                 </div>
-                {part.required ? (
-                  <span className="shrink-0 rounded border border-accent/40 px-2 py-0.5 text-xs text-accent">
-                    {t('questPart')}
-                  </span>
-                ) : null}
               </li>
             ))}
           </ol>

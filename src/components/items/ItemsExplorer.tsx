@@ -10,7 +10,6 @@ import {
 import {
   ArrowDown,
   ArrowUp,
-  Database,
   Filter,
   RefreshCw,
   RotateCcw,
@@ -20,11 +19,26 @@ import { useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
 import type { MarketItemsResponse } from '@/types/tarkov';
 import { useGameMode } from '@/contexts/GameModeContext';
-import { formatRelativeTime } from '@/lib/format';
 import { Link } from '@/i18n/navigation';
 import { RELATED_LINK_CLASS } from '@/components/tools/relatedLinkClass';
+import type { DataHealth } from '@/lib/data-status';
+import { contentFreshness, domainPolicy } from '@/lib/data-status';
+import {
+  DataSourcePopover,
+  DataStatusBadge,
+  LastUpdated,
+  StaleDataNotice,
+} from '@/components/status/StatusUI';
+import { CachedDataNotice } from '@/components/status/CachedDataNotice';
+import {
+  pwaFetch,
+  useConnectivityOptional,
+} from '@/contexts/ConnectivityContext';
+import { offlineResponseInfoFromHeaders, type OfflineResponseInfo } from '@/lib/offline-status';
 import { ItemSearch } from './ItemSearch';
 import { ItemsTable, type ItemSort } from './ItemsTable';
+
+const ITEM_PRICE_POLICY = domainPolicy('itemPrices');
 
 const DEFAULT_SORT: ItemSort = 'valuePerSlot';
 const DEFAULT_DIRECTION = 'desc';
@@ -42,6 +56,10 @@ const EMPTY_RESPONSE: MarketItemsResponse = {
     generatedAt: new Date(0).toISOString(),
     gameMode: 'regular',
     feeRate: DEFAULT_FEE,
+    totalCount: 0,
+    staleCount: 0,
+    missingCount: 0,
+    delivery: 'unknown',
   },
 };
 
@@ -80,11 +98,11 @@ function FilterFields({
 }: FilterFieldsProps) {
   const t = useTranslations('items');
   const fieldClass =
-    'h-[44px] w-full rounded-md border border-border bg-bg px-3 text-[14px] leading-5 text-fg focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50';
+    'h-[44px] w-full rounded-md border border-border bg-bg px-3 text-[16px] leading-6 text-fg focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50';
 
   return (
     <>
-      <label className="block text-[12px] leading-4 text-muted">
+      <label className="block text-[14px] leading-5 text-muted">
         <span className="mb-1 block">{t('categoryLabel')}</span>
         <select
           value={category}
@@ -101,7 +119,7 @@ function FilterFields({
         </select>
       </label>
 
-      <label className="block text-[12px] leading-4 text-muted">
+      <label className="block text-[14px] leading-5 text-muted">
         <span className="mb-1 block">{t('saleLabel')}</span>
         <select
           value={sale}
@@ -116,7 +134,7 @@ function FilterFields({
         </select>
       </label>
 
-      <label className="block text-[12px] leading-4 text-muted">
+      <label className="block text-[14px] leading-5 text-muted">
         <span className="mb-1 block">{t('sortLabel')}</span>
         <div className="flex">
           <select
@@ -147,7 +165,7 @@ function FilterFields({
         </div>
       </label>
 
-      <label className="block text-[12px] leading-4 text-muted">
+      <label className="block text-[14px] leading-5 text-muted">
         <span className="mb-1 block">{t('feeLabel')}</span>
         <div className="flex h-[44px] items-center rounded-md border border-border bg-bg px-3 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/50">
           <input
@@ -159,10 +177,10 @@ function FilterFields({
             onChange={(event) =>
               setFeeRate(Math.min(25, Math.max(0, Number(event.target.value))))
             }
-            className="min-w-0 flex-1 bg-transparent text-[14px] leading-5 text-fg outline-none"
+            className="min-w-0 flex-1 bg-transparent text-[16px] leading-6 text-fg outline-none"
             aria-label={t('feeLabel')}
           />
-          <span className="text-[13px] text-muted">%</span>
+          <span className="text-[14px] text-muted">%</span>
         </div>
       </label>
     </>
@@ -221,9 +239,13 @@ export function ItemsExplorer({
   initialResponse?: MarketItemsResponse | null;
 }) {
   const t = useTranslations('items');
+  const ts = useTranslations('status');
   const { gameMode } = useGameMode();
+  const connectivity = useConnectivityOptional();
+  const [offlineInfo, setOfflineInfo] = useState<OfflineResponseInfo | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchComposing, setSearchComposing] = useState(false);
   const [sort, setSort] = useState<ItemSort>(DEFAULT_SORT);
   const [direction, setDirection] = useState<'asc' | 'desc'>(DEFAULT_DIRECTION);
   const [sale, setSale] = useState('all');
@@ -232,12 +254,21 @@ export function ItemsExplorer({
   const [data, setData] = useState<MarketItemsResponse>(initialResponse ?? EMPTY_RESPONSE);
   const [loading, setLoading] = useState(!initialResponse);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false);
   const [failed, setFailed] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [queryReady, setQueryReady] = useState(false);
+  const [now, setNow] = useState(() => {
+    const generatedAt = Date.parse(
+      initialResponse?.meta.generatedAt ?? EMPTY_RESPONSE.meta.generatedAt,
+    );
+    return Number.isFinite(generatedAt) ? generatedAt : 0;
+  });
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const skippableInitialFetch = useRef(Boolean(initialResponse));
+  const loadMoreControllerRef = useRef<AbortController | null>(null);
+  const activeQueryKeyRef = useRef('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -262,10 +293,10 @@ export function ItemsExplorer({
   }, []);
 
   useEffect(() => {
-    if (!queryReady) return;
+    if (!queryReady || searchComposing) return;
     const timer = window.setTimeout(() => setDebouncedSearch(search), 250);
     return () => window.clearTimeout(timer);
-  }, [queryReady, search]);
+  }, [queryReady, search, searchComposing]);
 
   useEffect(() => {
     if (!queryReady) return;
@@ -284,7 +315,7 @@ export function ItemsExplorer({
     window.history.replaceState(
       window.history.state,
       '',
-      `${window.location.pathname}${query ? `?${query}` : ''}`,
+      `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`,
     );
   }, [
     queryReady,
@@ -298,6 +329,12 @@ export function ItemsExplorer({
 
   useEffect(() => {
     if (!filterOpen) return;
+    const desktopMedia = window.matchMedia('(min-width: 1024px)');
+    if (desktopMedia.matches) {
+      setFilterOpen(false);
+      return;
+    }
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const panel = sheetRef.current;
@@ -324,12 +361,24 @@ export function ItemsExplorer({
       }
     }
 
+    function onBreakpointChange(event: MediaQueryListEvent) {
+      if (event.matches) setFilterOpen(false);
+    }
+
     document.addEventListener('keydown', onKeyDown);
+    desktopMedia.addEventListener('change', onBreakpointChange);
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', onKeyDown);
+      desktopMedia.removeEventListener('change', onBreakpointChange);
     };
   }, [filterOpen]);
+
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const baseParams = useMemo(
     () =>
@@ -345,9 +394,23 @@ export function ItemsExplorer({
       }),
     [locale, gameMode, debouncedSearch, sort, direction, sale, category, feeRate],
   );
+  const queryKey = baseParams.toString();
+  activeQueryKeyRef.current = queryKey;
+
+  useEffect(
+    () => () => {
+      loadMoreControllerRef.current?.abort();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!queryReady) return;
+
+    loadMoreControllerRef.current?.abort();
+    loadMoreControllerRef.current = null;
+    setLoadingMore(false);
+    setLoadMoreFailed(false);
 
     if (skippableInitialFetch.current) {
       skippableInitialFetch.current = false;
@@ -370,12 +433,20 @@ export function ItemsExplorer({
     const params = new URLSearchParams(baseParams);
     params.set('page', '1');
 
-    fetch(`/api/items?${params.toString()}`, { signal: controller.signal })
+    pwaFetch(
+      `/api/items?${params.toString()}`,
+      { signal: controller.signal },
+      connectivity?.noteFetchOutcome,
+    )
       .then(async (response) => {
+        const info = offlineResponseInfoFromHeaders(response.headers, response.url);
+        setOfflineInfo(info.servedFromOfflineCache ? info : null);
         if (!response.ok) throw new Error('market request failed');
         return response.json() as Promise<MarketItemsResponse>;
       })
-      .then(setData)
+      .then((next) => {
+        if (activeQueryKeyRef.current === queryKey) setData(next);
+      })
       .catch((error: unknown) => {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           setFailed(true);
@@ -386,7 +457,7 @@ export function ItemsExplorer({
       });
 
     return () => controller.abort();
-  }, [baseParams, queryReady]);
+  }, [baseParams, queryKey, queryReady, connectivity?.noteFetchOutcome]);
 
   const resetFilters = useCallback(() => {
     setCategory('all');
@@ -405,21 +476,46 @@ export function ItemsExplorer({
 
   async function loadMore() {
     if (!data.hasMore || loadingMore) return;
+    const requestQueryKey = queryKey;
+    const controller = new AbortController();
+    loadMoreControllerRef.current?.abort();
+    loadMoreControllerRef.current = controller;
     setLoadingMore(true);
+    setLoadMoreFailed(false);
     const params = new URLSearchParams(baseParams);
     params.set('page', String(data.page + 1));
     try {
-      const response = await fetch(`/api/items?${params.toString()}`);
+      const response = await pwaFetch(
+        `/api/items?${params.toString()}`,
+        { signal: controller.signal },
+        connectivity?.noteFetchOutcome,
+      );
+      const info = offlineResponseInfoFromHeaders(response.headers, response.url);
+      if (info.servedFromOfflineCache) setOfflineInfo(info);
       if (!response.ok) throw new Error('market request failed');
       const next = (await response.json()) as MarketItemsResponse;
-      setData((current) => ({
-        ...next,
-        items: [...current.items, ...next.items],
-      }));
-    } catch {
-      setFailed(true);
+      if (controller.signal.aborted || activeQueryKeyRef.current !== requestQueryKey) {
+        return;
+      }
+      setData((current) => {
+        if (current.page + 1 !== next.page) return current;
+        return {
+          ...next,
+          items: [...current.items, ...next.items],
+        };
+      });
+    } catch (error: unknown) {
+      if (
+        !(error instanceof DOMException && error.name === 'AbortError') &&
+        activeQueryKeyRef.current === requestQueryKey
+      ) {
+        setLoadMoreFailed(true);
+      }
     } finally {
-      setLoadingMore(false);
+      if (loadMoreControllerRef.current === controller) {
+        loadMoreControllerRef.current = null;
+        if (activeQueryKeyRef.current === requestQueryKey) setLoadingMore(false);
+      }
     }
   }
 
@@ -432,19 +528,29 @@ export function ItemsExplorer({
     }
   }
 
-  const now = Date.now();
-  const sourceAge =
-    data.meta.sourceUpdatedAt == null
-      ? null
-      : (now - Date.parse(data.meta.sourceUpdatedAt)) / 3_600_000;
-  const sourceState =
-    sourceAge == null
-      ? 'unknown'
-      : sourceAge <= 12
-        ? 'fresh'
-        : sourceAge <= 24
-          ? 'aging'
-          : 'stale';
+  // One shared status vocabulary instead of this page's own fresh/aging/stale
+  // wording. Freshness thresholds now live in the domain registry, and
+  // `meta.delivery` is the server's own observation of whether this document
+  // came off the network or out of the stale-on-error path.
+  const health: DataHealth = {
+    domain: 'itemPrices',
+    availability: 'available',
+    freshness: contentFreshness({
+      sourceUpdatedAt: data.meta.sourceUpdatedAt,
+      warningAfterMs: ITEM_PRICE_POLICY.warningAfterMs,
+      staleAfterMs: ITEM_PRICE_POLICY.staleAfterMs,
+      now,
+    }),
+    delivery: data.meta.delivery,
+    timestamps: {
+      ...(data.meta.sourceUpdatedAt ? { sourceUpdatedAt: data.meta.sourceUpdatedAt } : {}),
+      observedAt: data.meta.generatedAt,
+    },
+    totalCount: data.meta.totalCount,
+    staleCount: data.meta.staleCount,
+    missingCount: data.meta.missingCount,
+    retryable: true,
+  };
   const activeFilterCount =
     Number(category !== 'all') +
     Number(sale !== 'all') +
@@ -467,57 +573,71 @@ export function ItemsExplorer({
 
   return (
     <div className="min-w-0">
+      <CachedDataNotice info={offlineInfo} locale={locale} variant="price" />
       <div className="mb-4 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-[24px] font-medium leading-8 text-fg sm:text-[28px]">
               {t('title')}
             </h1>
-            <span className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-[12px] font-medium leading-none text-accent">
+            <span className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-[14px] font-medium leading-5 text-accent">
               {gameMode === 'regular' ? 'PvP' : 'PvE'}
             </span>
           </div>
-          <p className="mt-1 max-w-2xl text-[13px] leading-5 text-muted">{t('subtitle')}</p>
+          <p className="mt-1 max-w-2xl text-[16px] leading-6 text-muted">{t('subtitle')}</p>
           <Link href="/economy/barters" className={RELATED_LINK_CLASS}>{t('relatedLink')}</Link>
         </div>
-        <div
-          className={`inline-flex min-h-[32px] shrink-0 items-center gap-2 self-start rounded-full border px-3 py-1.5 text-[12px] leading-4 sm:self-auto ${
-            sourceState === 'fresh'
-              ? 'border-positive/40 bg-positive/10 text-positive'
-              : sourceState === 'aging'
-                ? 'border-accent/40 bg-accent/10 text-accent'
-                : sourceState === 'stale'
-                  ? 'border-negative/40 bg-negative/10 text-negative'
-                  : 'border-border bg-surface text-muted'
-          }`}
-          title={`${t('dataSource')}: ${data.meta.source}`}
-        >
-          <Database className="size-[14px]" aria-hidden="true" />
-          <span>{t(`freshness.${sourceState}`)}</span>
-          <span aria-hidden="true">·</span>
-          <span>
-            {data.meta.sourceUpdatedAt
-              ? formatRelativeTime(data.meta.sourceUpdatedAt, locale, now)
-              : t('dataUnknown')}
-          </span>
+        <div className="flex min-w-0 flex-col items-start gap-2 self-start sm:items-end sm:self-auto">
+          <DataStatusBadge health={health} />
+          <LastUpdated
+            label={ts('label.sourceUpdatedAt')}
+            iso={data.meta.sourceUpdatedAt}
+            locale={locale}
+            now={now}
+          />
+          <DataSourcePopover
+            provider={ITEM_PRICE_POLICY.provider}
+            sourceUrl={ITEM_PRICE_POLICY.sourceUrl}
+            cachePolicy={ts(ITEM_PRICE_POLICY.cachePolicyKey)}
+            fallbackBehavior={ts(ITEM_PRICE_POLICY.fallbackBehaviorKey)}
+          >
+            <p className="mt-2 break-words">
+              {ts('counts.total', { count: data.meta.totalCount })} ·{' '}
+              {ts('counts.stale', { count: data.meta.staleCount })} ·{' '}
+              {ts('counts.missing', { count: data.meta.missingCount })}
+            </p>
+            <p className="mt-2 break-words">{ts('instanceNotice')}</p>
+          </DataSourcePopover>
         </div>
       </div>
 
+      {health.delivery === 'stale-cache' ? (
+        <div className="mb-4">
+          <StaleDataNotice />
+        </div>
+      ) : null}
+
       <div className="mb-4">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 lg:grid-cols-[minmax(320px,2fr)_auto]">
-          <ItemSearch value={search} onChange={setSearch} onClear={() => setSearch('')} />
+          <ItemSearch
+            value={search}
+            onChange={setSearch}
+            onClear={() => setSearch('')}
+            onCompositionStart={() => setSearchComposing(true)}
+            onCompositionEnd={() => setSearchComposing(false)}
+          />
           <button
             ref={filterButtonRef}
             type="button"
             onClick={() => setFilterOpen(true)}
-            className="flex h-[44px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-[14px] font-medium text-fg hover:border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:hidden"
+            className="flex h-[44px] min-w-[112px] items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-[16px] font-medium text-fg hover:border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:hidden"
             aria-expanded={filterOpen}
             aria-controls="mobile-item-filters"
           >
             <Filter className="size-[16px]" aria-hidden="true" />
             {t('filterButton')}
             {activeFilterCount > 0 ? (
-              <span className="flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[12px] leading-5 text-accent-fg">
+              <span className="flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[14px] leading-5 text-accent-fg">
                 {activeFilterCount}
               </span>
             ) : null}
@@ -530,7 +650,7 @@ export function ItemsExplorer({
               <button
                 type="button"
                 onClick={() => setCategory('all')}
-                className="inline-flex min-h-[32px] items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[12px] leading-4 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="inline-flex min-h-touch items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[14px] leading-5 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label={t('removeFilter', { filter: t(`categories.${category}`) })}
               >
                 {t(`categories.${category}`)}
@@ -541,7 +661,7 @@ export function ItemsExplorer({
               <button
                 type="button"
                 onClick={() => setSale('all')}
-                className="inline-flex min-h-[32px] items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[12px] leading-4 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="inline-flex min-h-touch items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[14px] leading-5 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label={t('removeFilter', { filter: t(`saleOptions.${sale}`) })}
               >
                 {t(`saleOptions.${sale}`)}
@@ -555,7 +675,7 @@ export function ItemsExplorer({
                   setSort(DEFAULT_SORT);
                   setDirection(DEFAULT_DIRECTION);
                 }}
-                className="inline-flex min-h-[32px] items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[12px] leading-4 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="inline-flex min-h-touch items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[14px] leading-5 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label={t('removeFilter', { filter: t('sortLabel') })}
               >
                 {t(`sortOptions.${sort}`)} · {directionLabel}
@@ -566,7 +686,7 @@ export function ItemsExplorer({
               <button
                 type="button"
                 onClick={() => setFeeRate(DEFAULT_FEE)}
-                className="inline-flex min-h-[32px] items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[12px] leading-4 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="inline-flex min-h-touch items-center gap-1 rounded-full border border-border bg-surface px-2.5 text-[14px] leading-5 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label={t('removeFilter', { filter: t('feeLabel') })}
               >
                 {t('feeChip', { rate: feeRate })}
@@ -576,7 +696,7 @@ export function ItemsExplorer({
             <button
               type="button"
               onClick={resetFilters}
-              className="min-h-[32px] rounded px-2 text-[12px] leading-4 text-muted underline underline-offset-4 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="min-h-touch rounded px-2 text-[16px] leading-6 text-muted underline underline-offset-4 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {t('clearAll')}
             </button>
@@ -589,12 +709,12 @@ export function ItemsExplorer({
           <FilterFields {...filterProps} />
         </div>
         <div className="mt-2 flex items-center justify-between gap-4">
-          <p className="text-[12px] leading-4 text-muted">{t('feeHint')}</p>
+          <p className="text-[14px] leading-5 text-muted">{t('feeHint')}</p>
           {activeFilterCount > 0 ? (
             <button
               type="button"
               onClick={resetFilters}
-              className="inline-flex min-h-[32px] shrink-0 items-center gap-1.5 rounded px-2 text-[12px] text-muted hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex min-h-touch shrink-0 items-center gap-1.5 rounded px-2 text-[16px] text-muted hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <RotateCcw className="size-[13px]" aria-hidden="true" />
               {t('resetFilters')}
@@ -603,7 +723,7 @@ export function ItemsExplorer({
         </div>
       </div>
 
-      <div className="mb-2 flex min-h-[32px] flex-wrap items-center justify-between gap-x-6 gap-y-1 text-[13px] leading-5 text-muted">
+      <div className="mb-2 flex min-h-[32px] flex-wrap items-center justify-between gap-x-6 gap-y-1 text-[14px] leading-5 text-muted">
         <p aria-live="polite">
           {loading ? t('loading') : t('resultCount', { count: data.total })}
         </p>
@@ -614,17 +734,17 @@ export function ItemsExplorer({
           })}
         </p>
       </div>
-      <p className="mb-3 text-[13px] leading-5 text-muted">{t('valueHelp')}</p>
+      <p className="mb-3 text-[16px] leading-6 text-muted">{t('valueHelp')}</p>
 
       <section aria-busy={loading} aria-label={t('resultsLabel')}>
         {failed ? (
           <div className="rounded-lg border border-negative/50 bg-negative/5 px-4 py-10 text-center">
-            <p className="text-[14px] leading-5 text-fg">{t('error')}</p>
-            <p className="mt-1 text-[12px] leading-4 text-muted">{t('errorHint')}</p>
+            <p className="text-[16px] leading-6 text-fg">{t('error')}</p>
+            <p className="mt-1 text-[14px] leading-5 text-muted">{t('errorHint')}</p>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-md border border-border bg-surface px-4 text-[14px] text-fg hover:border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-md border border-border bg-surface px-4 text-[16px] text-fg hover:border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <RefreshCw className="size-[16px]" aria-hidden="true" />
               {t('retry')}
@@ -634,18 +754,18 @@ export function ItemsExplorer({
           <ItemsSkeleton />
         ) : data.items.length === 0 ? (
           <div className="rounded-lg border border-border bg-surface px-4 py-10 text-center">
-            <p className="text-[15px] font-medium leading-6 text-fg">{t('empty')}</p>
+            <p className="text-[16px] font-medium leading-6 text-fg">{t('empty')}</p>
             {search.trim() ? (
-              <p className="mt-1 text-[13px] leading-5 text-muted">
+              <p className="mt-1 text-[14px] leading-5 text-muted">
                 {t('emptyQuery', { query: search.trim() })}
               </p>
             ) : null}
-            <p className="mt-1 text-[13px] leading-5 text-muted">{t('emptyHint')}</p>
+            <p className="mt-1 text-[14px] leading-5 text-muted">{t('emptyHint')}</p>
             {hasAnyCriteria ? (
               <button
                 type="button"
                 onClick={resetAll}
-                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-accent px-4 text-[14px] font-medium text-accent-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-accent px-4 text-[16px] font-medium text-accent-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 <RotateCcw className="size-[16px]" aria-hidden="true" />
                 {t('resetAll')}
@@ -662,13 +782,27 @@ export function ItemsExplorer({
               direction={direction}
               onSort={handleSort}
             />
-            {data.hasMore ? (
+            {loadMoreFailed ? (
+              <div
+                role="alert"
+                className="mt-4 flex flex-wrap items-center justify-center gap-3 rounded-md border border-negative/40 bg-negative/5 px-4 py-3 text-[14px] text-muted"
+              >
+                <span>{t('error')}</span>
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  className="min-h-[44px] rounded-md border border-border bg-surface px-4 text-[16px] text-fg hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  {t('retry')}
+                </button>
+              </div>
+            ) : data.hasMore ? (
               <div className="mt-4 text-center">
                 <button
                   type="button"
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="min-h-[44px] rounded-md border border-border bg-surface px-5 text-[14px] text-fg hover:border-accent disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="min-h-[44px] rounded-md border border-border bg-surface px-5 text-[16px] text-fg hover:border-accent disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   {loadingMore ? t('loading') : t('loadMore')}
                 </button>
@@ -705,7 +839,7 @@ export function ItemsExplorer({
                 >
                   {t('filtersTitle')}
                 </h2>
-                <p className="text-[12px] leading-4 text-muted">
+                <p className="text-[14px] leading-5 text-muted">
                   {t('activeFilters', { count: activeFilterCount })}
                 </p>
               </div>
@@ -723,13 +857,13 @@ export function ItemsExplorer({
             </div>
             <div className="grid gap-4 overflow-y-auto px-4 py-4 sm:grid-cols-2">
               <FilterFields {...filterProps} />
-              <p className="text-[12px] leading-4 text-muted sm:col-span-2">{t('feeHint')}</p>
+              <p className="text-[14px] leading-5 text-muted sm:col-span-2">{t('feeHint')}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-2 border-t border-border bg-surface px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
               <button
                 type="button"
                 onClick={resetFilters}
-                className="min-h-[44px] rounded-md border border-border px-4 text-[14px] text-fg hover:border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="min-h-[44px] rounded-md border border-border px-4 text-[16px] text-fg hover:border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {t('resetFilters')}
               </button>
@@ -739,7 +873,7 @@ export function ItemsExplorer({
                   setFilterOpen(false);
                   filterButtonRef.current?.focus();
                 }}
-                className="min-h-[44px] rounded-md bg-accent px-4 text-[14px] font-medium text-accent-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                className="min-h-[44px] rounded-md bg-accent px-4 text-[16px] font-medium text-accent-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
               >
                 {loading ? t('loading') : t('applyResults', { count: data.total })}
               </button>

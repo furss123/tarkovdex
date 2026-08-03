@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bitcoin,
-  Check,
   ChevronDown,
   CookingPot,
   Droplets,
@@ -19,7 +18,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { useGameMode } from '@/contexts/GameModeContext';
 import { calculateCraftProfit } from '@/lib/tool-calculations';
-import type { EconomyDataset, PriceStrategy } from '@/types/tools';
+import type { EconomyDataset } from '@/types/tools';
 
 type Props = { regular: EconomyDataset; pve: EconomyDataset };
 
@@ -46,38 +45,19 @@ function stationIcon(stationId: string): LucideIcon {
   return STATION_ICONS[stationId] ?? Hammer;
 }
 
+function metricTone(value: number | null): string {
+  if (value === null) return 'text-muted';
+  return value >= 0 ? 'text-positive' : 'text-negative';
+}
+
 export function EconomyExplorer({ regular, pve }: Props) {
   const t = useTranslations('economy');
   const { gameMode } = useGameMode();
   const data = gameMode === 'pve' ? pve : regular;
-  const [query, setQuery] = useState('');
-  const [strategy, setStrategy] = useState<PriceStrategy>('best');
-  const [profitableOnly, setProfitableOnly] = useState(false);
-  const [completeOnly, setCompleteOnly] = useState(false);
-  const [hourlyCost, setHourlyCost] = useState(0);
   const [expandedStations, setExpandedStations] = useState<string[]>([]);
   const [activeStationId, setActiveStationId] = useState('');
   const navRef = useRef<HTMLElement>(null);
   const [navOffset, setNavOffset] = useState(HEADER_HEIGHT + NAV_GAP);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const rawStrategy = params.get('strategy');
-    if (rawStrategy === 'flea' || rawStrategy === 'trader' || rawStrategy === 'best') {
-      setStrategy(rawStrategy);
-    }
-    setQuery(params.get('q') ?? '');
-  }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    params.delete('tab');
-    params.delete('sort');
-    if (query) params.set('q', query);
-    else params.delete('q');
-    params.set('strategy', strategy);
-    window.history.replaceState(null, '', `${window.location.pathname}?${params}`);
-  }, [query, strategy]);
 
   const stationGroups = useMemo(() => {
     const grouped = new Map<
@@ -92,20 +72,8 @@ export function EconomyExplorer({ regular, pve }: Props) {
     >();
 
     for (const deal of data.crafts) {
-      const result = calculateCraftProfit(deal, strategy, hourlyCost);
-      const searchText = [
-        deal.productItem.item.name,
-        deal.station.name,
-        ...deal.requiredItems.map((part) => part.item.name),
-      ].join(' ').toLocaleLowerCase();
-      const matches = !query || searchText.includes(query.toLocaleLowerCase());
-      if (
-        !matches ||
-        (profitableOnly && (result.profit ?? -1) <= 0) ||
-        (completeOnly && result.missing.length > 0)
-      ) {
-        continue;
-      }
+      if (deal.active === false) continue;
+      const result = calculateCraftProfit(deal, 'best', 0);
 
       const group = grouped.get(deal.station.id) ?? {
         station: deal.station,
@@ -132,7 +100,7 @@ export function EconomyExplorer({ regular, pve }: Props) {
             (a.entries[0]?.result.profit ?? Number.NEGATIVE_INFINITY) ||
           a.station.name.localeCompare(b.station.name),
       );
-  }, [completeOnly, data.crafts, hourlyCost, profitableOnly, query, strategy]);
+  }, [data.crafts]);
 
   useEffect(() => {
     if (!stationGroups.length) {
@@ -188,54 +156,6 @@ export function EconomyExplorer({ regular, pve }: Props) {
 
   return (
     <div>
-      <div className="grid gap-3 rounded-lg border border-border bg-surface/30 p-4 sm:grid-cols-2 lg:grid-cols-3">
-        <label className="text-xs text-muted sm:col-span-2 lg:col-span-1">
-          <span className="mb-1 block">{t('search')}</span>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg focus:border-accent focus:outline-none"
-          />
-        </label>
-        <label className="text-xs text-muted">
-          <span className="mb-1 block">{t('strategy')}</span>
-          <select
-            value={strategy}
-            onChange={(event) => setStrategy(event.target.value as PriceStrategy)}
-            className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg"
-          >
-            <option value="best">{t('best')}</option>
-            <option value="flea">{t('flea')}</option>
-            <option value="trader">{t('trader')}</option>
-          </select>
-        </label>
-        <label className="text-xs text-muted">
-          <span className="mb-1 block">{t('hourlyCost')}</span>
-          <input
-            type="number"
-            min={0}
-            value={hourlyCost}
-            onChange={(event) => setHourlyCost(Number(event.target.value))}
-            className="min-h-touch w-full rounded-md border border-border bg-bg px-3 text-sm text-fg"
-          />
-        </label>
-        <div className="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-3">
-          <FilterToggle
-            pressed={profitableOnly}
-            onToggle={() => setProfitableOnly((value) => !value)}
-            label={t('profitableOnly')}
-          />
-          <FilterToggle
-            pressed={completeOnly}
-            onToggle={() => setCompleteOnly((value) => !value)}
-            label={t('completeOnly')}
-          />
-        </div>
-      </div>
-
-      <p className="mt-3 text-xs leading-relaxed text-muted">{t('operatingNote')}</p>
-
       {stationGroups.length ? (
         <nav
           ref={navRef}
@@ -259,7 +179,7 @@ export function EconomyExplorer({ regular, pve }: Props) {
                       .getElementById(`station-section-${group.station.id}`)
                       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
-                  className={`flex min-h-touch items-center gap-2 rounded-md border px-3 py-2 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+                  className={`flex min-h-touch items-center gap-2 rounded-md border px-3 py-2 text-[16px] font-medium leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
                     active
                       ? 'border-accent bg-accent/10 text-accent'
                       : 'border-border bg-surface text-muted hover:border-accent/50 hover:text-fg'
@@ -320,17 +240,13 @@ export function EconomyExplorer({ regular, pve }: Props) {
                 <div className="flex gap-6 sm:text-right">
                   <div>
                     <p className="text-xs text-muted">{t('bestProfit')}</p>
-                    <p className={`mt-0.5 text-lg font-medium tabular-nums ${
-                      bestProfit !== null && bestProfit >= 0 ? 'text-positive' : 'text-negative'
-                    }`}>
+                    <p className={`mt-0.5 text-lg font-medium tabular-nums ${metricTone(bestProfit)}`}>
                       {bestProfit === null ? '—' : `₽${money.format(bestProfit)}`}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted">{t('bestHourly')}</p>
-                    <p className={`mt-0.5 text-lg font-medium tabular-nums ${
-                      bestHourly !== null && bestHourly >= 0 ? 'text-positive' : 'text-negative'
-                    }`}>
+                    <p className={`mt-0.5 text-lg font-medium tabular-nums ${metricTone(bestHourly)}`}>
                       {bestHourly === null ? '—' : `₽${money.format(bestHourly)}`}
                     </p>
                   </div>
@@ -342,7 +258,7 @@ export function EconomyExplorer({ regular, pve }: Props) {
                   <article
                     key={deal.id}
                     data-profit={result.profit ?? ''}
-                    className="rounded-lg border border-border bg-bg/50 p-4 transition-colors hover:border-accent/40"
+                    className="rounded-lg border border-border bg-bg/50 p-4"
                   >
                     <div className="flex items-start gap-3">
                       <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
@@ -372,14 +288,10 @@ export function EconomyExplorer({ regular, pve }: Props) {
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className={`text-base font-medium tabular-nums ${
-                          result.profit !== null && result.profit >= 0
-                            ? 'text-positive'
-                            : 'text-negative'
-                        }`}>
+                        <p className={`text-base font-medium tabular-nums ${metricTone(result.profit)}`}>
                           {result.profit === null ? '—' : `₽${money.format(result.profit)}`}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-muted">{t('profit')}</p>
+                        <p className="mt-0.5 text-[14px] leading-5 text-muted">{t('profit')}</p>
                       </div>
                     </div>
 
@@ -473,40 +385,5 @@ export function EconomyExplorer({ regular, pve }: Props) {
         <p className="mt-8 text-center text-sm text-muted">{t('empty')}</p>
       ) : null}
     </div>
-  );
-}
-
-/** Design-system toggle chip replacing the browser-default checkbox: selected
- * state uses border + background + check mark, not colour alone. */
-function FilterToggle({
-  pressed,
-  onToggle,
-  label,
-}: {
-  pressed: boolean;
-  onToggle: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onToggle}
-      className={`inline-flex min-h-touch items-center gap-1.5 rounded-md border px-3 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
-        pressed
-          ? 'border-accent bg-accent/10 text-accent'
-          : 'border-border bg-bg text-muted hover:text-fg'
-      }`}
-    >
-      <span
-        aria-hidden="true"
-        className={`flex size-4 items-center justify-center rounded-sm border ${
-          pressed ? 'border-accent bg-accent text-accent-fg' : 'border-border'
-        }`}
-      >
-        {pressed ? <Check className="size-3" /> : null}
-      </span>
-      {label}
-    </button>
   );
 }

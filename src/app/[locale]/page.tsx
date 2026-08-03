@@ -1,12 +1,16 @@
-import Image from 'next/image';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { SITE_URL } from '@/lib/site';
-import { HERO_ATMOSPHERE } from '@/lib/atmosphere';
+import { serializeJsonLd } from '@/lib/json-ld';
 import { getMaps, getTraders } from '@/lib/tarkov';
-import type { GameMap, TaskTrader } from '@/types/tarkov';
+import { getEconomyDataset } from '@/lib/tarkov-tools';
+import { selectBestCraftsByStation } from '@/lib/tool-calculations';
+import { getLiveFeed } from '@/lib/live/feed';
+import { isPublishable, latestPublicFeedEntries } from '@/lib/live/status';
 import { InGameClock } from '@/components/home/InGameClock';
+import { LatestNewsBoard } from '@/components/home/LatestNewsBoard';
+import { CraftProfitBoard } from '@/components/home/CraftProfitBoard';
 import { TraderRestockBoard } from '@/components/home/TraderRestockBoard';
 import { BossSpawnBoard } from '@/components/home/BossSpawnBoard';
 
@@ -14,16 +18,29 @@ type PageProps = {
   params: Promise<{ locale: string }>;
 };
 
+// The news board's public route refreshes on the same cadence. Price-backed
+// Tarkov documents keep their own 15-minute runtime cache; structural maps,
+// traders and hideout documents keep six hours in lib/tarkov.ts.
+export const revalidate = 600;
+export const dynamic = 'force-static';
+
+async function optional<T>(promise: Promise<T>): Promise<T | null> {
+  try {
+    return await promise;
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const locale = (await params).locale as Locale;
   return buildPageMetadata({ locale, page: 'home' });
 }
 
 /**
- * The dashboard widgets (raid clock, trader restocks, boss spawn rates) sit
- * above the fold — see CLAUDE.md > "Home page dashboard" for the
- * section-ordering rationale (most actionable info first). Traders and maps
- * are both fetched for **both** PvP and PvE
+ * The dashboard widgets are ordered from live time and news through economy,
+ * trader and boss data. Traders, crafts and maps are fetched for both PvP and
+ * PvE
  * (restock times and boss compositions genuinely differ between modes —
  * see CLAUDE.md > "Global PvP/PvE mode"); the widgets themselves read the
  * site-wide mode selection via `useGameMode()` rather than this page picking
@@ -34,27 +51,42 @@ export default async function HomePage({ params }: PageProps) {
   setRequestLocale(locale);
   const t = await getTranslations('home');
 
-  let pvpTraders: TaskTrader[] = [];
-  let pveTraders: TaskTrader[] = [];
-  let pvpMaps: GameMap[] = [];
-  let pveMaps: GameMap[] = [];
-  try {
-    const [pvpTradersById, pveTradersById, pvpMapsList, pveMapsList] = await Promise.all([
-      getTraders(locale, 'regular'),
-      getTraders(locale, 'pve'),
-      getMaps({ locale, gameMode: 'regular' }),
-      getMaps({ locale, gameMode: 'pve' }),
-    ]);
-    // Keep service/quest-only characters available to the tasks data layer,
-    // but omit them from this stock-restock UI because they sell no items.
-    pvpTraders = Object.values(pvpTradersById).filter((trader) => trader.hasStore);
-    pveTraders = Object.values(pveTradersById).filter((trader) => trader.hasStore);
-    pvpMaps = pvpMapsList;
-    pveMaps = pveMapsList;
-  } catch {
-    // Data-backed widgets are supplementary — on failure just hide them.
-    // The client-only raid clock remains available.
-  }
+  const [
+    pvpTradersById,
+    pveTradersById,
+    pvpMaps,
+    pveMaps,
+    pvpEconomy,
+    pveEconomy,
+    liveFeed,
+  ] = await Promise.all([
+    optional(getTraders(locale, 'regular')),
+    optional(getTraders(locale, 'pve')),
+    optional(getMaps({ locale, gameMode: 'regular' })),
+    optional(getMaps({ locale, gameMode: 'pve' })),
+    optional(getEconomyDataset(locale, 'regular')),
+    optional(getEconomyDataset(locale, 'pve')),
+    optional(getLiveFeed(locale)),
+  ]);
+
+  // Keep service/quest-only characters available to the tasks data layer,
+  // but omit them from this stock-restock UI because they sell no items.
+  const pvpTraders = pvpTradersById
+    ? Object.values(pvpTradersById).filter((trader) => trader.hasStore)
+    : null;
+  const pveTraders = pveTradersById
+    ? Object.values(pveTradersById).filter((trader) => trader.hasStore)
+    : null;
+  const pvpCraftLeaders = pvpEconomy
+    ? selectBestCraftsByStation(pvpEconomy.crafts)
+    : null;
+  const pveCraftLeaders = pveEconomy
+    ? selectBestCraftsByStation(pveEconomy.crafts)
+    : null;
+  const pvpBossMaps =
+    pvpMaps?.map(({ id, name, bosses }) => ({ id, name, bosses })) ?? null;
+  const pveBossMaps =
+    pveMaps?.map(({ id, name, bosses }) => ({ id, name, bosses })) ?? null;
 
   return (
     <>
@@ -62,7 +94,7 @@ export default async function HomePage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             '@context': 'https://schema.org',
             '@type': 'WebSite',
             name: 'TarkovDex',
@@ -71,56 +103,23 @@ export default async function HomePage({ params }: PageProps) {
           }),
         }}
       />
-      <section className="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14">
-        {/*
-          Atmosphere hero. The image is decoration only — the two overlays below
-          are what make the existing heading copy readable over it, so they are
-          deliberately heavy (the site's no-gradient rule is about decorative
-          surface treatment, not a contrast scrim). `fill` inside a fixed
-          min-height box means no layout shift, and this is the one image on the
-          site marked `priority`; everything else lazy-loads.
-        */}
-        {/* `isolate` so the `-z-10` decoration layers stack behind the copy but
-            still in front of the page background. */}
-        <header className="relative isolate mb-10 flex min-h-[260px] flex-col justify-end overflow-hidden rounded-lg border border-border px-6 py-8 sm:min-h-[380px] sm:px-10 sm:py-12">
-          <Image
-            src={HERO_ATMOSPHERE}
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 80rem) 100vw, 1280px"
-            className="-z-10 object-cover object-center"
-          />
-          {/* Heavier on mobile: below `sm` the copy spans nearly the full hero
-              width, so the right edge of a line can otherwise land on the
-              image's brightest area (measured ~3.9:1 for the muted subtitle
-              before this). Desktop copy stops well inside the dark half. */}
-          <div
-            className="absolute inset-0 -z-10 bg-gradient-to-r from-bg via-bg/90 to-bg/75 sm:to-bg/55"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute inset-0 -z-10 bg-gradient-to-t from-bg via-bg/55 to-transparent sm:via-bg/45"
-            aria-hidden="true"
-          />
-
-          <p className="text-xs font-medium uppercase tracking-widest text-accent">TarkovDex</p>
-          <h1 className="mt-2 text-2xl font-medium tracking-tight text-fg sm:text-3xl">
-            {t('title')}
-          </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted sm:text-base">
-            {t('subtitle')}
-          </p>
-        </header>
-
-        <div className="space-y-10">
+      <section className="mx-auto max-w-content px-4 py-4 sm:px-6 sm:py-6">
+        <h1 className="sr-only">{t('title')}</h1>
+        <div className="space-y-8 sm:space-y-10">
           <InGameClock />
-          {pvpTraders.length > 0 || pveTraders.length > 0 ? (
-            <TraderRestockBoard pvpTraders={pvpTraders} pveTraders={pveTraders} />
-          ) : null}
-          {pvpMaps.length > 0 || pveMaps.length > 0 ? (
-            <BossSpawnBoard pvpMaps={pvpMaps} pveMaps={pveMaps} locale={locale} />
-          ) : null}
+          <LatestNewsBoard
+            entries={liveFeed
+              ? latestPublicFeedEntries(liveFeed.entries.filter(isPublishable)).slice(0, 3)
+              : null}
+            locale={locale}
+          />
+          <CraftProfitBoard
+            pvpLeaders={pvpCraftLeaders}
+            pveLeaders={pveCraftLeaders}
+            locale={locale}
+          />
+          <TraderRestockBoard pvpTraders={pvpTraders} pveTraders={pveTraders} />
+          <BossSpawnBoard pvpMaps={pvpBossMaps} pveMaps={pveBossMaps} locale={locale} />
         </div>
       </section>
     </>

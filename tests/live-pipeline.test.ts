@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createTestDb, type TestDb } from './helpers/pglite';
+import { createTestDb, withQueryHook, type TestDb } from './helpers/pglite';
 import { runIngestion } from '../src/lib/live/pipeline';
 import type { SourceCollector } from '../src/lib/live/collectors';
 import { contentHash } from '../src/lib/live/normalize';
 import { fetchXTimeline } from '../src/lib/live/x';
-import type { RawSourcePost, SourceState } from '../src/lib/live/repository';
+import { createRepository, type RawSourcePost, type SourceState } from '../src/lib/live/repository';
 
 /**
  * The whole background pipeline against a real Postgres and a fake X, with no
@@ -93,7 +93,7 @@ async function withDb(run: (db: TestDb) => Promise<void>) {
   }
 }
 
-test('a cron run collects, stores and publishes without any page being rendered', async () => {
+test('a cron run stores an official post for review before an operator publishes it', async () => {
   await withDb(async (db) => {
     const summary = await runIngestion(db.repo, {
       trigger: 'cron',
@@ -105,12 +105,22 @@ test('a cron run collects, stores and publishes without any page being rendered'
     assert.equal(summary.sources[0].newPosts, 1);
     assert.equal(summary.eventsUpserted, 1);
 
-    // An official patch note with no claimed schedule is safe to publish.
-    const [event] = await db.repo.listEvents({ reviewStatus: ['auto_published'] });
+    const [event] = await db.repo.listEvents({ reviewStatus: ['pending_review'] });
     assert.equal(event.category, 'patch');
     assert.equal(event.reliability, 'official_confirmed');
+    assert.equal(event.reviewStatus, 'pending_review');
+    assert.equal(event.publishedAt, null);
     assert.equal(event.startsAt ?? null, null, 'no window was invented');
     assert.equal(event.sources.length, 1);
+
+    await db.repo.updateEventFields(
+      event.id,
+      { reviewStatus: 'reviewed', publishedAt: at(0) },
+      { manual: true, actor: 'admin:test' },
+    );
+    const approved = await db.repo.getEvent(event.id);
+    assert.equal(approved?.reviewStatus, 'reviewed');
+    assert.equal(approved?.publishedAt, new Date(at(0)).toISOString());
   });
 });
 
@@ -194,6 +204,83 @@ test('one failing source neither loses another’s posts nor its own cursor', as
   });
 });
 
+test('an interval skip preserves the previous attempt and backoff state', async () => {
+  await withDb(async (db) => {
+    const lastAttemptAt = at(-60_000);
+    const lastErrorAt = at(-30_000);
+    const nextRetryAt = at(60 * 60_000);
+    await db.repo.saveSourceState({
+      sourceKey: 'official_x:tarkov',
+      sourceType: 'official_x',
+      account: 'tarkov',
+      sinceId: '500',
+      lastAttemptAt,
+      lastError: 'x_rate_limited_429',
+      lastErrorAt,
+      consecutiveFailures: 2,
+      nextRetryAt,
+    });
+    const collector: SourceCollector = {
+      key: 'official_x:tarkov',
+      source: 'official_x',
+      account: 'tarkov',
+      enabled: () => true,
+      collect: async () => ({ posts: [], requests: 0, skipped: 'interval' }),
+    };
+
+    const summary = await runIngestion(db.repo, { trigger: 'cron', collectors: [collector] });
+    assert.equal(summary.sources[0].skipped, 'interval');
+    const state = await db.repo.getSourceState('official_x:tarkov');
+    assert.equal(state?.lastAttemptAt, new Date(lastAttemptAt).toISOString());
+    assert.equal(state?.lastError, 'x_rate_limited_429');
+    assert.equal(state?.lastErrorAt, new Date(lastErrorAt).toISOString());
+    assert.equal(state?.consecutiveFailures, 2);
+    assert.equal(state?.nextRetryAt, new Date(nextRetryAt).toISOString());
+    assert.equal(state?.sinceId, '500');
+  });
+});
+
+test('posts, cursor state and a successful run marker roll back as one unit', async () => {
+  await withDb(async (db) => {
+    await db.repo.saveSourceState({
+      sourceKey: 'official_x:tarkov',
+      sourceType: 'official_x',
+      account: 'tarkov',
+      sinceId: '500',
+    });
+    let failed = false;
+    const faultSql = withQueryHook(db.sql, (text, params) => {
+      if (!failed && text.includes('update live_ingestion_runs set') && params[1] === true) {
+        failed = true;
+        throw new Error('finish_success_failed');
+      }
+    });
+    const faultRepo = createRepository(faultSql);
+    const collector: SourceCollector = {
+      key: 'official_x:tarkov',
+      source: 'official_x',
+      account: 'tarkov',
+      enabled: () => true,
+      collect: async () => ({
+        posts: [post('501', 'Atomic announcement')],
+        requests: 1,
+        nextState: { sinceId: '501' },
+      }),
+    };
+
+    const summary = await runIngestion(faultRepo, { trigger: 'cron', collectors: [collector] });
+    assert.equal(summary.sources[0].ok, false);
+    assert.equal(summary.sources[0].newPosts, 0);
+    assert.equal((await db.repo.listRawPosts(10)).length, 0);
+    const state = await db.repo.getSourceState('official_x:tarkov');
+    assert.equal(state?.sinceId, '500');
+    assert.equal(state?.consecutiveFailures, 1);
+    const [run] = await db.repo.listRuns(10);
+    assert.equal(run.ok, false);
+    assert.equal(run.newPosts, 0);
+  });
+});
+
 test('overlapping runs are refused by a lock that outlives the instance', async () => {
   await withDb(async (db) => {
     await db.repo.acquireLock('tarkov-live:ingestion', 60_000, 'other-instance');
@@ -214,6 +301,31 @@ test('overlapping runs are refused by a lock that outlives the instance', async 
       collectors: [staticCollector('steam', [{ ...post('1', 'Patch'), source: 'steam', account: null }])],
     });
     assert.equal(after.locked, false);
+  });
+});
+
+test('an event insert rolls back when its source link cannot be written', async () => {
+  await withDb(async (db) => {
+    let failed = false;
+    const faultSql = withQueryHook(db.sql, (text) => {
+      if (!failed && text.includes('insert into live_event_sources')) {
+        failed = true;
+        throw new Error('link_failed');
+      }
+    });
+    const faultRepo = createRepository(faultSql);
+    const summary = await runIngestion(faultRepo, {
+      trigger: 'cron',
+      collectors: [
+        staticCollector('steam', [
+          { ...post('1', 'Patch 1.2.3.4'), source: 'steam', account: null },
+        ]),
+      ],
+    });
+
+    assert.equal(summary.error, 'collector_error');
+    assert.equal((await db.repo.listRawPosts(10)).length, 1, 'collection committed before event building');
+    assert.equal((await db.repo.listEvents({ limit: 10 })).length, 0, 'the orphan event insert rolled back');
   });
 });
 

@@ -1,8 +1,6 @@
-import Image from 'next/image';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
-import { HERO_ATMOSPHERE } from '@/lib/atmosphere';
 import { Heart } from 'lucide-react';
 
 type PageProps = {
@@ -22,21 +20,7 @@ export default async function SupportPage({ params }: PageProps) {
 
   return (
     <section className="mx-auto max-w-content px-4 py-10 sm:px-6">
-      {/* Texture only, kept faint on purpose: a support page should read as
-          trustworthy and restrained, so the image never grows past a header
-          backdrop and never sits next to the donation button. */}
-      <header className="relative isolate mb-6 flex min-h-[120px] items-end overflow-hidden rounded-lg border border-border px-5 py-5 sm:min-h-[150px] sm:px-6">
-        <Image
-          src={HERO_ATMOSPHERE}
-          alt=""
-          fill
-          sizes="(max-width: 80rem) 100vw, 1280px"
-          className="-z-10 object-cover object-center opacity-25"
-        />
-        <div
-          className="absolute inset-0 -z-10 bg-gradient-to-t from-bg via-bg/70 to-bg/50"
-          aria-hidden="true"
-        />
+      <header className="mb-6 border-b border-border pb-4">
         <h1 className="text-[28px] font-medium leading-9 tracking-tight text-fg sm:text-[30px] sm:leading-10">
           {t('title')}
         </h1>

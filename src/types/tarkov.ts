@@ -9,6 +9,8 @@
  * translation + extraction step, not something components should see.
  */
 
+import type { DeliveryStatus } from '@/lib/data-status';
+
 /** PvP ("regular") vs PvE. Declared here (not in lib/tarkov.ts, which is
  * `server-only`) so client components — like the global game-mode context —
  * can import the type without pulling in server-only fetch code. */
@@ -27,6 +29,8 @@ export interface Item {
   shortName: string;
   width: number;
   height: number;
+  /** Kilograms from upstream; null only if the dump omits a usable weight. */
+  weight: number | null;
   types: string[];
   avg24hPrice: number | null;
   low24hPrice: number | null;
@@ -63,6 +67,20 @@ export interface MarketItemsResponse {
     generatedAt: string;
     gameMode: GameMode;
     feeRate: number;
+    /** Rows matching the query. */
+    totalCount: number;
+    /** Of those, rows whose price is older than MARKET_PRICE_STALE_HOURS. */
+    staleCount: number;
+    /** Of those, rows with no usable upstream timestamp at all. */
+    missingCount: number;
+    /**
+     * How the underlying document reached this response. Set by the server
+     * caller (page or route handler) from the fetch observation; the pure
+     * query function itself cannot know and leaves it `'unknown'`. The browser
+     * cannot observe the server's cache, so this is the only way the flea
+     * market can say "you are seeing the previous copy".
+     */
+    delivery: DeliveryStatus;
   };
 }
 
@@ -92,6 +110,21 @@ export interface TaskObjective {
   description: string;
   optional: boolean;
   count: number | null;
+  /**
+   * Item ids that satisfy this objective — only ever set for
+   * `giveItem`/`findItem`/`plantItem` objective types, confirmed live
+   * (docs/architecture/tarkovdex-data-flow.md's task audit). When more than
+   * one id is present they are **alternatives** (any one counts), not a set
+   * that must all be supplied — upstream data confirmed some of these lists
+   * run to the thousands (generic "any item from category X" objectives),
+   * so `items[0]` is treated as the representative item for aggregation and
+   * the rest are never silently combined into a shopping-list total.
+   */
+  items: string[] | null;
+  /** Only ever set for the same three item-bearing objective types above —
+   * absent (not `false`) for every other type, confirmed live: present on
+   * all 559 item objectives in the audited dataset, absent on the other 908. */
+  foundInRaid: boolean | null;
 }
 
 export interface TaskRequirement {
@@ -118,6 +151,7 @@ export interface Task {
   kappaRequired: boolean | null;
   experience: number | null;
   taskImageLink: string | null;
+  wikiLink: string | null;
   requirements: TaskRequirement[];
   objectives: TaskObjective[];
 }

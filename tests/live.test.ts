@@ -15,11 +15,15 @@ import {
 } from '../src/lib/live/normalize';
 import {
   computeEventStatus,
+  latestPublicFeedEntries,
   matchesFilter,
+  newsEntryAnchorId,
+  publicFeedEntries,
   remainingMs,
   situationEntries,
   sortLiveEntries,
 } from '../src/lib/live/status';
+import { sanitizePublicFeed } from '../src/lib/live/feed';
 import { formatKst } from '../src/lib/format';
 import type { LiveEntry, NewsSource } from '../src/types/live';
 
@@ -159,8 +163,8 @@ test('game modes are only reported when the text names them', () => {
   assert.deepEqual(detectModes('Something is coming', 'soon'), ['unknown']);
 });
 
-test('auto-publish is refused for anything ambiguous or time-bound', () => {
-  assert.equal(decideReview('official_confirmed', false, false), 'auto_published');
+test('external entries always wait for approval and manual entries are reviewed', () => {
+  assert.equal(decideReview('official_confirmed', false, false), 'pending_review');
   // A claimed event window that no human entered never auto-publishes.
   assert.equal(decideReview('official_confirmed', true, false), 'pending_review');
   assert.equal(decideReview('developer_hint', false, false), 'pending_review');
@@ -325,7 +329,7 @@ test('the situation panel shows only reviewed, current items', () => {
   const oldPatch = entry({
     id: 'old-patch',
     category: 'patch',
-    reviewStatus: 'auto_published',
+    reviewStatus: 'reviewed',
     publishedAt: at(-30 * DAY),
   });
 
@@ -336,7 +340,7 @@ test('the situation panel shows only reviewed, current items', () => {
   assert.deepEqual(situationEntries([], NOW), []);
 
   // Only one patch card, the newest.
-  const newerPatch = entry({ id: 'new-patch', category: 'patch', reviewStatus: 'auto_published', publishedAt: at(-DAY) });
+  const newerPatch = entry({ id: 'new-patch', category: 'patch', reviewStatus: 'reviewed', publishedAt: at(-DAY) });
   assert.deepEqual(situationEntries([oldPatch, newerPatch], NOW).map((item) => item.id), ['new-patch']);
 });
 
@@ -357,6 +361,62 @@ test('feed order puts imminent endings first and finished events last', () => {
   assert.deepEqual(ordered, ['ending', 'active', 'scheduled', 'outage', 'dev', 'ended']);
 });
 
+test('the public feed selector exposes only approved entries', () => {
+  const at = (offset: number) => new Date(NOW + offset).toISOString();
+  const selected = publicFeedEntries(
+    [
+      entry({ id: 'newer', publishedAt: at(-HOUR), reviewStatus: 'reviewed' }),
+      entry({
+        id: 'pending-event',
+        startsAt: at(-DAY),
+        endsAt: at(DAY),
+        manualFields: ['endsAt'],
+        publishedAt: at(-DAY),
+        reviewStatus: 'pending_review',
+      }),
+      entry({ id: 'rejected', publishedAt: at(0), reviewStatus: 'rejected' }),
+    ],
+    NOW,
+  ).map((item) => item.id);
+
+  assert.deepEqual(selected, ['newer']);
+});
+
+test('the server feed boundary removes pending content before serialization', () => {
+  const approved = entry({ id: 'approved', reviewStatus: 'reviewed' });
+  const pending = entry({ id: 'pending', reviewStatus: 'pending_review' });
+  const sanitized = sanitizePublicFeed({
+    entries: [approved, pending],
+    degradedSources: [],
+    lastCheckedAt: null,
+    renderedAt: new Date(NOW).toISOString(),
+      freshness: 'ok',
+    sources: [],
+  });
+
+  assert.deepEqual(sanitized.entries.map((item) => item.id), ['approved']);
+});
+
+test('the home preview is newest-first even when an older event is active', () => {
+  const at = (offset: number) => new Date(NOW + offset).toISOString();
+  const selected = latestPublicFeedEntries([
+    entry({
+      id: 'older-active-event',
+      startsAt: at(-DAY),
+      endsAt: at(DAY),
+      manualFields: ['endsAt'],
+      publishedAt: at(-DAY),
+      reviewStatus: 'reviewed',
+    }),
+    entry({ id: 'new-announcement', publishedAt: at(-HOUR), reviewStatus: 'reviewed' }),
+    entry({ id: 'pending-newest', publishedAt: at(0), reviewStatus: 'pending_review' }),
+    entry({ id: 'rejected-newest', publishedAt: at(0), reviewStatus: 'rejected' }),
+  ]).map((item) => item.id);
+
+  assert.deepEqual(selected, ['new-announcement', 'older-active-event']);
+  assert.notEqual(newsEntryAnchorId('steam:one'), newsEntryAnchorId('steam:two'));
+});
+
 test('filters select what their label promises', () => {
   const at = (offset: number) => new Date(NOW + offset).toISOString();
   const active = entry({ id: 'a', startsAt: at(-DAY), endsAt: at(DAY), manualFields: ['endsAt'] });
@@ -366,7 +426,10 @@ test('filters select what their label promises', () => {
 
   assert.ok(matchesFilter(active, 'active_events', NOW));
   assert.ok(!matchesFilter(patch, 'active_events', NOW));
-  assert.ok(matchesFilter(dev, 'developer', NOW));
+  const officialTweet = entry({ id: 'x', source: 'official_x', category: 'announcement' });
+  assert.ok(matchesFilter(dev, 'twitter', NOW));
+  assert.ok(matchesFilter(officialTweet, 'twitter', NOW));
+  assert.ok(!matchesFilter(patch, 'twitter', NOW));
   assert.ok(matchesFilter(patch, 'official', NOW));
   assert.ok(matchesFilter(outage, 'status', NOW));
   assert.ok(!matchesFilter(active, 'ended', NOW));

@@ -7,10 +7,14 @@ export function ItemSearch({
   value,
   onChange,
   onClear,
+  onCompositionStart,
+  onCompositionEnd,
 }: {
   value: string;
   onChange: (value: string) => void;
   onClear?: () => void;
+  onCompositionStart?: () => void;
+  onCompositionEnd?: () => void;
 }) {
   const t = useTranslations('items');
 
@@ -28,9 +32,17 @@ export function ItemSearch({
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onCompositionStart={onCompositionStart}
+        onCompositionEnd={onCompositionEnd}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && value) {
+            event.preventDefault();
+            (onClear ?? (() => onChange('')))();
+          }
+        }}
         placeholder={t('searchPlaceholder')}
         autoComplete="off"
-        className="h-[44px] w-full rounded-md border border-border bg-bg pl-[40px] pr-[44px] text-[15px] leading-5 text-fg placeholder:text-muted focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+        className="h-[44px] w-full rounded-md border border-border bg-bg pl-[40px] pr-[44px] text-[16px] leading-6 text-fg placeholder:text-muted focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
       />
       {value ? (
         <button

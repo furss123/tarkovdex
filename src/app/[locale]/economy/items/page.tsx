@@ -3,6 +3,7 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { getItems } from '@/lib/tarkov';
 import { queryMarketItems } from '@/lib/market-items-query';
+import { domainHealth } from '@/lib/data-observations';
 import { ItemsExplorer } from '@/components/items/ItemsExplorer';
 import type { MarketItemsResponse } from '@/types/tarkov';
 
@@ -27,7 +28,7 @@ export default async function ItemsPage({ params }: Props) {
   let initialResponse: MarketItemsResponse | null = null;
   try {
     const items = await getItems({ locale, gameMode: 'regular' });
-    initialResponse = queryMarketItems(items, 'regular', {
+    const base = queryMarketItems(items, 'regular', {
       query: '',
       locale,
       sort: 'valuePerSlot',
@@ -37,6 +38,14 @@ export default async function ItemsPage({ params }: Props) {
       page: 1,
       feeRate: 5,
     });
+    const { delivery } = domainHealth({
+      domain: 'itemPrices',
+      gameMode: 'regular',
+      locale,
+      availability: 'available',
+      sourceUpdatedAt: base.meta.sourceUpdatedAt,
+    });
+    initialResponse = { ...base, meta: { ...base.meta, delivery } };
   } catch {
     // Initial SSR fetch is a progressive enhancement — ItemsExplorer's own
     // client fetch (and its existing error/retry UI) still runs if this fails.

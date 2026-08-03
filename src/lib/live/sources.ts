@@ -1,7 +1,7 @@
 import 'server-only';
 import type { Locale } from '@/i18n/routing';
 import { getSteamNews } from '../steam-news';
-import { getLocalizedNews } from '../translate-news';
+import { localizeNewsFromFiles } from '../static-news-localization';
 import type { CollectableAdapter } from './collect';
 import { liveConfig } from './config';
 import type { RawPost } from './normalize';
@@ -32,7 +32,8 @@ const steamAdapter: SourceAdapter = {
   source: 'steam',
   enabled: () => true,
   fetch: async (locale) => {
-    const [original, localized] = await Promise.all([getSteamNews(), getLocalizedNews(locale)]);
+    const original = await getSteamNews();
+    const localized = localizeNewsFromFiles(original, locale);
     const originals = [...original.patchNotes, ...original.events];
     const localizedById = new Map(
       [...localized.patchNotes, ...localized.events].map((item) => [item.id, item]),
@@ -114,8 +115,9 @@ const fixtureAdapter: SourceAdapter = {
 /**
  * The **fallback** registry, used only when no database is configured (local
  * development, CI, a preview deployment). It is deliberately limited to sources
- * that are safe to touch during a page render: Steam's RSS, which already has
- * its own 1-hour fetch cache, plus committed files.
+ * that are safe to touch during a page render: Steam's cached RSS plus
+ * committed files. Missing translations stay in English here; this path never
+ * asks a provider to translate during a render.
  *
  * X and the Gemini interpreter are **not** here and must never be added. They
  * belong to the cron pipeline (`collectors.ts` / `pipeline.ts`), because a
