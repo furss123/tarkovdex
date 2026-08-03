@@ -35,8 +35,10 @@ export interface PublicationDecision {
 }
 
 /**
- * Conservative review gate. Classification can explain why an item needs
- * extra caution, but only an operator may grant publication.
+ * Conservative review gate. Claimed schedules and ambiguous events still wait
+ * for an operator. Stage 1 publishes only timeless, official-confirmed Steam /
+ * website posts so Latest News can show verified source text immediately —
+ * before optional interpretation finishes.
  */
 export function decidePublication(input: PublicationInput): PublicationDecision {
   if (input.source === 'nikita_x') {
@@ -56,6 +58,12 @@ export function decidePublication(input: PublicationInput): PublicationDecision 
   }
   if (input.requiresReview) {
     return { reviewStatus: 'pending_review', reason: 'interpreter_flagged' };
+  }
+  if (
+    (input.source === 'steam' || input.source === 'official_website') &&
+    !input.hasWindow
+  ) {
+    return { reviewStatus: 'auto_published', reason: 'stage1_official_timeless' };
   }
   return { reviewStatus: 'pending_review', reason: 'operator_approval_required' };
 }

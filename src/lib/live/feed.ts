@@ -101,7 +101,7 @@ function healthOf(states: Awaited<ReturnType<LiveRepository['listSourceStates']>
 
 async function fromDatabase(repo: LiveRepository, locale: Locale): Promise<LiveFeed> {
   const [events, states] = await Promise.all([
-    repo.listEvents({ reviewStatus: ['reviewed'], limit: 120 }),
+    repo.listEvents({ reviewStatus: ['reviewed', 'auto_published'], limit: 120 }),
     repo.listSourceStates(),
   ]);
 
@@ -166,16 +166,44 @@ async function withOfficialX(feed: LiveFeed, locale: Locale): Promise<LiveFeed> 
   const publicFeed = sanitizePublicFeed(feed);
   try {
     const officialX = await getOfficialXEntries(locale, publicFeed.renderedAt);
+    const firstPartyNewsroom = publicFeed.entries.filter(
+      (entry) =>
+        entry.source === 'official_telegram' ||
+        entry.source === 'official_website' ||
+        entry.source === 'steam',
+    );
     // Profile-only copies have not passed through persistence or review. They
     // may enrich an already-published stored post after merge, but unmatched
     // pending copies must never create a new public card on their own.
-    const merged = mergeEntries([...publicFeed.entries, ...officialX]).filter(isPublishable);
+    // A matching X copy must also not replace the Telegram/web source identity:
+    // the newsroom intentionally accepts only those allowlisted first-party
+    // sources. Use the canonical merge predicate itself to remove only true
+    // duplicates from the presentation-only X stream.
+    const nonDuplicateX = officialX.filter((xEntry) =>
+      firstPartyNewsroom.every((newsroomEntry) => mergeEntries([newsroomEntry, xEntry]).length === 2),
+    );
+    const merged = mergeEntries([...publicFeed.entries, ...nonDuplicateX]).filter(isPublishable);
+    const sorted = sortLiveEntries(merged, Date.parse(publicFeed.renderedAt));
+    // The newsroom projects Telegram/web entries after this shared feed is
+    // built. Reserve those first-party rows before applying the global limit,
+    // otherwise a busy X timeline can evict a reviewed official story before
+    // the newsroom gets a chance to render it.
+    const newsroom = sorted.filter(
+      (entry) =>
+        entry.source === 'official_telegram' ||
+        entry.source === 'official_website' ||
+        entry.source === 'steam',
+    );
+    const otherEntries = sorted.filter(
+      (entry) =>
+        entry.source !== 'official_telegram' &&
+        entry.source !== 'official_website' &&
+        entry.source !== 'steam',
+    );
+    const selected = [...newsroom, ...otherEntries].slice(0, MAX_ENTRIES);
     return {
       ...publicFeed,
-      entries: sortLiveEntries(
-        merged,
-        Date.parse(publicFeed.renderedAt),
-      ).slice(0, MAX_ENTRIES),
+      entries: sortLiveEntries(selected, Date.parse(publicFeed.renderedAt)),
     };
   } catch {
     return publicFeed;

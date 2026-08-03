@@ -1,51 +1,74 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import {
+  Suspense,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
+import {
+  getVisibleNavigation,
+  isActivePath,
+  isGroupActive,
+  type NavigationItem,
+} from '@/lib/navigation';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { GameModeSwitcher } from './GameModeSwitcher';
 import { SearchTrigger } from '@/components/search/SearchTrigger';
 
-const NAV_ITEMS = [
-  { key: 'news', href: '/news', activePath: '/news' },
-  { key: 'items', href: '/economy/items', activePath: '/economy/items' },
-  { key: 'watchlist', href: '/economy/watchlist', activePath: '/economy/watchlist' },
-  { key: 'barters', href: '/economy/barters', activePath: '/economy/barters' },
-  { key: 'craftCalculator', href: '/economy/craft-calculator', activePath: '/economy/craft-calculator' },
-  { key: 'tasks', href: '/progression/tasks', activePath: '/progression/tasks' },
-  { key: 'gunsmith', href: '/progression/gunsmith', activePath: '/progression/gunsmith' },
-  { key: 'ammo', href: '/combat/ammo', activePath: '/combat/ammo' },
-  { key: 'armor', href: '/combat/armor', activePath: '/combat/armor' },
-  { key: 'budgetBuilder', href: '/combat/budget-builder', activePath: '/combat/budget-builder' },
-  { key: 'maps', href: '/maps', activePath: '/maps' },
-  { key: 'beginner', href: '/beginner', activePath: '/beginner' },
-  { key: 'about', href: '/about', activePath: '/about' },
-  { key: 'support', href: '/support', activePath: '/support' },
-] as const;
-
 const SWITCHER_FALLBACK = (
   <div
     aria-hidden="true"
-    className="h-[52px] w-[182px] rounded-md border border-border"
+    className="h-[52px] w-[124px] rounded-md border border-border"
   />
 );
 
-function isActivePath(pathname: string, activePath: string) {
-  return pathname === activePath || pathname.startsWith(`${activePath}/`);
-}
+const visibleNav = getVisibleNavigation();
 
 export function Header() {
   const t = useTranslations('nav');
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [mobileOpenGroup, setMobileOpenGroup] = useState<string | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const desktopNavRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setMenuOpen(false);
+    setOpenGroup(null);
+    setMobileOpenGroup(null);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!openGroup) return;
+
+    function onPointerDown(event: MouseEvent) {
+      if (
+        desktopNavRef.current &&
+        !desktopNavRef.current.contains(event.target as Node)
+      ) {
+        setOpenGroup(null);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpenGroup(null);
+    }
+
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [openGroup]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -99,23 +122,44 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 border-b border-border bg-bg/95 backdrop-blur">
         <div className="mx-auto flex h-[68px] max-w-content items-center justify-between gap-3 px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-5">
+          <div className="flex min-w-0 items-center gap-4">
             <Link
               href="/"
               className="flex min-h-touch shrink-0 items-center rounded text-[17px] font-medium leading-5 tracking-tight text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-[18px]"
             >
               {t('brand')}
             </Link>
-            <nav className="hidden h-[68px] items-center gap-0.5 xl:flex" aria-label={t('menu')}>
-              {NAV_ITEMS.map((item) => (
-                <TopLink
-                  key={item.key}
-                  href={item.href}
-                  active={isActivePath(pathname, item.activePath)}
-                >
-                  {t(item.key)}
-                </TopLink>
-              ))}
+            <nav
+              ref={desktopNavRef}
+              className="hidden h-[68px] items-center gap-0.5 xl:flex"
+              aria-label={t('menu')}
+            >
+              {visibleNav.map((item) =>
+                item.children ? (
+                  <DesktopGroup
+                    key={item.key}
+                    item={item}
+                    label={t(item.key)}
+                    pathname={pathname}
+                    open={openGroup === item.key}
+                    onToggle={() =>
+                      setOpenGroup((current) =>
+                        current === item.key ? null : item.key,
+                      )
+                    }
+                    onClose={() => setOpenGroup(null)}
+                    translate={t}
+                  />
+                ) : (
+                  <TopLink
+                    key={item.key}
+                    href={item.href!}
+                    active={isActivePath(pathname, item)}
+                  >
+                    {t(item.key)}
+                  </TopLink>
+                ),
+              )}
             </nav>
           </div>
 
@@ -144,9 +188,14 @@ export function Header() {
 
       {menuOpen ? (
         <div id="mobile-navigation" className="fixed inset-0 top-[68px] z-50 xl:hidden">
-          <div
-            aria-hidden="true"
+          <button
+            type="button"
+            aria-label={t('closeMenu')}
             className="absolute inset-0 size-full bg-black/70"
+            onClick={() => {
+              setMenuOpen(false);
+              menuButtonRef.current?.focus();
+            }}
           />
           <div
             ref={drawerRef}
@@ -169,16 +218,33 @@ export function Header() {
               </button>
             </div>
             <nav aria-label={t('menu')} className="space-y-1">
-              {NAV_ITEMS.map((item) => (
-                <MobileLink
-                  key={item.key}
-                  href={item.href}
-                  active={isActivePath(pathname, item.activePath)}
-                  onNavigate={() => setMenuOpen(false)}
-                >
-                  {t(item.key)}
-                </MobileLink>
-              ))}
+              {visibleNav.map((item) =>
+                item.children ? (
+                  <MobileGroup
+                    key={item.key}
+                    item={item}
+                    label={t(item.key)}
+                    pathname={pathname}
+                    open={mobileOpenGroup === item.key}
+                    onToggle={() =>
+                      setMobileOpenGroup((current) =>
+                        current === item.key ? null : item.key,
+                      )
+                    }
+                    onNavigate={() => setMenuOpen(false)}
+                    translate={t}
+                  />
+                ) : (
+                  <MobileLink
+                    key={item.key}
+                    href={item.href!}
+                    active={isActivePath(pathname, item)}
+                    onNavigate={() => setMenuOpen(false)}
+                  >
+                    {t(item.key)}
+                  </MobileLink>
+                ),
+              )}
             </nav>
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-4">
               <Suspense fallback={SWITCHER_FALLBACK}>
@@ -192,6 +258,141 @@ export function Header() {
   );
 }
 
+function DesktopGroup({
+  item,
+  label,
+  pathname,
+  open,
+  onToggle,
+  onClose,
+  translate,
+}: {
+  item: NavigationItem;
+  label: string;
+  pathname: string;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  translate: (key: string) => string;
+}) {
+  const panelId = useId();
+  const active = isGroupActive(pathname, item);
+  const children = item.children ?? [];
+
+  return (
+    <div className="relative flex h-full items-center">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-haspopup="true"
+        onClick={onToggle}
+        className={`relative flex min-h-touch items-center gap-1 rounded px-1.5 text-[16px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          active ? 'text-accent' : 'text-muted hover:text-fg'
+        }`}
+      >
+        {label}
+        <ChevronDown
+          className={`size-3.5 transition-transform motion-reduce:transition-none ${
+            open ? 'rotate-180' : ''
+          }`}
+          aria-hidden="true"
+        />
+        {active ? (
+          <span
+            className="absolute inset-x-1.5 bottom-[-12px] h-0.5 bg-accent"
+            aria-hidden="true"
+          />
+        ) : null}
+      </button>
+      {open ? (
+        <div
+          id={panelId}
+          role="menu"
+          className="absolute left-0 top-full z-50 mt-2 min-w-[12rem] rounded-md border border-border bg-bg py-1 shadow-none"
+        >
+          {children.map((child) => (
+            <Link
+              key={child.key}
+              href={child.href!}
+              role="menuitem"
+              aria-current={isActivePath(pathname, child) ? 'page' : undefined}
+              onClick={onClose}
+              className={`flex min-h-touch items-center px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+                isActivePath(pathname, child)
+                  ? 'bg-surface-2 text-accent'
+                  : 'text-muted hover:bg-surface hover:text-fg'
+              }`}
+            >
+              {translate(child.key)}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MobileGroup({
+  item,
+  label,
+  pathname,
+  open,
+  onToggle,
+  onNavigate,
+  translate,
+}: {
+  item: NavigationItem;
+  label: string;
+  pathname: string;
+  open: boolean;
+  onToggle: () => void;
+  onNavigate: () => void;
+  translate: (key: string) => string;
+}) {
+  const panelId = useId();
+  const active = isGroupActive(pathname, item);
+  const children = item.children ?? [];
+
+  return (
+    <div className="rounded-md">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={onToggle}
+        className={`flex min-h-touch w-full items-center justify-between rounded-md border-l-2 px-3 text-sm ${
+          active
+            ? 'border-accent bg-surface-2 text-accent'
+            : 'border-transparent text-muted hover:bg-surface hover:text-fg'
+        }`}
+      >
+        <span>{label}</span>
+        <ChevronDown
+          className={`size-4 transition-transform motion-reduce:transition-none ${
+            open ? 'rotate-180' : ''
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+      {open ? (
+        <div id={panelId} className="ml-2 mt-1 space-y-1 border-l border-border pl-2">
+          {children.map((child) => (
+            <MobileLink
+              key={child.key}
+              href={child.href!}
+              active={isActivePath(pathname, child)}
+              onNavigate={onNavigate}
+            >
+              {translate(child.key)}
+            </MobileLink>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function TopLink({
   href,
   active,
@@ -199,19 +400,22 @@ function TopLink({
 }: {
   href: string;
   active: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative flex min-h-touch items-center rounded px-1.5 text-[16px] leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+      className={`relative flex min-h-touch items-center rounded px-1.5 text-[16px] leading-5 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
         active ? 'text-accent' : 'text-muted hover:text-fg'
       }`}
     >
       {children}
       {active ? (
-        <span className="absolute inset-x-1.5 bottom-[-12px] h-0.5 bg-accent" aria-hidden="true" />
+        <span
+          className="absolute inset-x-1.5 bottom-[-12px] h-0.5 bg-accent"
+          aria-hidden="true"
+        />
       ) : null}
     </Link>
   );
@@ -225,7 +429,7 @@ function MobileLink({
 }: {
   href: string;
   active: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
   onNavigate: () => void;
 }) {
   return (

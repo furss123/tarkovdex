@@ -1,5 +1,15 @@
 # TarkovDex product completion roadmap
 
+## Newsroom V2 official Telegram release (2026-08-03)
+
+Completed as a compatibility projection over Tarkov Live rather than a second
+destructive database: official-source contract, protected manual importer,
+normalization/dedupe/classification/story merge, translation glossary/style/
+schema gates, review-first publication, lifecycle, URL-synchronized accessible
+tabs/filters, official-only homepage selection, ko/en/zh, tests, operations docs,
+Preview, and Production deployment. Automatic Telegram history collection stays
+disabled until an authorized adapter/credential is explicitly supplied.
+
 Written **2026-08-03** after the Phase 0 audit. Source of truth for what each
 phase does, in what order, and what it deliberately does not do.
 

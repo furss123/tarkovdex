@@ -3,7 +3,8 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { getLiveFeed } from '@/lib/live/feed';
 import type { LiveFeed } from '@/types/live';
-import { LiveBoard } from '@/components/news/LiveBoard';
+import { NewsroomBoard } from '@/components/news/NewsroomBoard';
+import { projectOfficialFeed } from '@/lib/newsroom/newsroom-projection';
 import { ToolIntro } from '@/components/tools/ToolShell';
 
 type PageProps = {
@@ -39,7 +40,7 @@ export default async function NewsPage({ params }: PageProps) {
   const locale = (await params).locale as Locale;
   setRequestLocale(locale);
 
-  const t = await getTranslations('news');
+  const t = await getTranslations('newsroom');
 
   let feed: LiveFeed | null = null;
   try {
@@ -53,7 +54,7 @@ export default async function NewsPage({ params }: PageProps) {
       <ToolIntro title={t('title')} description={t('description')} showMode={false} />
 
       {feed ? (
-        <LiveBoard feed={feed} locale={locale} />
+        <NewsroomBoard cards={projectOfficialFeed(feed.entries, locale)} locale={locale} renderedAt={feed.renderedAt} />
       ) : (
         <div className="rounded-lg border border-border px-4 py-12 text-center text-sm text-muted">
           {t('error')}

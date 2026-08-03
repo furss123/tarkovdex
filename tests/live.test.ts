@@ -168,7 +168,7 @@ test('a localized title over an English body reports the body as untranslated', 
   assert.equal(normalized.title, '版本 1.0.6.0');
   assert.equal(normalized.content, 'The update is now available.');
   assert.equal(normalized.translated, false);
-  assert.equal(normalized.reviewStatus, 'pending_review');
+  assert.equal(normalized.reviewStatus, 'auto_published');
 });
 
 test('a genuinely translated body still reports translated', () => {

@@ -1,5 +1,16 @@
 # TarkovDex data flow
 
+## Newsroom V2 official-source layer (2026-08-03)
+
+`OfficialSourcePost` validates and normalizes the allowlisted EN/RU Telegram or
+official-web input. Pure modules classify, hash/dedupe, derive a conservative
+canonical key, merge event status/timeline, validate translation drafts, and
+apply lifecycle/filter policy. A protected importer stores the normalized post
+in the existing raw-post table and creates/updates the existing event record as
+`pending_review`. Reads project reviewed official events into `NewsStory` and
+then the existing `LiveEntry`-compatible card. This C-shaped compatibility path
+avoids a destructive schema migration and leaves PatchImpact intact.
+
 Audited **2026-08-03**. Companion to `tarkovdex-feature-inventory.md`; this file
 follows a byte from upstream to pixel and records exactly where freshness can and
 cannot be known.

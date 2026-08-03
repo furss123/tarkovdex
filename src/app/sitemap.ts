@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next';
-import { locales, defaultLocale, type Locale } from '@/i18n/routing';
+import { defaultLocale, type Locale } from '@/i18n/routing';
+import { publicLocales } from '@/lib/locale-availability';
 import { SITE_URL } from '@/lib/site';
 import { X_DEFAULT_LOCALE } from '@/lib/metadata';
+import { SITEMAP_ROUTES } from '@/lib/navigation';
 import { getTasks } from '@/lib/tarkov';
 import { unionTaskEntries } from '@/lib/task-availability';
 import { taskSlugFor } from '@/lib/task-slug';
@@ -10,23 +12,6 @@ import { settleModePair } from '@/lib/settle-mode-pair';
 export const dynamic = 'force-static';
 export const revalidate = 21600;
 
-/** Every static route in the app, relative to a locale segment. */
-const ROUTES = [
-  '',
-  '/about',
-  '/news',
-  '/economy/items',
-  '/economy/barters',
-  '/progression/tasks',
-  '/progression/gunsmith',
-  '/combat/ammo',
-  '/combat/armor',
-  '/maps',
-  '/status',
-  '/beginner',
-  '/support',
-] as const;
-
 function urlFor(locale: Locale, route: string): string {
   return `${SITE_URL}/${locale}${route}`;
 }
@@ -34,16 +19,16 @@ function urlFor(locale: Locale, route: string): string {
 function alternatesFor(route: string) {
   return {
     languages: Object.fromEntries([
-      ...locales.map((l) => [l, urlFor(l, route)]),
+      ...publicLocales.map((l) => [l, urlFor(l, route)]),
       ['x-default', urlFor(X_DEFAULT_LOCALE, route)],
     ]),
   };
 }
 
 /**
- * One entry per locale x route, each carrying `alternates.languages` pointing
- * at its sibling locales — mirrors the hreflang symmetry decision in
- * CLAUDE.md (`localePrefix: 'always'`, so every locale's URL shape matches).
+ * One entry per public locale x route, each carrying `alternates.languages`
+ * pointing at its sibling public locales. Chinese stays implemented in the
+ * app tree but is omitted from sitemap/hreflang while unpublished.
  *
  * Quest detail URLs are appended the same way: `getTasks()` is called once
  * for a single locale ('en') for both game modes — the canonical slug is
@@ -55,12 +40,15 @@ function alternatesFor(route: string) {
  * under normal operation this produces the full 524-entry union.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const categoryEntries: MetadataRoute.Sitemap = ROUTES.flatMap((route) =>
-    locales.map((locale) => ({
-      url: urlFor(locale, route),
-      alternates: alternatesFor(route),
-      ...(locale === defaultLocale ? { priority: route === '' ? 1 : 0.8 } : {}),
-    })),
+  const categoryEntries: MetadataRoute.Sitemap = SITEMAP_ROUTES.flatMap(
+    (route) =>
+      publicLocales.map((locale) => ({
+        url: urlFor(locale, route),
+        alternates: alternatesFor(route),
+        ...(locale === defaultLocale
+          ? { priority: route === '' ? 1 : 0.8 }
+          : {}),
+      })),
   );
 
   const tasks = await settleModePair({
@@ -74,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const taskEntries: MetadataRoute.Sitemap = taskRoutes.flatMap((route) =>
-    locales.map((locale) => ({
+    publicLocales.map((locale) => ({
       url: urlFor(locale, route),
       alternates: alternatesFor(route),
     })),

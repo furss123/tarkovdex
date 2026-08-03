@@ -1,5 +1,16 @@
 # TarkovDex feature inventory
 
+## Newsroom V2 delta (2026-08-03)
+
+| capability | implementation | fallback / safety |
+| --- | --- | --- |
+| official source import | `POST /api/internal/news/import` | secret, 64 KiB limit, rate limit, allowlist, no fetch/SSRF |
+| Telegram adapter | `OfficialNewsSourceAdapter` contract | disabled/manual; no public-channel scrape |
+| newsroom domain | `src/lib/newsroom/*`, `src/types/newsroom.ts` | pure and provider-independent |
+| review/publication | existing authenticated Live admin + DB | imports always wait for review |
+| public feed | `NewsroomBoard`, official projection only | DB/source absence renders an honest empty state |
+| homepage | at most three official entries | no raw history/provider/admin code in client bundle |
+
 Audited **2026-08-03** against the working tree (uncommitted changes included —
 `git status` showed 83 modified + 33 untracked paths at audit time, all of which
 are treated as the current truth here, not as noise to be reverted).

@@ -3,7 +3,8 @@
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { getPathname, usePathname } from '@/i18n/navigation';
-import { locales, type Locale } from '@/i18n/routing';
+import { type Locale } from '@/i18n/routing';
+import { publicLocales } from '@/lib/locale-availability';
 
 const LABELS: Record<Locale, string> = {
   ko: '한국어',
@@ -13,7 +14,9 @@ const LABELS: Record<Locale, string> = {
 
 /**
  * Segmented language switcher. Replaces the current URL with the same path
- * under the chosen locale while preserving any query string.
+ * under the chosen locale while preserving any query string. Only publicly
+ * available locales are rendered — Chinese stays in the type map so it can
+ * return without deleting the translation layer.
  */
 export function LocaleSwitcher() {
   const t = useTranslations('common');
@@ -38,7 +41,7 @@ export function LocaleSwitcher() {
       role="group"
       aria-label={t('language')}
     >
-      {locales.map((locale) => {
+      {publicLocales.map((locale) => {
         const isActive = locale === active;
         return (
           <button

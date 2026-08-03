@@ -11,6 +11,8 @@
     "db:verify-live": "tsx scripts/verify-live-db.ts",
     "smoke:live-admin": "tsx scripts/smoke-live-admin.ts",
     "smoke:production": "tsx scripts/smoke-production-routes.ts",
+    "news:legacy:audit": "tsx --conditions react-server scripts/news-legacy-audit.ts",
+    "news:legacy:archive": "tsx --conditions react-server scripts/news-legacy-audit.ts --archive",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "audit:armor": "tsx scripts/audit-armor-data.ts",

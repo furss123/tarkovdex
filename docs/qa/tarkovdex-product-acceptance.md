@@ -1,5 +1,20 @@
 # TarkovDex product acceptance
 
+## Newsroom V2 acceptance evidence (2026-08-03)
+
+- 537 tests pass / 0 fail (baseline 495 retained).
+- Typecheck and lint pass; ko/en/zh message leaves are 1105/1105/1105.
+- Production build passes; shared First Load JS remains 103 kB; `/news` is
+  8.32 kB route JS / 140 kB First Load JS.
+- 20 representative BSG-style fixtures cover classification and naturalness
+  contracts. Source, dedupe, story merge, lifecycle, URL filters, translation
+  style/schema, glossary, and scope inference have pure tests.
+- Browser matrix: ko/en/zh at 320, 360, 390, 430, 768, 1024, 1280, and 1440 px;
+  zero document overflow and zero console errors. Back/forward restores URL tab
+  state, invalid query falls back to game/all/all.
+- Production smoke: 20 routes pass; official newsroom pages return 200 in all
+  locales; unauthenticated import and news cron return 401.
+
 Written **2026-08-03**. The checklist every phase is measured against, plus the
 final gate for Phase 9.
 

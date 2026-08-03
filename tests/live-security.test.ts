@@ -202,6 +202,7 @@ test('file-backed localization never invents a provider fallback', () => {
 test('news updates invalidate both the full board and the home preview', () => {
   const pipeline = readFileSync(join(process.cwd(), 'src/lib/live/pipeline.ts'), 'utf8');
   assert.ok(pipeline.includes("revalidatePath('/[locale]/news', 'page')"));
+  assert.ok(pipeline.includes("revalidatePath('/[locale]/news/patch/[slug]', 'page')"));
   assert.ok(pipeline.includes("revalidatePath('/[locale]', 'page')"));
 });
 
@@ -239,8 +240,8 @@ function decision(overrides: Partial<PublicationInput> = {}) {
   });
 }
 
-test('every collected post waits for operator approval', () => {
-  assert.equal(decision().reviewStatus, 'pending_review');
+test('timeless official Steam posts stage-1 auto-publish; risky cases wait', () => {
+  assert.equal(decision({ category: 'patch', intent: 'patch' }).reviewStatus, 'auto_published');
   assert.equal(decision({ source: 'nikita_x' }).reviewStatus, 'pending_review');
   assert.equal(decision({ reliability: 'official_statement' }).reviewStatus, 'pending_review');
   assert.equal(decision({ intent: 'teaser' }).reviewStatus, 'pending_review');
@@ -257,9 +258,10 @@ test('every collected post waits for operator approval', () => {
     'an event post whose intent is unclear waits',
   );
   assert.equal(
-    decision({ intent: 'unknown', category: 'event', interpreted: false }).reviewStatus,
+    decision({ intent: 'unknown', category: 'event', interpreted: false, hasWindow: true, windowEvidenced: true })
+      .reviewStatus,
     'pending_review',
-    'an absent interpretation still cannot bypass operator approval',
+    'an absent interpretation still cannot bypass operator approval for scheduled events',
   );
 });
 

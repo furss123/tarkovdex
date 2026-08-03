@@ -46,7 +46,7 @@ test('home data graph fetches every Tarkov document once per mode', async () => 
   }
 });
 
-test('file-backed home news feed requests Steam once without exposing an unreviewed post', async () => {
+test('file-backed home news feed requests Steam once and Stage-1 publishes timeless official posts', async () => {
   const originalFetch = globalThis.fetch;
   const originalDatabaseUrl = process.env.DATABASE_URL;
   const originalPostgresUrl = process.env.POSTGRES_URL;
@@ -67,7 +67,12 @@ test('file-backed home news feed requests Steam once without exposing an unrevie
 
   try {
     const feed = await getLiveFeed('en');
-    assert.ok(!feed.entries.some((entry) => entry.sourcePostId === 'news-1'));
+    assert.ok(feed.entries.some((entry) => entry.sourcePostId === 'news-1'));
+    assert.ok(
+      feed.entries.every(
+        (entry) => entry.reviewStatus === 'reviewed' || entry.reviewStatus === 'auto_published',
+      ),
+    );
     assert.equal(calls, 1);
   } finally {
     globalThis.fetch = originalFetch;

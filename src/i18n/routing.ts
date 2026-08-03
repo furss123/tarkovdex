@@ -5,7 +5,9 @@ import { defineRouting } from 'next-intl/routing';
  * helpers, and the request config so all three stay in sync.
  *
  * Decisions (see CLAUDE.md > i18n):
- *   - locales: ko / zh / en, with ko as the default (Korean-first audience).
+ *   - locales: ko / zh / en remain registered so Chinese messages, types, and
+ *     page trees stay intact. Public exposure (switcher, sitemap, hreflang) is
+ *     limited to ko/en via `lib/locale-availability.ts`; `/zh` redirects to `/ko`.
  *   - localePrefix: 'always' — every URL is prefixed (/ko, /zh, /en), including
  *     the default. Consistent, unambiguous URLs and clean hreflang alternates.
  *   - alternateLinks: false — page metadata and sitemap.ts are the single

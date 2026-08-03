@@ -93,7 +93,7 @@ export function remainingMs(
 /** Publishable = safe to present on every public surface. Pending and rejected
  * rows remain available only to the admin review desk. */
 export function isPublishable(entry: LiveEntry): boolean {
-  return entry.reviewStatus === 'reviewed';
+  return entry.reviewStatus === 'reviewed' || entry.reviewStatus === 'auto_published';
 }
 
 const CATEGORY_RANK: Record<NewsCategory, number> = {

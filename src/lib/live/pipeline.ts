@@ -60,6 +60,7 @@ const LOCALES = ['ko', 'en', 'zh'] as const;
 export function revalidateNews(): boolean {
   try {
     revalidatePath('/[locale]/news', 'page');
+    revalidatePath('/[locale]/news/patch/[slug]', 'page');
     revalidatePath('/[locale]', 'page');
     return true;
   } catch {

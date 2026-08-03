@@ -2,14 +2,17 @@ import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { SITE_AUTHOR } from '@/lib/site';
+import { getVisibleFooterLinks } from '@/lib/navigation';
 import { LocaleSwitcher } from './LocaleSwitcher';
 
 const SWITCHER_FALLBACK = (
   <div
     aria-hidden="true"
-    className="h-[52px] w-[182px] rounded-md border border-border"
+    className="h-[52px] w-[124px] rounded-md border border-border"
   />
 );
+
+const FOOTER_ONLY_KEYS = new Set(['status', 'localData', 'about']);
 
 /**
  * Site footer. Carries the legally required disclaimer that TarkovDex is an
@@ -21,20 +24,7 @@ export async function Footer() {
   const t = await getTranslations('footer');
   const tc = await getTranslations('common');
   const tn = await getTranslations('nav');
-  const mainLinks = [
-    { href: '/news', label: tn('news') },
-    { href: '/economy/items', label: tn('items') },
-    { href: '/economy/watchlist', label: tn('watchlist') },
-    { href: '/economy/barters', label: tn('barters') },
-    { href: '/economy/craft-calculator', label: tn('craftCalculator') },
-    { href: '/combat/budget-builder', label: tn('budgetBuilder') },
-    { href: '/progression/tasks', label: tn('tasks') },
-    { href: '/progression/gunsmith', label: tn('gunsmith') },
-    { href: '/combat/ammo', label: tn('ammo') },
-    { href: '/combat/armor', label: tn('armor') },
-    { href: '/maps', label: tn('maps') },
-    { href: '/beginner', label: tn('beginner') },
-  ] as const;
+  const links = getVisibleFooterLinks();
 
   return (
     <footer className="border-t border-border">
@@ -54,45 +44,20 @@ export async function Footer() {
               aria-label={t('navigation')}
               className="flex flex-wrap items-center gap-x-4 text-xs text-muted sm:justify-end"
             >
-              {mainLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex min-h-touch min-w-touch items-center justify-center rounded underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <Link
-                href="/status"
-                className="flex min-h-touch min-w-touch items-center justify-center rounded underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                {t('status')}
-              </Link>
-              <Link
-                href="/progression/tasks/tracker"
-                className="flex min-h-touch min-w-touch items-center justify-center rounded underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                {t('tracker')}
-              </Link>
-              <Link
-                href="/local-data"
-                className="flex min-h-touch min-w-touch items-center justify-center rounded underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                {t('localData')}
-              </Link>
-              <Link
-                href="/about"
-                className="flex min-h-touch min-w-touch items-center justify-center rounded underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                {t('about')}
-              </Link>
-              <Link
-                href="/support"
-                className="flex min-h-touch min-w-touch items-center justify-center rounded underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-              >
-                {t('support')}
-              </Link>
+              {links.map((item) => {
+                const label = FOOTER_ONLY_KEYS.has(item.key)
+                  ? t(item.key as 'status' | 'localData' | 'about')
+                  : tn(item.key as Parameters<typeof tn>[0]);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href!}
+                    className="flex min-h-touch min-w-touch items-center justify-center rounded underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
             </nav>
             <div className="mt-2">
               <Suspense fallback={SWITCHER_FALLBACK}>

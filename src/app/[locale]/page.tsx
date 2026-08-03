@@ -11,6 +11,7 @@ import {
 } from '@/lib/tool-calculations';
 import { getLiveFeed } from '@/lib/live/feed';
 import { isPublishable, latestPublicFeedEntries } from '@/lib/live/status';
+import { selectHomepageOfficialEntries } from '@/lib/newsroom/newsroom-projection';
 import { InGameClock } from '@/components/home/InGameClock';
 import { LatestNewsBoard } from '@/components/home/LatestNewsBoard';
 import { CraftProfitBoard } from '@/components/home/CraftProfitBoard';
@@ -122,7 +123,7 @@ export default async function HomePage({ params }: PageProps) {
           <InGameClock />
           <LatestNewsBoard
             entries={liveFeed
-              ? latestPublicFeedEntries(liveFeed.entries.filter(isPublishable)).slice(0, 3)
+              ? selectHomepageOfficialEntries(latestPublicFeedEntries(liveFeed.entries.filter(isPublishable)))
               : null}
             locale={locale}
           />

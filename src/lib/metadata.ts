@@ -1,7 +1,8 @@
 import 'server-only';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { locales, type Locale } from '@/i18n/routing';
+import { type Locale } from '@/i18n/routing';
+import { publicLocales } from '@/lib/locale-availability';
 import { SITE_URL } from '@/lib/site';
 
 type PageMetadataKey =
@@ -76,7 +77,7 @@ function buildMetadataFromStrings({
     alternates: {
       canonical,
       languages: Object.fromEntries([
-        ...locales.map((language) => [
+        ...publicLocales.map((language) => [
           language,
           `${SITE_URL}/${language}${path}`,
         ]),
@@ -90,7 +91,7 @@ function buildMetadataFromStrings({
       siteName: 'TarkovDex',
       type: 'website',
       locale: OG_LOCALE[locale],
-      alternateLocale: locales
+      alternateLocale: publicLocales
         .filter((language) => language !== locale)
         .map((language) => OG_LOCALE[language]),
       images,

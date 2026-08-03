@@ -113,14 +113,23 @@ export function reliabilityFor(source: NewsSource, category: NewsCategory): Reli
   }
 }
 
-/** Committed manual entries are already reviewed. Every external source waits
- * in the private queue until an operator approves it. */
+/** Committed manual entries are already reviewed. Timeless official Steam /
+ * website posts Stage-1 auto-publish so Latest News is not empty while an
+ * operator is offline. Everything else waits in the private queue. */
 export function decideReview(
-  _reliability: ReliabilityLevel,
-  _hasWindow: boolean,
+  reliability: ReliabilityLevel,
+  hasWindow: boolean,
   manual: boolean,
+  source?: NewsSource,
 ): ReviewStatus {
   if (manual) return 'reviewed';
+  if (
+    (source === 'steam' || source === 'official_website') &&
+    reliability === 'official_confirmed' &&
+    !hasWindow
+  ) {
+    return 'auto_published';
+  }
   return 'pending_review';
 }
 
@@ -180,7 +189,7 @@ export function toLiveEntry(post: RawPost, now: string): LiveEntry {
     recommendedAction: null,
     category,
     reliability,
-    reviewStatus: decideReview(reliability, Boolean(startsAt || endsAt), manualFields.length > 0),
+    reviewStatus: decideReview(reliability, Boolean(startsAt || endsAt), manualFields.length > 0, post.source),
     gameModes: detectModes(post.title, post.content),
     affects: detectAffects(post.title, post.content),
     maps: [],

@@ -13,3 +13,16 @@ export function hasNewerOfficialPost(
   if (!Number.isFinite(seen) || !Number.isFinite(newest)) return false;
   return newest > seen;
 }
+
+/**
+ * Featured ("지금 확인할 소식") cards stay unique in the database. Exclude
+ * those IDs from the normal Latest list so the same story is not rendered
+ * twice on first paint. Filtering still applies to the remaining list.
+ */
+export function excludeFeaturedStoryIds<T extends { id: string }>(
+  stories: T[],
+  featuredIds: ReadonlySet<string>,
+): T[] {
+  if (featuredIds.size === 0) return stories;
+  return stories.filter((story) => !featuredIds.has(story.id));
+}

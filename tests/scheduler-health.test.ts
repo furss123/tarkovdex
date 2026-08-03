@@ -6,7 +6,10 @@ import {
   classifyFromSourceStates,
   classifySchedulerHealth,
 } from '../src/lib/live/scheduler-health';
-import { hasNewerOfficialPost } from '../src/lib/newsroom/news-refresh-signal';
+import {
+  excludeFeaturedStoryIds,
+  hasNewerOfficialPost,
+} from '../src/lib/newsroom/news-refresh-signal';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -168,6 +171,18 @@ test('Latest News refresh banner signals only when a newer official post arrives
   assert.equal(
     hasNewerOfficialPost('2030-05-01T12:00:00.000Z', '2030-05-01T11:00:00.000Z'),
     false,
+  );
+});
+
+test('featured stories are excluded from the normal Latest list', () => {
+  const list = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+  assert.deepEqual(
+    excludeFeaturedStoryIds(list, new Set(['a', 'c'])).map((story) => story.id),
+    ['b'],
+  );
+  assert.deepEqual(
+    excludeFeaturedStoryIds(list, new Set()).map((story) => story.id),
+    ['a', 'b', 'c'],
   );
 });
 

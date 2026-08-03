@@ -6,7 +6,8 @@ import {
   getTranslations,
   setRequestLocale,
 } from 'next-intl/server';
-import { isValidLocale, routing } from '@/i18n/routing';
+import { isValidLocale } from '@/i18n/routing';
+import { publicLocales } from '@/lib/locale-availability';
 import { SITE_AUTHOR, SITE_URL } from '@/lib/site';
 import { GameModeProvider } from '@/contexts/GameModeContext';
 import { ConnectivityProvider } from '@/contexts/ConnectivityContext';
@@ -20,9 +21,10 @@ type LayoutProps = {
   params: Promise<{ locale: string }>;
 };
 
-/** Pre-render every locale at build time. */
+/** Pre-render publicly available locales at build time. Chinese remains in
+ *  routing/messages for reactivation; `/zh` redirects to `/ko` in middleware. */
 export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
+  return publicLocales.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata({
