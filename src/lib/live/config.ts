@@ -102,12 +102,12 @@ export const liveConfig = {
       return process.env.CRON_SECRET;
     },
     /** After this long with no successful collection the board says so, rather
-     * than presenting "no events" as a fact. Vercel Hobby invokes project
-     * cron jobs daily, so the default allows one daily cycle plus two hours
-     * of scheduling jitter. Faster external schedulers can lower this with
-     * LIVE_STALE_AFTER_MINUTES. */
+     * than presenting "no events" as a fact. Default matches the GitHub Actions
+     * ~5-minute external scheduler (three missed ticks + jitter). Vercel Hobby
+     * daily cron remains a fallback; override with LIVE_STALE_AFTER_MINUTES if
+     * the external scheduler is disabled. */
     get staleAfterMinutes(): number {
-      return int('LIVE_STALE_AFTER_MINUTES', 26 * 60, { min: 5, max: 10080 });
+      return int('LIVE_STALE_AFTER_MINUTES', 20, { min: 5, max: 10080 });
     },
     get endingSoonHours(): number {
       return int('LIVE_ENDING_SOON_HOURS', 6, { min: 1, max: 168 });

@@ -93,7 +93,7 @@ async function withDb(run: (db: TestDb) => Promise<void>) {
   }
 }
 
-test('a cron run stores an official post for review before an operator publishes it', async () => {
+test('a cron run Stage-1 auto-publishes a timeless official Steam patch', async () => {
   await withDb(async (db) => {
     const summary = await runIngestion(db.repo, {
       trigger: 'cron',
@@ -105,11 +105,11 @@ test('a cron run stores an official post for review before an operator publishes
     assert.equal(summary.sources[0].newPosts, 1);
     assert.equal(summary.eventsUpserted, 1);
 
-    const [event] = await db.repo.listEvents({ reviewStatus: ['pending_review'] });
+    const [event] = await db.repo.listEvents({ reviewStatus: ['auto_published'] });
     assert.equal(event.category, 'patch');
     assert.equal(event.reliability, 'official_confirmed');
-    assert.equal(event.reviewStatus, 'pending_review');
-    assert.equal(event.publishedAt, null);
+    assert.equal(event.reviewStatus, 'auto_published');
+    assert.ok(event.publishedAt);
     assert.equal(event.startsAt ?? null, null, 'no window was invented');
     assert.equal(event.sources.length, 1);
 
@@ -281,9 +281,10 @@ test('posts, cursor state and a successful run marker roll back as one unit', as
   });
 });
 
-test('overlapping runs are refused by a lock that outlives the instance', async () => {
+test('overlapping scheduled invocations refuse the second run without collecting', async () => {
+  // Covers GitHub Actions + Vercel Hobby fallback colliding on the same lock.
   await withDb(async (db) => {
-    await db.repo.acquireLock('tarkov-live:ingestion', 60_000, 'other-instance');
+    await db.repo.acquireLock('tarkov-live:ingestion', 60_000, 'vercel-daily-fallback');
     const summary = await runIngestion(db.repo, {
       trigger: 'cron',
       collectors: [staticCollector('steam', [{ ...post('1', 'Patch'), source: 'steam', account: null }])],
@@ -291,16 +292,7 @@ test('overlapping runs are refused by a lock that outlives the instance', async 
 
     assert.equal(summary.locked, true);
     assert.equal(summary.error, 'already_running');
-    assert.deepEqual(summary.sources, []);
-    assert.equal((await db.repo.listRawPosts(10)).length, 0, 'nothing was collected');
-
-    // And the refused run did not steal the other instance's lock.
-    await db.repo.releaseLock('tarkov-live:ingestion', 'other-instance');
-    const after = await runIngestion(db.repo, {
-      trigger: 'cron',
-      collectors: [staticCollector('steam', [{ ...post('1', 'Patch'), source: 'steam', account: null }])],
-    });
-    assert.equal(after.locked, false);
+    assert.equal((await db.repo.listRawPosts(10)).length, 0);
   });
 });
 

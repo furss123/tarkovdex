@@ -1,0 +1,141 @@
+/**
+ * Operator-facing classification of the external news ingestion scheduler.
+ * Reuses `live_source_states` / `live_ingestion_runs` heartbeats — no second
+ * monitoring table. Pure so tests can cover every branch without I/O.
+ */
+
+/** Target cadence for the GitHub Actions scheduler (and acceptable fallback). */
+export const SCHEDULER_INTERVAL_MS = 5 * 60_000;
+
+/**
+ * Heartbeat older than this is "delayed". 20 minutes covers three missed
+ * 5-minute ticks plus scheduling jitter without treating a quiet no-new-post
+ * run as an outage.
+ */
+export const SCHEDULER_DELAYED_AFTER_MS = 20 * 60_000;
+
+export type SchedulerHealthStatus =
+  | 'running'
+  | 'delayed'
+  | 'failed'
+  | 'never'
+  | 'checked_no_new'
+  | 'new_posts_found'
+  | 'new_posts_published';
+
+export interface SchedulerHeartbeatInput {
+  lastAttemptAt: string | null;
+  lastSuccessAt: string | null;
+  consecutiveFailures: number;
+  lastError: string | null;
+  /** Latest finished ingestion run, when available. */
+  lastRunOk?: boolean | null;
+  lastRunNewPosts?: number | null;
+  lastRunEventsUpserted?: number | null;
+  lastRunFinishedAt?: string | null;
+}
+
+function ageMs(iso: string | null, now: number): number | null {
+  if (!iso) return null;
+  const value = Date.parse(iso);
+  return Number.isFinite(value) ? now - value : null;
+}
+
+/**
+ * Classify scheduler health from stored heartbeats. "No new posts" is a
+ * successful check, never an error.
+ */
+export function classifySchedulerHealth(
+  input: SchedulerHeartbeatInput,
+  now: number,
+  delayedAfterMs: number = SCHEDULER_DELAYED_AFTER_MS,
+): SchedulerHealthStatus {
+  const successAge = ageMs(input.lastSuccessAt, now);
+  const attemptAge = ageMs(input.lastAttemptAt, now);
+  const runAge = ageMs(input.lastRunFinishedAt ?? null, now);
+
+  if (successAge == null && attemptAge == null) return 'never';
+
+  const recentFailure =
+    input.consecutiveFailures > 0 &&
+    (attemptAge == null || attemptAge <= delayedAfterMs) &&
+    (successAge == null || (attemptAge != null && attemptAge < successAge));
+
+  if (recentFailure || (input.lastRunOk === false && (runAge == null || runAge <= delayedAfterMs))) {
+    return 'failed';
+  }
+
+  if (successAge == null || successAge > delayedAfterMs) return 'delayed';
+
+  const newPosts = input.lastRunNewPosts ?? 0;
+  const published = input.lastRunEventsUpserted ?? 0;
+  if (input.lastRunOk === true && newPosts > 0 && published > 0) return 'new_posts_published';
+  if (input.lastRunOk === true && newPosts > 0) return 'new_posts_found';
+  if (input.lastRunOk === true && newPosts === 0) return 'checked_no_new';
+  return 'running';
+}
+
+/** Korean operator labels for the admin desk (not public site copy). */
+export const SCHEDULER_HEALTH_LABEL_KO: Record<SchedulerHealthStatus, string> = {
+  running: '스케줄러 정상 동작 중',
+  delayed: '스케줄러가 최근 실행되지 않음',
+  failed: '스케줄러 요청 실패',
+  never: '스케줄러 실행 기록 없음',
+  checked_no_new: '출처 확인 완료 · 새 게시물 없음',
+  new_posts_found: '새 게시물 감지됨',
+  new_posts_published: '새 게시물 게시됨',
+};
+
+/** Aggregate heartbeats across sources + the newest finished run. */
+export function classifyFromSourceStates(
+  states: Array<{
+    lastAttemptAt: string | null;
+    lastSuccessAt: string | null;
+    consecutiveFailures: number;
+    lastError: string | null;
+    active?: boolean;
+  }>,
+  latestRun: {
+    ok: boolean | null;
+    newPosts: number;
+    eventsUpserted: number;
+    finishedAt: string | null;
+  } | null,
+  now: number,
+  delayedAfterMs: number = SCHEDULER_DELAYED_AFTER_MS,
+): SchedulerHealthStatus {
+  const active = states.filter((state) => state.active !== false);
+  if (active.length === 0 && !latestRun) return 'never';
+
+  const lastSuccessAt = active
+    .map((state) => state.lastSuccessAt)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1) ?? null;
+  const lastAttemptAt = active
+    .map((state) => state.lastAttemptAt)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1) ?? null;
+  const consecutiveFailures = Math.max(0, ...active.map((state) => state.consecutiveFailures));
+  const lastError =
+    active
+      .filter((state) => state.consecutiveFailures > 0 && state.lastError)
+      .map((state) => state.lastError)
+      .at(-1) ?? null;
+
+  return classifySchedulerHealth(
+    {
+      lastAttemptAt,
+      lastSuccessAt,
+      consecutiveFailures,
+      lastError,
+      lastRunOk: latestRun?.ok ?? null,
+      lastRunNewPosts: latestRun?.newPosts ?? null,
+      lastRunEventsUpserted: latestRun?.eventsUpserted ?? null,
+      lastRunFinishedAt: latestRun?.finishedAt ?? null,
+    },
+    now,
+    delayedAfterMs,
+  );
+}

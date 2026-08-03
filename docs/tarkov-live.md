@@ -1,5 +1,12 @@
 # Tarkov Live (`/[locale]/news`) — operations manual
 
+> Newsroom V2 (2026-08-03): the public `/news` and home preview now select only
+> allowlisted official Telegram/official-web entries through the compatibility
+> projection documented in `docs/operations/tarkovdex-newsroom.md`. Steam/X
+> ingestion remains available to the legacy Live pipeline and admin audit, but
+> is no longer part of the default public newsroom feed. Telegram collection is
+> manual/protected until an authorized adapter exists; no HTML scraping is used.
+
 The situation board at `/ko/news`, `/en/news` and `/zh/news` answers six
 questions above the fold:
 
@@ -170,21 +177,19 @@ the fallback content for a deployment with no database.
 
 ### Cron schedule
 
-`vercel.json` requests `0 0 * * *`: once per day at 00:00 UTC (09:00 KST).
-`LIVE_STALE_AFTER_MINUTES=1560` allows that daily run 26 hours before the board
-marks it stale.
+`vercel.json` keeps a daily Hobby fallback (`0 0 * * *` UTC) for
+`/api/cron/tarkov-live`. Near-real-time detection is driven by the GitHub
+Actions workflow `.github/workflows/tarkov-live-news-ingestion.yml`
+(`*/5 * * * *`, plus `workflow_dispatch`), which calls the same protected
+endpoint with `Authorization: Bearer $CRON_SECRET`.
 
-If a 5–10 minute cadence is needed, change the Vercel schedule on a plan that
-supports that frequency or point an external scheduler at the same endpoint —
-it is a plain authenticated HTTP call:
+`LIVE_STALE_AFTER_MINUTES` defaults to `20` so a missed external schedule is
+visible within about three ticks. Overlapping calls are safe: the second gets
+`409 already_running` and does nothing.
 
 ```bash
 curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://tarkovdex.dev/api/cron/tarkov-live
 ```
-
-GitHub Actions on a schedule, cron-job.org, Upstash QStash and a home server's
-crontab all work. Overlapping calls are safe: the second gets `409
-already_running` and does nothing.
 
 Limit a run to one source with `?source=<key>` — `steam`, `official_x:tarkov`,
 `nikita_x:nikgeneburn`, `fixtures`.

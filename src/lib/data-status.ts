@@ -171,7 +171,8 @@ export interface DataDomainPolicy {
   staleAfterMs?: number;
 }
 
-const HOUR = 60 * 60 * 1000;
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
 const TARKOV_JSON = 'json.tarkov.dev';
 const TARKOV_JSON_URL = 'https://json.tarkov.dev';
 
@@ -294,8 +295,9 @@ export const DATA_DOMAINS: DataDomainPolicy[] = [
     cachePolicyKey: 'cachePolicy.live',
     fallbackBehaviorKey: 'fallback.live',
     supportsSourceTimestamp: true,
-    warningAfterMs: 6 * HOUR,
-    staleAfterMs: 26 * HOUR,
+    // Align with the ~5-minute GitHub Actions scheduler + 20-minute stale gate.
+    warningAfterMs: 10 * MINUTE,
+    staleAfterMs: 20 * MINUTE,
   },
   {
     id: 'events',
@@ -304,8 +306,8 @@ export const DATA_DOMAINS: DataDomainPolicy[] = [
     cachePolicyKey: 'cachePolicy.live',
     fallbackBehaviorKey: 'fallback.live',
     supportsSourceTimestamp: true,
-    warningAfterMs: 6 * HOUR,
-    staleAfterMs: 26 * HOUR,
+    warningAfterMs: 10 * MINUTE,
+    staleAfterMs: 20 * MINUTE,
   },
 ];
 

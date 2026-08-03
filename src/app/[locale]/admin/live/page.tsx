@@ -7,6 +7,10 @@ import { formatKst } from '@/lib/format';
 import { getRepository } from '@/lib/live/repository-client';
 import type { LiveEventRow, LiveRepository } from '@/lib/live/repository';
 import { computeEventStatus, instantToKstInput } from '@/lib/live/status';
+import {
+  SCHEDULER_HEALTH_LABEL_KO,
+  classifyFromSourceStates,
+} from '@/lib/live/scheduler-health';
 import { ActionForm, LoginForm } from './AdminForms';
 import {
   clearOverrideAction,
@@ -330,6 +334,25 @@ async function Dashboard({ repo, csrf }: { repo: LiveRepository; csrf: string })
     .filter((value): value is string => Boolean(value))
     .sort()
     .at(-1);
+  const latestRun = runs[0] ?? null;
+  const schedulerStatus = classifyFromSourceStates(
+    states.map((state) => ({
+      lastAttemptAt: state.lastAttemptAt,
+      lastSuccessAt: state.lastSuccessAt,
+      consecutiveFailures: state.consecutiveFailures,
+      lastError: state.lastError,
+      active: state.active,
+    })),
+    latestRun
+      ? {
+          ok: latestRun.ok,
+          newPosts: latestRun.newPosts,
+          eventsUpserted: latestRun.eventsUpserted,
+          finishedAt: latestRun.finishedAt,
+        }
+      : null,
+    now,
+  );
   const active = published.filter((event) =>
     ['active', 'ending_soon', 'scheduled'].includes(
       computeEventStatus(
@@ -372,7 +395,8 @@ async function Dashboard({ repo, csrf }: { repo: LiveRepository; csrf: string })
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Stat label="스케줄러" value={SCHEDULER_HEALTH_LABEL_KO[schedulerStatus]} />
           <Stat label="마지막 성공 수집" value={formatKst(lastSuccess ?? null, 'ko') ?? '기록 없음'} />
           <Stat label="검수 대기" value={`${pending.length}건`} />
           <Stat label="진행/예정 이벤트" value={`${active.length}건`} />
