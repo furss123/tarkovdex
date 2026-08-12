@@ -12,18 +12,14 @@ export default async function NotFound() {
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
         {t('notFoundBody')}
       </p>
-      <div className="mt-6 flex flex-wrap gap-2">
+      {/* One destination on purpose: with a single-page site, every 404 has
+          exactly one useful answer. */}
+      <div className="mt-6">
         <Link
           href="/"
           className="inline-flex min-h-touch items-center rounded-md bg-accent px-5 text-sm font-medium text-accent-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
         >
           {t('home')}
-        </Link>
-        <Link
-          href="/progression/tasks"
-          className="inline-flex min-h-touch items-center rounded-md border border-border px-5 text-sm font-medium text-fg hover:border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-        >
-          {t('browseTasks')}
         </Link>
       </div>
     </section>

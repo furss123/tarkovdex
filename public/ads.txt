@@ -1,0 +1,7 @@
+# Google AdSense authorized seller declaration.
+#
+# Replace pub-0000000000000000 with the publisher id AdSense issues on
+# approval, then redeploy. Until then this file is inert: an unrecognised
+# publisher id authorises nobody, which is the correct state pre-approval.
+#
+# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

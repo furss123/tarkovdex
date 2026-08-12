@@ -1,15 +1,5 @@
 {
   "env": {
     "NEXT_PUBLIC_SITE_URL": "https://tarkovdex.dev"
-  },
-  "crons": [
-    {
-      "path": "/api/cron/tarkov-live",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/news",
-      "schedule": "0 0 * * *"
-    }
-  ]
+  }
 }

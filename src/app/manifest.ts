@@ -14,7 +14,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'TarkovDex',
     short_name: 'TarkovDex',
     description:
-      'Unofficial Escape from Tarkov guide — flea prices, quests, maps, and live updates.',
+      'Unofficial Escape from Tarkov dashboard — live raid time, boss spawn rates, and hideout craft profit.',
     start_url: '/ko',
     scope: '/',
     display: 'standalone',

@@ -2,11 +2,9 @@
 
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { ArrowRight } from 'lucide-react';
-import { useGameMode } from '@/contexts/GameModeContext';
-import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { formatSignedRoubles } from '@/lib/format';
+import type { CraftLeaderGroups } from '@/types/dashboard';
 import type { CraftProfitLeader } from '@/types/tools';
 import {
   EmptyState,
@@ -15,12 +13,10 @@ import {
   StaleDataNotice,
 } from '@/components/status/StatusUI';
 
-export interface CraftLeaderGroups {
-  current: CraftProfitLeader[];
-  stale: CraftProfitLeader[];
-}
-
-function craftDuration(seconds: number, t: ReturnType<typeof useTranslations>): string {
+function craftDuration(
+  seconds: number,
+  t: ReturnType<typeof useTranslations>,
+): string {
   const totalMinutes = Math.max(1, Math.round(seconds / 60));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -55,7 +51,9 @@ function CraftCard({
               className="size-full object-contain"
             />
           ) : (
-            <span className="text-xs text-muted" aria-hidden="true">—</span>
+            <span className="text-xs text-muted" aria-hidden="true">
+              —
+            </span>
           )}
         </span>
         <div className="min-w-0 flex-1">
@@ -79,12 +77,16 @@ function CraftCard({
               className="size-full object-contain"
             />
           ) : (
-            <span className="text-xs text-muted" aria-hidden="true">—</span>
+            <span className="text-xs text-muted" aria-hidden="true">
+              —
+            </span>
           )}
         </span>
         <p className="line-clamp-2 min-w-0 text-sm text-fg">
           {leader.product.name}{' '}
-          <span className="whitespace-nowrap text-muted">× {leader.product.count}</span>
+          <span className="whitespace-nowrap text-muted">
+            × {leader.product.count}
+          </span>
         </p>
       </div>
 
@@ -137,43 +139,33 @@ const GRID =
   'mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
 
 /**
- * Two groups, never interleaved: a ranking whose contributing prices are recent
- * enough to act on, and dated reference below it.
+ * Best hideout craft per station, ranked by profit.
  *
- * The split is decided server-side by `partitionCraftLeadersByFreshness()`
- * against the `crafts` domain thresholds, so this component only presents it.
- * The old single grid ranked a 243-day-old Bitcoin Farm output alongside seven
- * current recipes under a "current prices" caption.
+ * Two groups, never interleaved: a ranking whose contributing prices are
+ * recent enough to act on, and dated reference below it. The split is decided
+ * server-side by `partitionCraftLeadersByFreshness()`, so this component only
+ * presents it. The single grid this replaced ranked a 243-day-old Bitcoin Farm
+ * output alongside seven current recipes under a "current prices" caption.
+ *
+ * Mode selection happens one level up in `LiveDashboard` — both modes are
+ * already resident, so switching never refetches.
  */
 export function CraftProfitBoard({
-  pvpLeaders,
-  pveLeaders,
+  leaders,
   locale,
 }: {
-  pvpLeaders: CraftLeaderGroups | null;
-  pveLeaders: CraftLeaderGroups | null;
+  leaders: CraftLeaderGroups | null;
   locale: Locale;
 }) {
   const t = useTranslations('home');
-  const { gameMode } = useGameMode();
-  const leaders = gameMode === 'regular' ? pvpLeaders : pveLeaders;
 
   return (
     <section aria-labelledby="craft-profit-heading">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div>
-          <h2 id="craft-profit-heading" className="text-base font-medium text-fg">
-            {t('craftProfitTitle')}
-          </h2>
-          <p className="mt-1 text-xs text-muted">{t('craftProfitDescription')}</p>
-        </div>
-        <Link
-          href="/economy/barters"
-          className="flex min-h-touch shrink-0 items-center gap-1 self-start rounded text-xs text-muted underline-offset-4 transition-colors hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-        >
-          {t('viewAllCrafts')}
-          <ArrowRight className="size-4 text-accent" aria-hidden="true" />
-        </Link>
+      <div className="flex flex-col gap-1">
+        <h2 id="craft-profit-heading" className="text-base font-medium text-fg">
+          {t('craftProfitTitle')}
+        </h2>
+        <p className="text-xs text-muted">{t('craftProfitDescription')}</p>
       </div>
 
       {leaders === null ? (

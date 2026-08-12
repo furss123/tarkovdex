@@ -1,4 +1,5 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import {
@@ -9,11 +10,10 @@ import {
 import { isValidLocale } from '@/i18n/routing';
 import { publicLocales } from '@/lib/locale-availability';
 import { SITE_AUTHOR, SITE_URL } from '@/lib/site';
+import { ADSENSE_CLIENT } from '@/lib/ads';
 import { GameModeProvider } from '@/contexts/GameModeContext';
-import { ConnectivityProvider } from '@/contexts/ConnectivityContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { ServiceWorkerManager } from '@/components/pwa/ServiceWorkerManager';
 import '../globals.css';
 
 type LayoutProps = {
@@ -26,6 +26,11 @@ type LayoutProps = {
 export function generateStaticParams() {
   return publicLocales.map((locale) => ({ locale }));
 }
+
+/** Next 15 wants theme colour on the viewport export, not on metadata. */
+export const viewport: Viewport = {
+  themeColor: '#17181b',
+};
 
 export async function generateMetadata({
   params,
@@ -41,7 +46,6 @@ export async function generateMetadata({
     title: t('title'),
     description: t('description'),
     authors: [{ name: SITE_AUTHOR }],
-    themeColor: '#17181b',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',
@@ -64,12 +68,7 @@ export async function generateMetadata({
       siteName: 'TarkovDex',
       type: 'website',
       images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-          alt: 'TarkovDex',
-        },
+        { url: ogImageUrl, width: 1200, height: 630, alt: 'TarkovDex' },
       ],
     },
     twitter: {
@@ -136,22 +135,35 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         </a>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <GameModeProvider>
-            <ConnectivityProvider>
-              <ServiceWorkerManager locale={locale} />
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main
-                  id="main-content"
-                  tabIndex={-1}
-                  className="min-w-0 flex-1 focus:outline-none"
-                >
-                  {children}
-                </main>
-                <Footer />
-              </div>
-            </ConnectivityProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main
+                id="main-content"
+                tabIndex={-1}
+                className="min-w-0 flex-1 focus:outline-none"
+              >
+                {children}
+              </main>
+              <Footer />
+            </div>
           </GameModeProvider>
         </NextIntlClientProvider>
+
+        {/*
+          AdSense loader. Absent entirely until a publisher id is configured,
+          so an unapproved or local build ships no third-party script at all.
+          `afterInteractive` keeps it off the critical path — the dashboard's
+          first paint and the raid clock must not wait on an ad network.
+        */}
+        {ADSENSE_CLIENT ? (
+          <Script
+            id="adsense-loader"
+            async
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+          />
+        ) : null}
       </body>
     </html>
   );

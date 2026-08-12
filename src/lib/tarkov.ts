@@ -1,21 +1,7 @@
 import 'server-only';
-import type {
-  GameMap,
-  GameMode,
-  Item,
-  MapBossSpawn,
-  Task,
-  TaskTrader,
-} from '@/types/tarkov';
+import type { GameMap, GameMode, MapBossSpawn } from '@/types/tarkov';
 import type { Locale } from '@/i18n/routing';
-import { localizeMobName, localizeTaskText } from '@/lib/game-localization';
-import { safeTarkovWikiUrl } from '@/lib/wiki-url';
-import {
-  recordCacheHit,
-  recordFetchError,
-  recordFetchSuccess,
-  recordStaleServed,
-} from '@/lib/data-observations';
+import { localizeMobName } from '@/lib/game-localization';
 
 /**
  * json.tarkov.dev static JSON API client.
@@ -130,7 +116,6 @@ export async function fetchTarkovJson<T>(path: string): Promise<T> {
   const now = Date.now();
   const cached = memoryCache.get(path);
   if (cached && cached.expiresAt > now) {
-    recordCacheHit(path);
     return cached.value as Promise<T>;
   }
 
@@ -150,28 +135,20 @@ export async function fetchTarkovJson<T>(path: string): Promise<T> {
       return validateTarkovDocument(path, parsed) as T;
     },
   );
-  // The recorders are the only Phase 1 addition here: they observe the paths
-  // this code already takes so a page can say whether it is showing a fresh
-  // document or the previous one. Instance-scoped — see data-observations.ts.
-  const value = request.then(
-    (parsed) => {
-      recordFetchSuccess(path, Date.now());
-      return parsed;
-    },
-    (error) => {
-      if (stale) {
-        memoryCache.set(path, {
-          ...stale,
-          expiresAt: now + RETRY_AFTER_ERROR_SECONDS * 1000,
-        });
-        recordStaleServed(path, Date.now(), error);
-        return stale.value as Promise<T>;
-      }
-      if (memoryCache.get(path)?.value === value) memoryCache.delete(path);
-      recordFetchError(path, Date.now(), error);
-      throw error;
-    },
-  );
+  // On failure, a previously good document is served for a grace window
+  // rather than collapsing the board — the caller still sees the content
+  // timestamp, so a dated answer is never mistaken for a current one.
+  const value: Promise<T> = request.catch((error: unknown) => {
+    if (stale) {
+      memoryCache.set(path, {
+        ...stale,
+        expiresAt: now + RETRY_AFTER_ERROR_SECONDS * 1000,
+      });
+      return stale.value as Promise<T>;
+    }
+    if (memoryCache.get(path)?.value === value) memoryCache.delete(path);
+    throw error;
+  });
   const replacement: MemoryCacheEntry = {
     expiresAt: now + cacheSecondsForPath(path) * 1000,
     staleUntil: now + staleIfErrorSecondsForPath(path) * 1000,
@@ -217,191 +194,6 @@ export function translate(dict: TranslationDict, raw: string | null | undefined)
 // for why this endpoint was added to an originally items/tasks/maps-only scope.
 // ---------------------------------------------------------------------------
 
-interface RawTrader {
-  id: string;
-  name: string;
-  imageLink: string | null;
-  /** Store traders have multiple loyalty levels; service/quest-only
-   * characters currently expose a single placeholder level. Confirmed
-   * against both regular/pve barter trader ids. */
-  levels?: unknown[];
-  /** ISO timestamp of this trader's next stock refresh — confirmed present
-   * on every trader in a live fetch. Used by the homepage's restock board. */
-  resetTime: string | null;
-}
-
-/** `regular/traders`'s `data` is `{ [traderId]: RawTrader }` directly — no
- * nested `traders` key, unlike items/tasks/maps. Confirmed against live data. */
-interface RawTradersDoc {
-  data: Record<string, RawTrader>;
-}
-
-/** Id-keyed map of resolved trader names, for joining into tasks. */
-export async function getTraders(
-  locale: Locale,
-  gameMode: GameMode = DEFAULT_GAME_MODE,
-): Promise<Record<string, TaskTrader>> {
-  const [doc, dict] = await Promise.all([
-    fetchTarkovJson<RawTradersDoc>(`/${gameMode}/traders`),
-    getTranslationDict('traders', locale, gameMode),
-  ]);
-
-  const traders: Record<string, TaskTrader> = {};
-  for (const raw of Object.values(doc.data)) {
-    traders[raw.id] = {
-      id: raw.id,
-      name: translate(dict, raw.name),
-      imageLink: raw.imageLink,
-      hasStore: (raw.levels?.length ?? 0) > 1,
-      resetTime: raw.resetTime,
-    };
-  }
-  return traders;
-}
-
-// ---------------------------------------------------------------------------
-// items
-// ---------------------------------------------------------------------------
-
-interface RawSellOffer {
-  trader: string;
-  priceRUB: number | null;
-}
-
-/** Only the fields getItems() actually maps into `Item` are typed here —
- * the raw item also has basePrice/width/height/gridImageLink/wikiLink/types/
- * plus many weapon/armor-only property blocks, all unused by this page.
- * `sellToTrader` is marked optional deliberately: it comes from an externally
- * regenerated dump (all 5055 items currently have it, but a future
- * regeneration could omit one). The `?` forces the `?? []` guard in
- * bestVendorSellRUB(), so one malformed record degrades that one field
- * instead of throwing and blanking the entire list. See CLAUDE.md >
- * "Defensive mapping". */
-interface RawItem {
-  id: string;
-  name: string;
-  shortName: string;
-  width: number;
-  height: number;
-  weight?: number | null;
-  types?: string[];
-  avg24hPrice: number | null;
-  low24hPrice?: number | null;
-  high24hPrice: number | null;
-  changeLast48hPercent: number | null;
-  updated: string;
-  iconLink: string | null;
-  sellToTrader?: RawSellOffer[];
-}
-
-interface RawItemsDoc {
-  data: { items: Record<string, RawItem> };
-}
-
-/** Highest vendor sell price in RUB across a raw item's sell offers, or null
- * if there are none (e.g. quest-only items). Computed server-side so the
- * client never receives the full offer array — see "items — client-side
- * search" in CLAUDE.md. */
-function bestVendorSellRUB(offers: RawSellOffer[] | undefined): number | null {
-  const prices = (offers ?? [])
-    .map((offer) => offer.priceRUB)
-    .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0);
-  return prices.length ? Math.max(...prices) : null;
-}
-
-function positiveFinite(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0
-    ? value
-    : null;
-}
-
-function finiteValue(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-function validTimestamp(value: unknown): string | null {
-  return typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
-}
-
-export interface GetItemsParams {
-  locale: Locale;
-  gameMode?: GameMode;
-}
-
-/**
- * Fetch every item with flea-price signals, localized to the given locale.
- *
- * Returns the **full** catalog (~5000 items) — there is no server-side name
- * filter or result cap anymore. Search/filtering happens entirely
- * client-side (see `ItemsExplorer`), the same pattern as
- * `getTasks`/`TasksExplorer`. This is a deliberate architecture change made
- * during the Step-2 migration review, not the original design: the earlier
- * version read `?q=` server-side and re-fetched + re-parsed the full 15.8MB
- * `items` endpoint on *every* request — confirmed via response headers
- * (`Cache-Control: no-cache, no-store`, no `x-nextjs-cache`), because reading
- * `searchParams` makes a Next.js route fully dynamic, bypassing ISR
- * entirely, unlike `tasks`/`maps` which showed `x-nextjs-cache: HIT`.
- * Removing the server-side search lets this page be static/ISR like its
- * siblings — the 15.8MB parse now happens once per `REVALIDATE_SECONDS`
- * window instead of once per request. See CLAUDE.md > "items — client-side
- * search" for the measured payload-size trade-off this introduces (the full
- * trimmed `Item[]` ships to the client: ~1.5MB raw / ~245KB gzipped,
- * measured against real data — see `Item`'s trimmed field set in
- * types/tarkov.ts).
- */
-export async function getItems({
-  locale,
-  gameMode = DEFAULT_GAME_MODE,
-}: GetItemsParams): Promise<Item[]> {
-  const [doc, dict] = await Promise.all([
-    fetchTarkovJson<RawItemsDoc>(`/${gameMode}/items`),
-    getTranslationDict('items', locale, gameMode),
-  ]);
-
-  return Object.values(doc.data.items).flatMap((raw): Item[] => {
-    // Width/height feed the value-per-slot calculation. A malformed dimension
-    // cannot be repaired without inventing a price ranking, so discard that
-    // one record rather than silently turning it into a 1x1 item.
-    if (
-      typeof raw.id !== 'string' ||
-      raw.id === '' ||
-      !Number.isInteger(raw.width) ||
-      !Number.isInteger(raw.height) ||
-      raw.width <= 0 ||
-      raw.height <= 0
-    ) {
-      return [];
-    }
-    const avg24hPrice = positiveFinite(raw.avg24hPrice);
-    return [{
-      id: raw.id,
-      name: translate(dict, raw.name),
-      shortName: translate(dict, raw.shortName),
-      width: raw.width,
-      height: raw.height,
-      weight:
-        typeof raw.weight === 'number' && Number.isFinite(raw.weight) && raw.weight >= 0
-          ? raw.weight
-          : null,
-      types: Array.isArray(raw.types)
-        ? raw.types.filter((type): type is string => typeof type === 'string')
-        : [],
-      avg24hPrice,
-      low24hPrice: positiveFinite(raw.low24hPrice),
-      high24hPrice: positiveFinite(raw.high24hPrice),
-      changeLast48hPercent:
-        avg24hPrice === null ? null : finiteValue(raw.changeLast48hPercent),
-      updated: validTimestamp(raw.updated),
-      iconLink: raw.iconLink,
-      bestVendorSellRUB: bestVendorSellRUB(raw.sellToTrader),
-    }];
-  });
-}
-
-// ---------------------------------------------------------------------------
-// maps
-// ---------------------------------------------------------------------------
-
 interface RawBossSpawn {
   spawnChance: number | null;
   /** Key into `data.mobs`, e.g. "bossTagilla". Also happens to equal that
@@ -421,7 +213,6 @@ interface RawMapEntry {
   id: string;
   name: string;
   description: string | null;
-  wiki: string | null;
   players: string | null;
   raidDuration: number | null;
   /** Optional for the same defensive reason as RawItem's arrays — guarded at
@@ -524,153 +315,9 @@ export async function getMaps({
       id: raw.id,
       name: translate(dict, raw.name),
       description: raw.description ? translate(dict, raw.description) : null,
-      wiki: safeTarkovWikiUrl(raw.wiki),
       players: raw.players,
       raidDuration: raw.raidDuration,
       bosses: dedupeBosses(raw.bosses ?? [], doc.data.mobs, dict, locale),
     }),
   );
-}
-
-/**
- * Lightweight id→translated-name index over the `maps` endpoint, used by
- * {@link getTasks} to resolve a task's target map. This fetches the same
- * ~9.5MB `maps` response the maps page uses (Next's fetch Data Cache dedupes
- * the network request across routes within the revalidate window; the
- * JSON.parse cost is still paid per call — see CLAUDE.md for the trade-off).
- */
-async function getMapNameIndex(
-  locale: Locale,
-  gameMode: GameMode,
-): Promise<Record<string, string>> {
-  const [doc, dict] = await Promise.all([
-    fetchTarkovJson<RawMapsDoc>(`/${gameMode}/maps`),
-    getTranslationDict('maps', locale, gameMode),
-  ]);
-
-  const index: Record<string, string> = {};
-  for (const raw of Object.values(doc.data.maps)) {
-    index[raw.id] = translate(dict, raw.name);
-  }
-  return index;
-}
-
-// ---------------------------------------------------------------------------
-// tasks
-// ---------------------------------------------------------------------------
-
-interface RawObjective {
-  id: string;
-  description: string;
-  type: string;
-  optional: boolean;
-  count?: number | null;
-  items?: string[];
-  foundInRaid?: boolean;
-}
-
-interface RawTask {
-  id: string;
-  name: string;
-  /** Trader id — a plain string, not a nested object. Resolved via getTraders(). */
-  trader: string | null;
-  /** Target map id, or null for map-agnostic (e.g. hideout) tasks. */
-  map: string | null;
-  minPlayerLevel: number | null;
-  wikiLink: string | null;
-  kappaRequired: boolean | null;
-  experience?: number | null;
-  taskImageLink?: string | null;
-  taskRequirements?: Array<{
-    task: string;
-    status?: string[];
-  }>;
-  /** Optional for the same defensive reason as RawItem's arrays — guarded below. */
-  objectives?: RawObjective[];
-}
-
-interface RawTasksDoc {
-  data: { tasks: Record<string, RawTask> };
-}
-
-export interface GetTasksParams {
-  locale: Locale;
-  gameMode?: GameMode;
-}
-
-/**
- * Fetch the full quest list, localized to the given locale, with trader and
- * map names resolved (both are id-only references in the raw data).
- */
-export async function getTasks({
-  locale,
-  gameMode = DEFAULT_GAME_MODE,
-}: GetTasksParams): Promise<Task[]> {
-  const [doc, dict, traders, mapNames, englishDict] = await Promise.all([
-    fetchTarkovJson<RawTasksDoc>(`/${gameMode}/tasks`),
-    getTranslationDict('tasks', locale, gameMode),
-    getTraders(locale, gameMode),
-    getMapNameIndex(locale, gameMode),
-    // The English name is shown in parentheses after the localized one so a
-    // quest stays findable by the name English guides/videos use. On `en` the
-    // localized name already *is* the English one, so skip the extra fetch.
-    locale === 'en' ? null : getTranslationDict('tasks', 'en', gameMode),
-  ]);
-
-  const rawTasks = Object.values(doc.data.tasks);
-  /** Localized name + English name, per task id — prerequisites are id-only
-   * references, so both have to be resolvable by id for the requirement list. */
-  const taskNames = new Map(
-    rawTasks.map((raw) => [
-      raw.id,
-      {
-        name: localizeTaskText(translate(dict, raw.name), locale),
-        nameEn: englishDict ? translate(englishDict, raw.name) : null,
-      },
-    ]),
-  );
-
-  return rawTasks.map((raw): Task => {
-    const trader = raw.trader ? traders[raw.trader] ?? null : null;
-    const map =
-      raw.map && mapNames[raw.map] ? { id: raw.map, name: mapNames[raw.map] } : null;
-    const names = taskNames.get(raw.id);
-
-    return {
-      id: raw.id,
-      name: names?.name ?? translate(dict, raw.name),
-      // Suppressed when it would just repeat the localized name — either
-      // because we're on `en`, or because upstream's own ko/zh entry is
-      // already the untranslated English string.
-      nameEn: names?.nameEn && names.nameEn !== names.name ? names.nameEn : null,
-      trader,
-      map,
-      minPlayerLevel: raw.minPlayerLevel,
-      kappaRequired: raw.kappaRequired,
-      experience: raw.experience ?? null,
-      taskImageLink: raw.taskImageLink ?? null,
-      wikiLink: safeTarkovWikiUrl(raw.wikiLink),
-      requirements: (raw.taskRequirements ?? []).map((requirement) => {
-        const prerequisite = taskNames.get(requirement.task);
-        return {
-          taskId: requirement.task,
-          taskName: prerequisite?.name ?? requirement.task,
-          taskNameEn:
-            prerequisite?.nameEn && prerequisite.nameEn !== prerequisite.name
-              ? prerequisite.nameEn
-              : null,
-          statuses: requirement.status ?? [],
-        };
-      }),
-      objectives: (raw.objectives ?? []).map((o) => ({
-        id: o.id,
-        type: o.type,
-        description: localizeTaskText(translate(dict, o.description), locale),
-        optional: o.optional,
-        count: o.count ?? null,
-        items: o.items && o.items.length > 0 ? o.items : null,
-        foundInRaid: typeof o.foundInRaid === 'boolean' ? o.foundInRaid : null,
-      })),
-    };
-  });
 }

@@ -6,14 +6,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: [
-        // JSON data endpoints and the authenticated cron trigger, not indexable
-        // content — see src/app/api.
-        '/api/',
-        // The operator's review desk. Also `noindex` on the page itself and
-        // absent from sitemap.ts; this is the third layer, not the only one.
-        '/*/admin',
-      ],
+      // `/api/dashboard` is the board's live-refresh JSON, not indexable
+      // content. Every real page stays crawlable.
+      disallow: ['/api/'],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

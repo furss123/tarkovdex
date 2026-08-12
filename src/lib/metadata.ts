@@ -5,26 +5,7 @@ import { type Locale } from '@/i18n/routing';
 import { publicLocales } from '@/lib/locale-availability';
 import { SITE_URL } from '@/lib/site';
 
-type PageMetadataKey =
-  | 'home'
-  | 'items'
-  | 'barters'
-  | 'craftCalculator'
-  | 'budgetBuilder'
-  | 'tasks'
-  | 'gunsmith'
-  | 'ammo'
-  | 'armor'
-  | 'maps'
-  | 'news'
-  | 'about'
-  | 'support'
-  | 'status'
-  | 'localData'
-  | 'questTracker'
-  | 'search'
-  | 'watchlist'
-  | 'beginner';
+type PageMetadataKey = 'home' | 'support' | 'privacy';
 
 const OG_LOCALE: Record<Locale, string> = {
   ko: 'ko_KR',
@@ -124,23 +105,4 @@ export async function buildPageMetadata({
     title: t('title'),
     description: t('description'),
   });
-}
-
-/**
- * Same canonical/hreflang/OG/Twitter shape as `buildPageMetadata`, for pages
- * whose title/description are computed from real entity data (e.g. a quest
- * detail page) rather than looked up by a fixed `pageMetadata.*` key.
- */
-export function buildDetailPageMetadata({
-  locale,
-  path,
-  title,
-  description,
-}: {
-  locale: Locale;
-  path: string;
-  title: string;
-  description: string;
-}): Metadata {
-  return buildMetadataFromStrings({ locale, path, title, description });
 }

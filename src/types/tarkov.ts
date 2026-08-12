@@ -3,190 +3,25 @@
  * TarkovDex consumes. These are our own normalized shapes — hand-written from
  * real fetched responses (see lib/tarkov.ts), not a 1:1 mirror of the raw API.
  *
- * Raw response shapes (as actually observed, not the GraphQL schema this
- * project used before) live as `Raw*` interfaces alongside the fetch/mapping
+ * Raw response shapes live as `Raw*` interfaces alongside the fetch/mapping
  * code in lib/tarkov.ts, since they're an implementation detail of the
  * translation + extraction step, not something components should see.
+ *
+ * Scope note (single-page redesign): the item, task and trader shapes that
+ * used to live here were removed with the routes that rendered them. Only the
+ * map/boss shapes the dashboard's spawn board reads remain.
  */
-
-import type { DeliveryStatus } from '@/lib/data-status';
 
 /** PvP ("regular") vs PvE. Declared here (not in lib/tarkov.ts, which is
  * `server-only`) so client components — like the global game-mode context —
  * can import the type without pulling in server-only fetch code. */
 export type GameMode = 'regular' | 'pve';
 
-/**
- * A single tradable item with flea-market price signals — deliberately trimmed
- * to only the fields the items page renders. This is the exact shape shipped
- * to the client (see CLAUDE.md > "items — client-side search"); every field
- * here has a measured cost, so don't add one back without checking payload
- * size again.
- */
-export interface Item {
-  id: string;
-  name: string;
-  shortName: string;
-  width: number;
-  height: number;
-  /** Kilograms from upstream; null only if the dump omits a usable weight. */
-  weight: number | null;
-  types: string[];
-  avg24hPrice: number | null;
-  low24hPrice: number | null;
-  high24hPrice: number | null;
-  changeLast48hPercent: number | null;
-  /** ISO timestamp of the last price update. */
-  updated: string | null;
-  iconLink: string | null;
-  /** Best (highest) vendor sell price in RUB, precomputed server-side from the
-   * raw `sellToTrader[]` array — used only as the flea-banned fallback. No
-   * vendor name — see CLAUDE.md > Traders (scope note) for why items
-   * intentionally doesn't join against traders data. */
-  bestVendorSellRUB: number | null;
-}
-
-export interface MarketItem extends Item {
-  slotCount: number;
-  estimatedFleaNet: number | null;
-  referenceValue: number | null;
-  valuePerSlot: number | null;
-  valueSource: 'flea' | 'trader' | null;
-  freshnessHours: number | null;
-}
-
-export interface MarketItemsResponse {
-  items: MarketItem[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
-  meta: {
-    source: 'json.tarkov.dev';
-    sourceUpdatedAt: string | null;
-    generatedAt: string;
-    gameMode: GameMode;
-    feeRate: number;
-    /** Rows matching the query. */
-    totalCount: number;
-    /** Of those, rows whose price is older than MARKET_PRICE_STALE_HOURS. */
-    staleCount: number;
-    /** Of those, rows with no usable upstream timestamp at all. */
-    missingCount: number;
-    /**
-     * How the underlying document reached this response. Set by the server
-     * caller (page or route handler) from the fetch observation; the pure
-     * query function itself cannot know and leaves it `'unknown'`. The browser
-     * cannot observe the server's cache, so this is the only way the flea
-     * market can say "you are seeing the previous copy".
-     */
-    delivery: DeliveryStatus;
-  };
-}
-
-export interface TaskTrader {
-  id: string;
-  name: string;
-  imageLink: string | null;
-  /** Whether this trader has an actual item storefront. Derived from the
-   * trader's loyalty-level data and used to exclude service/quest-only
-   * characters from the homepage restock board. */
-  hasStore: boolean;
-  /** ISO timestamp of this trader's next stock refresh. Unused by the tasks
-   * page (which only needs id→name/image) — added for the homepage's trader
-   * restock board, which reuses this same trader lookup rather than adding a
-   * second fetch/type for the same entity. See CLAUDE.md > Traders. */
-  resetTime: string | null;
-}
-
-export interface TaskMap {
-  id: string;
-  name: string;
-}
-
-export interface TaskObjective {
-  id: string;
-  type: string;
-  description: string;
-  optional: boolean;
-  count: number | null;
-  /**
-   * Item ids that satisfy this objective — only ever set for
-   * `giveItem`/`findItem`/`plantItem` objective types, confirmed live
-   * (docs/architecture/tarkovdex-data-flow.md's task audit). When more than
-   * one id is present they are **alternatives** (any one counts), not a set
-   * that must all be supplied — upstream data confirmed some of these lists
-   * run to the thousands (generic "any item from category X" objectives),
-   * so `items[0]` is treated as the representative item for aggregation and
-   * the rest are never silently combined into a shopping-list total.
-   */
-  items: string[] | null;
-  /** Only ever set for the same three item-bearing objective types above —
-   * absent (not `false`) for every other type, confirmed live: present on
-   * all 559 item objectives in the audited dataset, absent on the other 908. */
-  foundInRaid: boolean | null;
-}
-
-export interface TaskRequirement {
-  taskId: string;
-  taskName: string;
-  /** English name of the prerequisite, for the same reason as `Task.nameEn`. */
-  taskNameEn: string | null;
-  statuses: string[];
-}
-
-/** A single quest ("task" in the API's terminology). */
-export interface Task {
-  id: string;
-  name: string;
-  /** The quest's English name, shown in parentheses after the localized name
-   * so players can find a quest by the name used in English guides/videos.
-   * Null when it would just repeat `name` (i.e. on the `en` locale). */
-  nameEn: string | null;
-  trader: TaskTrader | null;
-  /** The task's single target map, if any (many tasks — hideout/trader-only
-   * — have none). Resolved from the `maps` endpoint by id. */
-  map: TaskMap | null;
-  minPlayerLevel: number | null;
-  kappaRequired: boolean | null;
-  experience: number | null;
-  taskImageLink: string | null;
-  wikiLink: string | null;
-  requirements: TaskRequirement[];
-  objectives: TaskObjective[];
-}
-
-export interface TaskFilterTrader {
-  id: string;
-  name: string;
-  imageLink: string | null;
-  taskCount: number;
-}
-
-export interface TaskFilterMap {
-  id: string;
-  name: string;
-}
-
-export interface TasksResponse {
-  tasks: Task[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
-  filters: {
-    traders: TaskFilterTrader[];
-    maps: TaskFilterMap[];
-  };
-  gameMode: GameMode;
-  source: 'json.tarkov.dev';
-}
-
 export interface MapBossRef {
   id: string;
   name: string;
-  /** Portrait art used by the compact homepage boss rows. Null-safe like
-   * every other image field — not every mob entry has one. */
+  /** Portrait art used by the compact boss rows. Null-safe like every other
+   * image field — not every mob entry has one. */
   imageLink: string | null;
 }
 
@@ -199,19 +34,15 @@ export interface MapBossSpawn {
 /**
  * A raid map. `players` is a free-form string from the API (e.g. "4-6"), not a
  * number, so it's rendered as-is rather than passed through Intl.NumberFormat.
- *
- * The API has no "difficulty" field, so `description` stands in for it on the
- * maps page — see CLAUDE.md > Maps page.
  */
 export interface GameMap {
   id: string;
   name: string;
   description: string | null;
-  wiki: string | null;
   players: string | null;
   /** Minutes. */
   raidDuration: number | null;
   /** Deduped by boss id, keeping the highest spawnChance seen, sorted
-   * descending — see CLAUDE.md > Maps page for why. */
+   * descending — the raw data lists one entry per spawn location/condition. */
   bosses: MapBossSpawn[];
 }

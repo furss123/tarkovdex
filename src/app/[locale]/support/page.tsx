@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { Heart } from 'lucide-react';
+import { KOFI_URL } from '@/lib/site';
 
 type PageProps = {
   params: Promise<{ locale: string }>;
@@ -31,7 +32,7 @@ export default async function SupportPage({ params }: PageProps) {
 
         <div className="mt-8 flex justify-center">
           <a
-            href="https://ko-fi.com/nightscav"
+            href={KOFI_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-md border border-accent bg-accent/10 px-6 py-3 text-sm font-medium text-accent transition-colors hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"

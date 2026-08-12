@@ -16,3 +16,12 @@ export const SITE_AUTHOR = 'NightScav';
  */
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tarkovdex.dev';
+
+/** Donation destination. One constant so the dashboard callout, the support
+ * page and the privacy policy's third-party list can never drift apart. */
+export const KOFI_URL = 'https://ko-fi.com/nightscav';
+
+/** Contact address published on the privacy policy — a requirement for an ad
+ * network review, and the only way a user can act on a data request. */
+export const CONTACT_EMAIL =
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? 'sotscavking@gmail.com';
