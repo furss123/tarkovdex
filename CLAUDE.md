@@ -310,9 +310,11 @@ page therefore never ships a craft ranking, and "failed" is never rendered as
 `GameMode` is now `'regular' | 'pve' | 'seasonal'`, iterated from `GAME_MODES`
 so adding a fourth is a one-line change. Upstream path segments go through
 `MODE_PATH` in `lib/tarkov.ts`; the seasonal one reads
-`TARKOV_SEASONAL_PATH` (default `seasonal`) because BSG renames the season
+`TARKOV_SEASONAL_PATH` (default `pvp-season`) because BSG renames the season
 between wipes and correcting it should be an env change, not a deploy of new
-code.
+code. The default was `seasonal` until `GET /endpoints` was actually reachable
+and reported `gameModes: ["regular", "pve", "pvp-season"]` — `seasonal` 404s,
+so PvP S rendered its failed-load state on every board until this was corrected.
 
 **No fallback, on purpose.** When the seasonal segment does not resolve, every
 board for that mode reports a failed load. A seasonal wipe has its own economy
@@ -388,9 +390,16 @@ navigation via `localStorage`. The seasonal "S" computes to
 `rgb(124 186 92)` with its glow, and the Gunsmith page shows "no builds for
 this mode" on seasonal versus a load error on PvP.
 
-**Not verified: real data.** json.tarkov.dev is unreachable from this sandbox
-(`CONNECT tunnel failed, 403`), so every board rendered its error state. Craft
-profit figures, boss percentages, and the Gunsmith parts lists must be checked
-against a local `npm run build && npm start` with real network. The seasonal
-path segment could not be confirmed against upstream for the same reason —
-`TARKOV_SEASONAL_PATH` exists precisely so that is a one-line correction.
+**Real data, since verified.** The original pass ran in a sandbox where
+json.tarkov.dev was unreachable (`CONNECT tunnel failed, 403`), so every board
+rendered its error state and the numbers were unconfirmed. Re-checked against a
+local `next start` with real network across all three modes: the home board
+draws six real craft margins and nine real boss tables, `/hideout` lists every
+station with stale-price crafts split out below, `/bosses` lists all 13 maps
+with the popular ones first, and `/gunsmith` renders 27 quest chips with full
+parts lists, resolved icons and met-condition figures in both PvP and PvE.
+Seasonal is genuinely distinct rather than a relabelled PvP — different top
+crafts (₽400,382 tank battery vs. PvP's ₽158,643 Hot Rod) and a different map
+set. Switching modes in the header issues no further `/api/board` request in any
+direction. Zero console errors, zero horizontal overflow and zero sub-44px tap
+targets at 375px on all four routes.
