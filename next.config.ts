@@ -4,13 +4,28 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 /**
- * Routes that existed before the single-page redesign. They are 301'd to the
- * dashboard rather than left to 404 because they are indexed and linked: a
- * redirect keeps a visitor arriving from a search result or an old bookmark on
- * a working page, and tells the crawler the address is retired rather than
- * temporarily broken.
+ * Old addresses that now have a real successor page. These are matched before
+ * the blanket retirement list below (Next applies the first matching redirect),
+ * so a visitor arriving from a search result or a bookmark lands on the page
+ * that answers the thing they were looking for rather than on the dashboard.
  *
- * Listed as prefixes with a wildcard tail so quest detail URLs
+ * `/maps` in particular: it used to be the map guide and is the closest
+ * ancestor of the boss spawn page, so its accumulated link equity belongs
+ * there rather than on the home page.
+ */
+const MOVED_ROUTES: Array<{ from: string; to: string }> = [
+  { from: 'progression/gunsmith', to: '/gunsmith' },
+  { from: 'maps', to: '/bosses' },
+  { from: 'economy/crafts', to: '/hideout' },
+];
+
+/**
+ * Routes that existed before the single-page redesign and have no successor.
+ * They are 301'd to the dashboard rather than left to 404 because they are
+ * indexed and linked: a redirect keeps the visitor on a working page and tells
+ * the crawler the address is retired rather than temporarily broken.
+ *
+ * Listed as prefixes with a wildcard tail so detail URLs
  * (`/ko/progression/tasks/:slug`) are covered as well as the section roots.
  */
 const RETIRED_SECTIONS = [
@@ -61,7 +76,20 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return RETIRED_SECTIONS.flatMap((section) => [
+    return [
+      ...MOVED_ROUTES.flatMap((route) => [
+        {
+          source: `/:locale(ko|zh|en)/${route.from}`,
+          destination: `/:locale${route.to}`,
+          permanent: true,
+        },
+        {
+          source: `/:locale(ko|zh|en)/${route.from}/:path*`,
+          destination: `/:locale${route.to}`,
+          permanent: true,
+        },
+      ]),
+      ...RETIRED_SECTIONS.flatMap((section) => [
       {
         source: `/:locale(ko|zh|en)/${section}`,
         destination: '/:locale',
@@ -72,7 +100,8 @@ const nextConfig: NextConfig = {
         destination: '/:locale',
         permanent: true,
       },
-    ]);
+      ]),
+    ];
   },
   images: {
     // tarkov.dev serves item icons and boss portraits from assets.tarkov.dev.

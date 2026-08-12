@@ -1,36 +1,71 @@
 # TarkovDex
 
 An **unofficial** Escape from Tarkov dashboard, deployed at
-[tarkovdex.dev](https://tarkovdex.dev). One page, three things:
+[tarkovdex.dev](https://tarkovdex.dev). A live dashboard plus three topic
+pages:
 
-- **작전 시간 (raid time)** — both in-game time variants, live
-- **보스 스폰률 (boss spawn rates)** — spawn chances on the main maps
-- **하이드아웃 최적 생산품 (hideout crafts)** — the most profitable craft per station
+- **작전 시간 (raid time)** — both in-game time variants, live, home page only
+- **보스 스폰률 (boss spawn rates)** — spawn chances, every map
+- **은신처 제작 (hideout crafts)** — the most profitable craft per station
+- **건스미스 (Gunsmith)** — one complete solved build per quest
 
-Korean and English, with PvP and PvE data side by side. Game data comes from
-the public static JSON API at [json.tarkov.dev](https://json.tarkov.dev).
-TarkovDex is not affiliated with Battlestate Games.
+Korean and English, with PvP, PvE and seasonal PvP data side by side. Game data
+comes from the public static JSON API at
+[json.tarkov.dev](https://json.tarkov.dev). TarkovDex is not affiliated with
+Battlestate Games.
 
 ## Routes
 
 | Route | What it is |
 | --- | --- |
-| `/[locale]` | The dashboard. Everything is here. |
+| `/[locale]` | Dashboard — raid clock, top crafts, mainline map bosses |
+| `/[locale]/bosses` | Boss spawn rates, every map |
+| `/[locale]/hideout` | Craft profit, every station |
+| `/[locale]/gunsmith` | Gunsmith build guide |
 | `/[locale]/support` | Ko-fi donation page |
 | `/[locale]/privacy` | Privacy policy — required to serve ads |
-| `/api/dashboard` | JSON the dashboard polls for live updates |
+| `/api/board?view=…` | JSON the live boards poll |
 
-Every retired section (`/news`, `/economy/*`, `/progression/*`, `/combat/*`,
-`/maps`, `/status`, `/about`, …) 301s to the dashboard — see
-`RETIRED_SECTIONS` in `next.config.ts`.
+The home page's two data sections are summaries — six crafts, nine maps — and
+each links to the full page. The projection happens server-side, so the summary
+and the full page can never disagree about a number.
+
+Old addresses with a successor 308 to it (`/maps` → `/bosses`,
+`/progression/gunsmith` → `/gunsmith`, `/economy/crafts` → `/hideout`);
+everything else retired (`/news`, `/combat/*`, `/status`, `/about`, …) goes to
+the dashboard. Both lists are in `next.config.ts`.
+
+## Game modes
+
+Three, selected once in the header and read by every board:
+
+| Mode | Upstream segment |
+| --- | --- |
+| PvP | `regular` |
+| PvE | `pve` |
+| PvP S (seasonal) | `TARKOV_SEASONAL_PATH`, default `seasonal` |
+
+All three are fetched server-side and travel in one payload, so switching mode
+is a re-render and never a request. The seasonal segment is an environment
+variable because BSG renames it between seasons; when it does not resolve, the
+boards for that mode say they could not load rather than falling back to PvP
+numbers — a seasonal wipe has its own economy and its own boss table, so
+borrowed numbers would be worse than none.
+
+Gunsmith builds are solved offline per mode (`src/lib/gunsmith-builds.json`).
+A mode with no solved builds reports that, which is a different message from a
+failed load.
 
 ## How "live" works, precisely
 
 The page server-renders its first paint (ISR, 10-minute window) so it is
-useful and crawlable without JavaScript. After mount, `useLiveDashboard`
-polls `/api/dashboard` every 60 seconds, immediately on the tab becoming
-visible, and on the browser coming back online. Polling stops entirely while
-the tab is hidden.
+useful and crawlable without JavaScript. After mount, `useLiveBoard` polls
+`/api/board` every 60 seconds, immediately on the tab becoming visible, and on
+the browser coming back online. Polling stops entirely while the tab is hidden.
+
+The Gunsmith page does not poll at all: a solved build changes when the shipped
+snapshot is regenerated, not minute to minute, so a refresh there would only
+redraw an identical parts list.
 
 Two timestamps are shown, and they are not the same thing:
 
@@ -91,7 +126,7 @@ hidden copy of the previous route in the DOM and `getBoundingClientRect()`
 reads a `display: none` subtree, reporting zeros.
 
 UI messages live in `messages/{ko,zh,en}.json`; their leaf-key schemas must
-stay identical (89 keys). Chinese stays implemented but unpublished — `/zh`
+stay identical (151 keys). Chinese stays implemented but unpublished — `/zh`
 redirects to `/ko` in middleware, and it is absent from the sitemap and
 hreflang. See [CLAUDE.md](./CLAUDE.md) for architecture and decision history.
 

@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { RefreshCw, TriangleAlert } from 'lucide-react';
 import type { Locale } from '@/i18n/routing';
 import { formatKst, formatRelativeTime } from '@/lib/format';
-import type { LiveStatus } from './useLiveDashboard';
+import type { GameMode } from '@/types/tarkov';
+import type { LiveStatus } from './useLiveBoard';
 
 /**
  * The board's honesty strip.
@@ -23,20 +24,27 @@ import type { LiveStatus } from './useLiveDashboard';
  */
 export function LiveStatusBar({
   locale,
+  gameMode,
   priceUpdatedAt,
+  showPriceAge,
   now,
   lastSyncedAt,
   status,
   onRefresh,
 }: {
   locale: Locale;
+  gameMode: GameMode;
   priceUpdatedAt: string | null;
+  /** False on boards with no price-backed number on screen — the boss page.
+   * Showing a price stamp there would attach an age to data it does not
+   * describe, which is the exact confusion this strip exists to prevent. */
+  showPriceAge: boolean;
   now: number | null;
   lastSyncedAt: number | null;
   status: LiveStatus;
   onRefresh: () => void;
 }) {
-  const t = useTranslations('home');
+  const t = useTranslations('board');
   const absolute = formatKst(priceUpdatedAt, locale);
   const priceAge =
     absolute == null
@@ -65,13 +73,25 @@ export function LiveStatusBar({
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border bg-surface/30 px-3 py-2 text-[14px] leading-5"
     >
       <p className="min-w-0 break-words text-muted">
-        {t('priceAgeLabel')}:{' '}
-        {priceUpdatedAt && absolute ? (
-          <time dateTime={priceUpdatedAt} className="text-fg">
-            {priceAge}
-          </time>
+        {/* Which mode these numbers describe. It leads the strip because a
+            visitor who misreads the mode misreads every figure on the page. */}
+        <span className="text-fg">{t(`modeLabel.${gameMode}`)}</span>
+        <span aria-hidden="true" className="mx-2 text-border">
+          |
+        </span>
+        {showPriceAge ? (
+          <>
+            {t('priceAgeLabel')}:{' '}
+            {priceUpdatedAt && absolute ? (
+              <time dateTime={priceUpdatedAt} className="text-fg">
+                {priceAge}
+              </time>
+            ) : (
+              <span className="text-fg">{priceAge}</span>
+            )}
+          </>
         ) : (
-          <span className="text-fg">{priceAge}</span>
+          t('bossAgeNote')
         )}
       </p>
 

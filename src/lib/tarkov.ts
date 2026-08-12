@@ -1,5 +1,5 @@
 import 'server-only';
-import type { GameMap, GameMode, MapBossSpawn } from '@/types/tarkov';
+import type { GameMap, GameMode, MapBossSpawn, TaskTrader } from '@/types/tarkov';
 import type { Locale } from '@/i18n/routing';
 import { localizeMobName } from '@/lib/game-localization';
 
@@ -37,6 +37,27 @@ const REQUEST_TIMEOUT_MS = 15_000;
  * keep working. */
 export type { GameMode };
 const DEFAULT_GAME_MODE: GameMode = 'regular';
+
+/**
+ * Game mode -> upstream path segment.
+ *
+ * `regular` and `pve` are permanent and confirmed. The seasonal wipe ("PvP S")
+ * is published on its own segment, and that segment changes when BSG starts a
+ * new season, so it is read from the environment with a sensible default
+ * instead of being frozen in the bundle — correcting it is an env change and a
+ * redeploy, not a code change. A wrong or absent segment fails the fetch, which
+ * every caller already handles as "this mode has no data", so a stale guess can
+ * never surface as wrong numbers.
+ */
+const MODE_PATH: Record<GameMode, string> = {
+  regular: 'regular',
+  pve: 'pve',
+  seasonal: process.env.TARKOV_SEASONAL_PATH?.trim() || 'seasonal',
+};
+
+export function modePath(gameMode: GameMode): string {
+  return MODE_PATH[gameMode] ?? gameMode;
+}
 
 /** Structural game data changes slowly. Price-backed documents use the
  * shorter window requested by the economy/combat tools. */
@@ -170,7 +191,7 @@ export async function getTranslationDict(
   locale: Locale,
   gameMode: GameMode,
 ): Promise<TranslationDict> {
-  const doc = await fetchTarkovJson<TranslationDoc>(`/${gameMode}/${endpoint}_${locale}`);
+  const doc = await fetchTarkovJson<TranslationDoc>(`/${modePath(gameMode)}/${endpoint}_${locale}`);
   return doc.data;
 }
 
@@ -193,6 +214,42 @@ export function translate(dict: TranslationDict, raw: string | null | undefined)
 // There is no dedicated traders page/UI; see CLAUDE.md > Traders (scope note)
 // for why this endpoint was added to an originally items/tasks/maps-only scope.
 // ---------------------------------------------------------------------------
+
+interface RawTrader {
+  id: string;
+  name: string;
+  imageLink: string | null;
+}
+
+interface RawTradersDoc {
+  data: Record<string, RawTrader>;
+}
+
+/**
+ * id -> trader lookup. Fetched only to resolve names; there is no traders page.
+ * See CLAUDE.md > "Traders (scope note)" for why this endpoint is in scope at
+ * all — a task document's `trader` field is a bare id that resolves through
+ * nothing else.
+ */
+export async function getTraders(
+  locale: Locale,
+  gameMode: GameMode = DEFAULT_GAME_MODE,
+): Promise<Record<string, TaskTrader>> {
+  const [doc, dict] = await Promise.all([
+    fetchTarkovJson<RawTradersDoc>(`/${modePath(gameMode)}/traders`),
+    getTranslationDict('traders', locale, gameMode),
+  ]);
+
+  const traders: Record<string, TaskTrader> = {};
+  for (const raw of Object.values(doc.data ?? {})) {
+    traders[raw.id] = {
+      id: raw.id,
+      name: translate(dict, raw.name),
+      imageLink: raw.imageLink ?? null,
+    };
+  }
+  return traders;
+}
 
 interface RawBossSpawn {
   spawnChance: number | null;
@@ -306,7 +363,7 @@ export async function getMaps({
   gameMode = DEFAULT_GAME_MODE,
 }: GetMapsParams): Promise<GameMap[]> {
   const [doc, dict] = await Promise.all([
-    fetchTarkovJson<RawMapsDoc>(`/${gameMode}/maps`),
+    fetchTarkovJson<RawMapsDoc>(`/${modePath(gameMode)}/maps`),
     getTranslationDict('maps', locale, gameMode),
   ]);
 

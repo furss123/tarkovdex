@@ -87,6 +87,9 @@ const config: Config = {
         // referenced but undefined, so those elements silently lost their
         // color treatment.
         warning: 'rgb(var(--color-accent) / <alpha-value>)',
+        // Seasonal-mode identity mark only — see globals.css for the scope
+        // this hue is allowed in.
+        seasonal: 'rgb(var(--color-seasonal) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['var(--font-sans)'],

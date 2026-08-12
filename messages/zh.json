@@ -15,6 +15,18 @@
     "privacy": {
       "title": "隐私政策 — TarkovDex",
       "description": "说明 TarkovDex 处理哪些信息，以及广告和第三方服务如何使用 Cookie。"
+    },
+    "bosses": {
+      "title": "各地图 Boss 刷新率 — TarkovDex",
+      "description": "逃离塔科夫全部地图的 Boss 出现概率，支持 PvP、PvE 与赛季 PvP。"
+    },
+    "hideout": {
+      "title": "藏身处制作收益 — TarkovDex",
+      "description": "自动更新各藏身处制作台当前收益最高的制作、预估收益与每小时收益。"
+    },
+    "gunsmith": {
+      "title": "枪匠改装指南 | TarkovDex",
+      "description": "查看每个枪匠任务的完整配件清单，以及人体工程学、后坐力、重量等条件的实际达成数值。"
     }
   },
   "common": {
@@ -25,7 +37,16 @@
     "createdBy": "制作",
     "gameMode": "游戏模式",
     "pvpShort": "PvP",
-    "pveShort": "PvE"
+    "pveShort": "PvE",
+    "seasonalShort": "PvP S",
+    "seasonalName": "赛季 PvP (PvP S)"
+  },
+  "nav": {
+    "primary": "主菜单",
+    "menu": "打开菜单",
+    "bosses": "Boss 刷新率",
+    "hideout": "藏身处制作",
+    "gunsmith": "枪匠"
   },
   "home": {
     "title": "塔科夫突袭时间、Boss 刷新率与藏身处制作",
@@ -34,12 +55,24 @@
     "raidTimeA": "突袭时间 A",
     "raidTimeB": "突袭时间 B",
     "nightHint": "夜间",
+    "supportPrompt": "如果这个页面帮到了你，可以请作者喝杯咖啡。",
+    "supportCta": "赞助"
+  },
+  "board": {
     "priceAgeLabel": "价格基准时间",
     "priceAgeUnknown": "无法确认",
     "liveAuto": "自动刷新中",
     "liveSyncedAt": "{time} 已同步",
     "liveError": "刷新失败",
     "liveRefreshNow": "立即刷新",
+    "bossAgeNote": "Boss 刷新率只随版本更新或活动变化。",
+    "modeLabel": {
+      "regular": "PvP",
+      "pve": "PvE",
+      "seasonal": "赛季 PvP"
+    }
+  },
+  "craft": {
     "craftProfitTitle": "藏身处最优产物",
     "craftProfitDescription": "每个制作台各挑一条当前收益最高的配方。为扣除跳蚤市场手续费与燃料成本前的预估收益。",
     "estimatedProfit": "预估收益",
@@ -58,12 +91,65 @@
     "craftStaleNotice": "以下配方所用的价格已超过 24 小时。",
     "craftStaleHint": "实际收益可能不同，请在游戏内再确认一次价格。",
     "craftPriceUpdatedLabel": "价格基准时间",
+    "craftSummaryDescription": "当前收益最高的 6 项制作。各制作台的完整列表见藏身处制作页面。",
+    "craftSeeAll": "查看全部制作台"
+  },
+  "boss": {
     "bossSpawnTitle": "各地图 Boss 出现概率",
     "bossSpawnDescription": "主要地图的 Boss 刷新率。数值随版本更新或活动变动，其间保持不变。",
     "bossDataError": "无法加载 Boss 出现信息。",
     "bossSpawnEmpty": "没有可显示的 Boss 出现信息。",
-    "supportPrompt": "如果这个页面帮到了你，可以请作者喝杯咖啡。",
-    "supportCta": "赞助"
+    "bossSummaryDescription": "主要地图的 Boss 出现概率。其余地图见 Boss 刷新率页面。",
+    "bossSeeAll": "查看全部地图"
+  },
+  "hideout": {
+    "title": "藏身处制作收益",
+    "description": "按预估收益排序，列出每个制作台当前收益最高的一项制作。金额为扣除跳蚤市场手续费和燃料成本之前的数值；计算所用价格过旧的制作单独列在下方。",
+    "adRegionLabel": "广告"
+  },
+  "bosses": {
+    "title": "各地图 Boss 刷新率",
+    "description": "全部地图的 Boss 出现概率。热门地图排在前面，其余按出现概率从高到低排列。刷新率只随版本更新或活动变化。",
+    "adRegionLabel": "广告"
+  },
+  "gunsmith": {
+    "title": "枪匠改装指南",
+    "description": "为每个枪匠任务提供完整的成品配件清单，以及成枪实际达到的各项数值。",
+    "task": "枪匠任务",
+    "baseWeapon": "基础武器",
+    "minLevel": "等级 {level}",
+    "buildTitle": "{count, plural, other {完整配装（# 个配件）}}",
+    "buildIntro": "请自上而下依次安装。完全照此配装，即可满足右侧全部条件。",
+    "attachTo": "安装到 {parent}",
+    "attachToWeapon": "安装到 {weapon} 本体",
+    "questPart": "任务指定",
+    "conditions": "成品条件",
+    "conditionsIntro": "左侧为任务要求值，右侧粗体为上述配装实际达到的数值。",
+    "met": "达标",
+    "notMet": "未达标",
+    "verified": "上述配装满足全部条件。",
+    "unverified": "上述配装未满足部分条件，请查看下方标记的项目。",
+    "notesTitle": "提交前确认",
+    "noteDurability": "耐久度检查的是武器状态而非配件，提交前请先维修武器。",
+    "noteAmmo": "数值以未装填弹药为准，弹匣留空不影响条件。",
+    "noteAlternatives": "使用同等配件也可以，但替换后请在游戏内预设编辑器中确认最终数值。",
+    "error": "无法加载枪匠数据。",
+    "conditionNames": {
+      "accuracy": "精度",
+      "ergonomics": "人体工学",
+      "effectiveDistance": "有效射程",
+      "recoil": "后坐力",
+      "weight": "重量",
+      "height": "高度",
+      "width": "宽度",
+      "durability": "耐久度",
+      "magazineCapacity": "弹匣容量",
+      "muzzleVelocity": "初速",
+      "sightingRange": "瞄准距离"
+    },
+    "adRegionLabel": "广告",
+    "emptyForMode": "该模式暂无枪匠配装数据。",
+    "emptyForModeHint": "在顶部切换到 PvP 或 PvE 即可查看配装清单。"
   },
   "footer": {
     "summary": "实时查看塔科夫突袭时间、Boss 出现概率与藏身处制作收益。",

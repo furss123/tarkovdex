@@ -5,7 +5,13 @@ import { type Locale } from '@/i18n/routing';
 import { publicLocales } from '@/lib/locale-availability';
 import { SITE_URL } from '@/lib/site';
 
-type PageMetadataKey = 'home' | 'support' | 'privacy';
+type PageMetadataKey =
+  | 'home'
+  | 'bosses'
+  | 'hideout'
+  | 'gunsmith'
+  | 'support'
+  | 'privacy';
 
 const OG_LOCALE: Record<Locale, string> = {
   ko: 'ko_KR',

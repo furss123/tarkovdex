@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { DashboardData } from '@/types/dashboard';
+import type { BoardData, BoardView } from '@/types/dashboard';
 
 /**
  * Polling cadence. Deliberately not faster: json.tarkov.dev regenerates its
- * price dumps on its own schedule, and `/api/dashboard` sits behind a 60s CDN
+ * price dumps on its own schedule, and `/api/board` sits behind a 60s CDN
  * window, so a tighter interval would redraw identical numbers while
  * multiplying requests. What actually keeps the board current is the
  * visibility refetch below — a tab that has been in the background for an hour
@@ -19,8 +19,8 @@ const AGE_TICK_MS = 15_000;
 
 export type LiveStatus = 'idle' | 'refreshing' | 'error';
 
-export interface LiveDashboardState {
-  data: DashboardData;
+export interface LiveBoardState {
+  data: BoardData;
   status: LiveStatus;
   /** Client clock, advanced by the age ticker — the `now` every relative
    * timestamp on the board is measured against. Null until first mount so
@@ -33,21 +33,22 @@ export interface LiveDashboardState {
 }
 
 /**
- * Keeps the dashboard payload current without a page reload.
+ * Keeps a board's payload current without a page reload.
  *
  * Three things trigger a refetch: the interval, the tab becoming visible
  * again, and the browser coming back online. Polling stops entirely while the
- * tab is hidden — a backgrounded dashboard that keeps requesting is pure cost
+ * tab is hidden — a backgrounded board that keeps requesting is pure cost
  * for a user who is not looking at it.
  *
  * A failed refresh never clears `data`. The board keeps rendering its last
  * good payload and surfaces the failure as a status, because a blank board is
  * strictly worse than a board that says how old it is.
  */
-export function useLiveDashboard(
-  initialData: DashboardData,
+export function useLiveBoard(
+  initialData: BoardData,
   locale: string,
-): LiveDashboardState {
+  view: BoardView,
+): LiveBoardState {
   const [data, setData] = useState(initialData);
   const [status, setStatus] = useState<LiveStatus>('idle');
   const [now, setNow] = useState<number | null>(null);
@@ -62,13 +63,16 @@ export function useLiveDashboard(
     inFlight.current = controller;
     setStatus('refreshing');
 
-    fetch(`/api/dashboard?locale=${encodeURIComponent(locale)}`, {
-      signal: controller.signal,
-      cache: 'no-store',
-    })
+    fetch(
+      `/api/board?view=${view}&locale=${encodeURIComponent(locale)}`,
+      {
+        signal: controller.signal,
+        cache: 'no-store',
+      },
+    )
       .then(async (res) => {
-        if (!res.ok) throw new Error(`dashboard responded ${res.status}`);
-        return (await res.json()) as DashboardData;
+        if (!res.ok) throw new Error(`board responded ${res.status}`);
+        return (await res.json()) as BoardData;
       })
       .then((next) => {
         if (controller.signal.aborted) return;
@@ -81,7 +85,7 @@ export function useLiveDashboard(
         if (controller.signal.aborted) return;
         setStatus('error');
       });
-  }, [locale]);
+  }, [locale, view]);
 
   useEffect(() => {
     setNow(Date.now());

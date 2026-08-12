@@ -269,3 +269,128 @@ above, which was invisible to both typecheck and lint.
 **Verify layout against `next start`, not `next dev`.** In dev, Next keeps a
 hidden copy of the previous route in the DOM, so `getBoundingClientRect()`
 reads a `display: none` subtree and reports zeros.
+
+## 2026-08-12 nav restored: three topic pages, three game modes
+
+The single-page redesign above was reversed in part, on request. The dashboard
+stays, but three topic pages come back with a header nav, and the PvP/PvE
+toggle becomes a three-way PvP / PvE / PvP S selector.
+
+### Why pages came back
+
+Search. Gunsmith is the single most-searched thing this project covers, and a
+six-row summary inside a dashboard cannot rank for "건스미스 파트 12" — a page
+whose whole content is that answer can. Same argument, weaker, for boss spawn
+rates and hideout crafts. The monetization goal that drove the single-page cut
+is better served by three indexable answers than by one page that mentions all
+three.
+
+### Summary vs. full, not duplication
+
+The home page keeps both data sections but they are **projections**, decided
+server-side in `getBoardData(locale, view)`:
+
+- home: the six most profitable crafts across all stations (ranked by profit,
+  dated-price group dropped), and the nine mainline maps.
+- `/hideout`: every station's best craft, including the dated-price group.
+- `/bosses`: every map, mainline first then by highest chance.
+
+One producer, so a number cannot mean one thing on the summary and another on
+the full page. The dated group is *dropped* rather than truncated on the home
+summary deliberately: showing two dated rows and hiding five is more misleading
+than showing none and linking out.
+
+`BoardModeData.crafts` / `.bosses` are three-state — `undefined` (this view
+does not render it), `null` (this mode's fetch failed), or a value. The boss
+page therefore never ships a craft ranking, and "failed" is never rendered as
+"empty".
+
+### Three game modes
+
+`GameMode` is now `'regular' | 'pve' | 'seasonal'`, iterated from `GAME_MODES`
+so adding a fourth is a one-line change. Upstream path segments go through
+`MODE_PATH` in `lib/tarkov.ts`; the seasonal one reads
+`TARKOV_SEASONAL_PATH` (default `seasonal`) because BSG renames the season
+between wipes and correcting it should be an env change, not a deploy of new
+code.
+
+**No fallback, on purpose.** When the seasonal segment does not resolve, every
+board for that mode reports a failed load. A seasonal wipe has its own economy
+and its own boss table, so quietly serving PvP numbers under a seasonal label
+would be worse than an empty board — this is the same "never guess" rule the
+Tarkov Live work was built on.
+
+**The green "S" is a deliberate exception to the one-accent rule.** A new token
+(`--color-seasonal`, a desaturated tactical green, 7.4:1 on the page
+background) is used in exactly two places: the "S" glyph and the indicator dot
+in the mode switcher. Selection is still carried by the amber fill every other
+control uses, so the green says *which mode this is* and the amber says *which
+one you picked* — status is never hue-only. It appears nowhere else: no
+surfaces, borders, links or states.
+
+The status strip now leads with the mode label for the same reason: a visitor
+who misreads the mode misreads every figure under it.
+
+### Gunsmith, restored whole
+
+`gunsmith-builds.json` (27 quests × 2 modes), `task-ko.json`, `getTraders()`,
+`localizeTaskText()`, `getGunsmithTasks()` and the explorer all came back from
+the pre-redesign commit. The stat model and the solver are unchanged — see
+"Gunsmith: solved builds" above.
+
+What changed is only the page shell: the old one depended on `ToolShell`,
+`ModeAvailabilityBoundary` and the `domainHealth` registry, all deleted in the
+redesign. Rather than restore that scaffolding, the page uses the idiom the
+rest of the site now uses (`ErrorState` / `EmptyState` from `StatusUI`, modes
+settled with `Promise.allSettled`). `getGunsmithTasks` returns early for a mode
+with no snapshot, so the seasonal mode costs zero upstream requests and renders
+"no builds for this mode yet" — which the explorer keeps distinct from "could
+not load".
+
+The page has `revalidate = 21600` and **does not poll**. Nothing on it is
+price-backed; a live refresh would spend requests redrawing an identical parts
+list.
+
+### Component moves
+
+`useLiveDashboard` → `components/boards/useLiveBoard` (takes a `view`),
+`LiveDashboard` → `components/boards/LiveBoards`, and the craft/boss/status
+components moved to `components/boards/` since three pages render them.
+`/api/dashboard` → `/api/board?view=home|hideout|bosses`; one route because the
+three views are projections of the same documents and the same cache.
+
+Message namespaces split to match: `board`, `craft`, `boss` alongside `home`,
+plus `nav`, `hideout`, `bosses`, `gunsmith`. 151 leaf keys, identical across
+ko/en/zh.
+
+### Header
+
+Collapses at `lg`, not `sm`: the bar is brand + three Korean nav labels + two
+segmented controls, and the mode switcher gained a third button. The nav goes
+behind a disclosure below `lg` while **both switchers stay visible** — hiding
+the mode control would put the thing that reinterprets every number on the page
+one tap further away.
+
+### Verified
+
+`typecheck`, `lint` and a production build all pass; 18 pages, and all four
+content routes prerender (confirmed in `prerender-manifest.json`, not just from
+the route table) with `10m` / `1h` / `10m` / `6h` windows.
+
+Against `next start`: 375px and 1280px on `/ko`, `/ko/bosses`, `/ko/hideout`,
+`/ko/gunsmith`, `/en`, `/en/gunsmith` — zero page-level horizontal overflow,
+zero interactive elements under 44px, no console errors other than the
+sandbox's blocked network. At 375px the desktop nav is hidden and the
+disclosure opens all three links and closes itself on navigation; at 1024px the
+full nav fits with zero overflow. The three mode buttons render, the status
+strip's mode label changes with the selection, and the choice survives
+navigation via `localStorage`. The seasonal "S" computes to
+`rgb(124 186 92)` with its glow, and the Gunsmith page shows "no builds for
+this mode" on seasonal versus a load error on PvP.
+
+**Not verified: real data.** json.tarkov.dev is unreachable from this sandbox
+(`CONNECT tunnel failed, 403`), so every board rendered its error state. Craft
+profit figures, boss percentages, and the Gunsmith parts lists must be checked
+against a local `npm run build && npm start` with real network. The seasonal
+path segment could not be confirmed against upstream for the same reason —
+`TARKOV_SEASONAL_PATH` exists precisely so that is a one-line correction.

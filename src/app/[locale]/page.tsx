@@ -3,11 +3,11 @@ import type { Locale } from '@/i18n/routing';
 import { buildPageMetadata } from '@/lib/metadata';
 import { SITE_URL } from '@/lib/site';
 import { serializeJsonLd } from '@/lib/json-ld';
-import { getDashboardData } from '@/lib/dashboard';
+import { getBoardData } from '@/lib/dashboard';
 import { ADSENSE_SLOT_MAIN } from '@/lib/ads';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { InGameClock } from '@/components/home/InGameClock';
-import { LiveDashboard } from '@/components/home/LiveDashboard';
+import { LiveBoards } from '@/components/boards/LiveBoards';
 import { SupportCallout } from '@/components/home/SupportCallout';
 
 type PageProps = {
@@ -42,11 +42,19 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 /**
- * The whole site, essentially.
+ * The dashboard.
  *
  * Three things, ordered by how fast they change: the raid clock (continuous,
- * client-side, no data dependency), then the hideout craft ranking and boss
- * spawn rates (both live-refreshed together from one payload).
+ * client-side, no data dependency), then the most profitable hideout crafts
+ * and the popular maps' boss spawn rates (both live-refreshed together from
+ * one payload).
+ *
+ * The two data sections are summaries, not copies: the craft board shows the
+ * six best crafts across all stations, the boss board the nine mainline maps.
+ * The per-station board and the complete map list live on `/hideout` and
+ * `/bosses`, which each link from their section heading. Splitting them that
+ * way is what lets those pages carry a full answer for a search query while
+ * the home page stays a glance.
  *
  * The data is fetched here for the first paint so the page is useful before
  * any JavaScript runs and crawlable without it, then handed to the client as
@@ -57,7 +65,7 @@ export default async function HomePage({ params }: PageProps) {
   const locale = (await params).locale as Locale;
   setRequestLocale(locale);
   const t = await getTranslations('home');
-  const dashboard = await getDashboardData(locale);
+  const board = await getBoardData(locale, 'home');
 
   return (
     <>
@@ -77,9 +85,11 @@ export default async function HomePage({ params }: PageProps) {
         <h1 className="sr-only">{t('title')}</h1>
         <div className="space-y-8 sm:space-y-10">
           <InGameClock />
-          <LiveDashboard
-            initialData={dashboard}
+          <LiveBoards
+            initialData={board}
             locale={locale}
+            craftHref="/hideout"
+            bossHref="/bosses"
             slot={
               <AdSlot slot={ADSENSE_SLOT_MAIN} label={t('adRegionLabel')} />
             }

@@ -15,6 +15,18 @@
     "privacy": {
       "title": "Privacy Policy — TarkovDex",
       "description": "What TarkovDex processes, and how cookies are used by advertising and third-party services."
+    },
+    "bosses": {
+      "title": "Boss spawn rates by map — TarkovDex",
+      "description": "Boss spawn chances on every Escape from Tarkov map, for PvP, PvE and the seasonal wipe."
+    },
+    "hideout": {
+      "title": "Hideout craft profit — TarkovDex",
+      "description": "The most profitable craft at each hideout station, with estimated profit and profit per hour, refreshed automatically."
+    },
+    "gunsmith": {
+      "title": "Gunsmith build guide | TarkovDex",
+      "description": "A complete parts list for every Gunsmith task, with the ergonomics, recoil and weight values the finished weapon reaches."
     }
   },
   "common": {
@@ -25,7 +37,16 @@
     "createdBy": "Created by",
     "gameMode": "Game mode",
     "pvpShort": "PvP",
-    "pveShort": "PvE"
+    "pveShort": "PvE",
+    "seasonalShort": "PvP S",
+    "seasonalName": "Seasonal PvP (PvP S)"
+  },
+  "nav": {
+    "primary": "Primary",
+    "menu": "Open menu",
+    "bosses": "Boss spawns",
+    "hideout": "Hideout crafts",
+    "gunsmith": "Gunsmith"
   },
   "home": {
     "title": "Tarkov raid time, boss spawn rates and hideout crafts",
@@ -34,12 +55,24 @@
     "raidTimeA": "Raid time A",
     "raidTimeB": "Raid time B",
     "nightHint": "Night",
+    "supportPrompt": "If this screen saved you a raid, consider buying a coffee.",
+    "supportCta": "Support"
+  },
+  "board": {
     "priceAgeLabel": "Prices as of",
     "priceAgeUnknown": "Cannot be determined",
     "liveAuto": "Auto-refreshing",
     "liveSyncedAt": "Synced {time}",
     "liveError": "Refresh failed",
     "liveRefreshNow": "Refresh now",
+    "bossAgeNote": "Spawn rates change with a patch or an event, not minute to minute.",
+    "modeLabel": {
+      "regular": "PvP",
+      "pve": "PvE",
+      "seasonal": "Seasonal PvP"
+    }
+  },
+  "craft": {
     "craftProfitTitle": "Best hideout crafts",
     "craftProfitDescription": "One craft per station — the most profitable right now. Estimated before flea market fees and fuel costs.",
     "estimatedProfit": "Estimated profit",
@@ -58,12 +91,65 @@
     "craftStaleNotice": "The prices behind these crafts are more than 24 hours old.",
     "craftStaleHint": "Profit may differ now — check the price in game before committing.",
     "craftPriceUpdatedLabel": "Prices as of",
+    "craftSummaryDescription": "The six most profitable crafts right now. Every station is on the hideout page.",
+    "craftSeeAll": "All stations"
+  },
+  "boss": {
     "bossSpawnTitle": "Boss spawn chances by map",
     "bossSpawnDescription": "Spawn rates on the main maps. These change with a patch or an event, and stay put in between.",
     "bossDataError": "Could not load boss spawn data.",
     "bossSpawnEmpty": "No boss spawn data to show.",
-    "supportPrompt": "If this screen saved you a raid, consider buying a coffee.",
-    "supportCta": "Support"
+    "bossSummaryDescription": "Spawn chances on the mainline maps. The rest are on the boss spawn page.",
+    "bossSeeAll": "All maps"
+  },
+  "hideout": {
+    "title": "Hideout craft profit",
+    "description": "The single most profitable craft at each station, ranked by estimated profit before flea fees and fuel. Crafts priced on data older than a day are listed separately below.",
+    "adRegionLabel": "Advertisement"
+  },
+  "bosses": {
+    "title": "Boss spawn rates by map",
+    "description": "Spawn chances for every map. Mainline maps come first, then the rest by highest chance. Rates change with a patch or an event and hold steady in between.",
+    "adRegionLabel": "Advertisement"
+  },
+  "gunsmith": {
+    "title": "Gunsmith build guide",
+    "description": "A complete, checked parts list for every Gunsmith task, with the exact values the finished weapon reaches.",
+    "task": "Gunsmith task",
+    "baseWeapon": "Base weapon",
+    "minLevel": "Level {level}",
+    "buildTitle": "{count, plural, one {Complete build (# part)} other {Complete build (# parts)}}",
+    "buildIntro": "Install these in order, top to bottom. Built exactly as listed, the weapon meets every requirement on the right.",
+    "attachTo": "Attaches to {parent}",
+    "attachToWeapon": "Attaches to the {weapon} itself",
+    "questPart": "Required",
+    "conditions": "Build requirements",
+    "conditionsIntro": "Left is what the task demands; the bold value is what the build above actually reaches.",
+    "met": "Met",
+    "notMet": "Not met",
+    "verified": "The build above meets every requirement.",
+    "unverified": "The build above misses some requirements. Check the values marked below.",
+    "notesTitle": "Before handing it in",
+    "noteDurability": "Durability is a weapon-condition check, not a part. Repair the weapon before turning it in.",
+    "noteAmmo": "Values assume no ammunition loaded. An empty magazine is fine.",
+    "noteAlternatives": "Equivalent parts also work, but confirm the final values in the in-game preset editor if you substitute anything.",
+    "error": "Couldn't load Gunsmith data.",
+    "conditionNames": {
+      "accuracy": "Accuracy",
+      "ergonomics": "Ergonomics",
+      "effectiveDistance": "Effective distance",
+      "recoil": "Recoil",
+      "weight": "Weight",
+      "height": "Height",
+      "width": "Width",
+      "durability": "Durability",
+      "magazineCapacity": "Magazine capacity",
+      "muzzleVelocity": "Muzzle velocity",
+      "sightingRange": "Sighting range"
+    },
+    "adRegionLabel": "Advertisement",
+    "emptyForMode": "No Gunsmith builds are available for this mode yet.",
+    "emptyForModeHint": "Switch to PvP or PvE above to see the build lists."
   },
   "footer": {
     "summary": "Live Tarkov raid time, boss spawn chances and hideout craft profit.",

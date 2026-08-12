@@ -101,3 +101,49 @@ export interface EconomyDataset {
   generatedAt: string;
   sourceUpdatedAt: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Gunsmith
+//
+// A quest's build is a solved artifact, not a live computation: the parts and
+// the values they reach are produced offline by
+// `scripts/generate-gunsmith-builds.mjs` and shipped as
+// `src/lib/gunsmith-builds.json`. Everything below is what the page renders
+// after that snapshot's ids are resolved to localized names and icons.
+// ---------------------------------------------------------------------------
+
+export interface GunsmithCondition {
+  key: string;
+  value: number;
+  compareMethod: string;
+  /** What the shipped build actually reaches. */
+  actual: number;
+  satisfied: boolean;
+}
+
+export interface GunsmithBuildPart {
+  item: ToolItem;
+  /** Localized name of the slot it goes into. */
+  slot: string;
+  /** The part it attaches to, or null when it goes straight on the weapon. */
+  parent: ToolItem | null;
+  /** True when the quest itself names this part (or its category). */
+  required: boolean;
+}
+
+export interface GunsmithTask {
+  id: string;
+  name: string;
+  /** English name, shown alongside the localized one; null when identical. */
+  nameEn: string | null;
+  /** "Gunsmith - Part N" ordinal, null for the named one-offs. */
+  part: number | null;
+  trader: string | null;
+  minPlayerLevel: number | null;
+  weapon: ToolItem;
+  /** A complete build, parents before children — install it top to bottom. */
+  build: GunsmithBuildPart[];
+  conditions: GunsmithCondition[];
+  /** Every condition met by `build`. False means the guide is incomplete. */
+  verified: boolean;
+}

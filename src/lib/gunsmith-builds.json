@@ -1,0 +1,6252 @@
+{
+ "regular": {
+  "5ac23c6186f7741247042bad": {
+   "name": "Gunsmith - Part 1",
+   "weapon": "54491c4f4bdc2db1078b4568",
+   "parts": [
+    {
+     "id": "55d45f484bdc2d972f8b456d",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "560d1a214bdc2da74d8b4570",
+     "required": false
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "55d45f484bdc2d972f8b456d",
+     "slot": "MOD_TACTICAL",
+     "slotId": "560d493e4bdc2d26448b4577",
+     "required": true
+    },
+    {
+     "id": "560835c74bdc2dc8488b456f",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "560d19c44bdc2de22e8b457a",
+     "required": false
+    },
+    {
+     "id": "55d484b44bdc2d1d4e8b456d",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "560d1bc94bdc2de22e8b457b",
+     "required": false
+    },
+    {
+     "id": "56083a334bdc2dc8488b4571",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "560d1d074bdc2d26448b4574",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 56,
+    "recoil": 361,
+    "weight": 2.84,
+    "width": 4,
+    "height": 1,
+    "magazineCapacity": 6,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 45,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 1,
+     "compareMethod": "<="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 5,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 850,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac2426c86f774138762edfe": {
+   "name": "Gunsmith - Part 2",
+   "weapon": "57dc2fa62459775949412633",
+   "parts": [
+    {
+     "id": "59d36a0086f7747e673f3946",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "59d368ce86f7747e6a5beb03",
+     "required": false
+    },
+    {
+     "id": "57ffa9f4245977728561e844",
+     "parent": "59d36a0086f7747e673f3946",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59d36a0086f7747e673f3947",
+     "required": true
+    },
+    {
+     "id": "5beec8ea0db834001a6f9dbf",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "57dc31bc245977596d4ef3d2",
+     "required": false
+    },
+    {
+     "id": "55d482194bdc2d1d4e8b456b",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "57dc31f2245977596c274b4f",
+     "required": false
+    },
+    {
+     "id": "5c791e872e2216001219c40a",
+     "parent": "57ffa9f4245977728561e844",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "57ffad2224597779db60ceb4",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 63,
+    "recoil": 107,
+    "weight": 2.42,
+    "width": 3,
+    "height": 2,
+    "magazineCapacity": 60,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 56,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": "<="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 550,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 3.5,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 3,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac2428686f77412450b42bf": {
+   "name": "Gunsmith - Part 3",
+   "weapon": "5926bb2186f7744b1c6c6e60",
+   "parts": [
+    {
+     "id": "5926c0df86f77462f647f764",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5926bb2186f7744b1c6c6e63",
+     "required": false
+    },
+    {
+     "id": "5c0000c00db834001a6697fc",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5926df9986f7742f6356f504",
+     "required": false
+    },
+    {
+     "id": "5c6165902e22160010261b28",
+     "parent": "5c0000c00db834001a6697fc",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c013b390db83400232ff0bc",
+     "required": true
+    },
+    {
+     "id": "5a9548c9159bd400133e97b3",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5926c0df86f77462f647f767",
+     "required": false
+    },
+    {
+     "id": "5cc9c20cd7f00c001336c65d",
+     "parent": "5a9548c9159bd400133e97b3",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5a954931159bd400160a65a2",
+     "required": true
+    },
+    {
+     "id": "5926c32286f774616e42de99",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5926bb2186f7744b1c6c6e65",
+     "required": false
+    },
+    {
+     "id": "5926d3c686f77410de68ebc8",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_STOCK",
+     "slotId": "5926c1c786f774641f04af45",
+     "required": false
+    },
+    {
+     "id": "5a351711c4a282000b1521a4",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5926bb2186f7744b1c6c6e62",
+     "required": false
+    },
+    {
+     "id": "5926d2be86f774134d668e4e",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5926c0df86f77462f647f768",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 60,
+    "recoil": 42,
+    "weight": 3.6,
+    "width": 4,
+    "height": 2,
+    "magazineCapacity": 50,
+    "effectiveDistance": 200,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 200
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 200,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 45,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 50,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 240,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872f9decada40426d3447": {
+   "name": "Gunsmith - Part 4",
+   "weapon": "587e02ff24597743df3deaeb",
+   "parts": [
+    {
+     "id": "634eff66517ccc8a960fc735",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "587e02ff24597743df3deaed",
+     "required": false
+    },
+    {
+     "id": "5cf67cadd7f00c065a5abab7",
+     "parent": "634eff66517ccc8a960fc735",
+     "slot": "MOD_MUZZLE",
+     "slotId": "634eff66517ccc8a960fc738",
+     "required": false
+    },
+    {
+     "id": "5e208b9842457a4a7a33d074",
+     "parent": "5cf67cadd7f00c065a5abab7",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5cf67cadd7f00c065a5abab9",
+     "required": true
+    },
+    {
+     "id": "653ecef836fae5a82f02b869",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "587e02ff24597743df3deaec",
+     "required": false
+    },
+    {
+     "id": "6415c694da439c6a97048b56",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "593d4a0586f7745e5838a153",
+     "required": false
+    },
+    {
+     "id": "634f05a21f9f536910079b56",
+     "parent": "634eff66517ccc8a960fc735",
+     "slot": "MOD_MOUNT",
+     "slotId": "634eff66517ccc8a960fc736",
+     "required": false
+    },
+    {
+     "id": "634f036a517ccc8a960fc746",
+     "parent": "634f05a21f9f536910079b56",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "634f05a21f9f536910079b57",
+     "required": false
+    },
+    {
+     "id": "587df583245977373c4f1129",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "587e02ff24597743df3deaee",
+     "required": false
+    },
+    {
+     "id": "5dfe6104585a0c3e995c7b82",
+     "parent": "6415c694da439c6a97048b56",
+     "slot": "MOD_SCOPE",
+     "slotId": "6415c694da439c6a97048b57",
+     "required": false
+    },
+    {
+     "id": "653ecc425a1690d9d90491e4",
+     "parent": "634f036a517ccc8a960fc746",
+     "slot": "MOD_MOUNT",
+     "slotId": "634f0cddfc6902735b039204",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 38,
+    "recoil": 81,
+    "weight": 5.28,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 20,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 600,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 35,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 350,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3267986f7742a413592fe": {
+   "name": "Gunsmith - Part 5",
+   "weapon": "5a7828548dc32e5a9c28b516",
+   "parts": [
+    {
+     "id": "5a788068c5856700137e4c8f",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a7828548dc32e5a9c28b518",
+     "required": true
+    },
+    {
+     "id": "5b7be47f5acfc400170e2dd2",
+     "parent": "5a788068c5856700137e4c8f",
+     "slot": "MOD_MOUNT",
+     "slotId": "5b7d2ae05acfc4001a5c401d",
+     "required": false
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "5b7be47f5acfc400170e2dd2",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5b7be47f5acfc400170e2dd4",
+     "required": true
+    },
+    {
+     "id": "57cffb66245977632f391a99",
+     "parent": "5a788068c5856700137e4c8f",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5a788c7fc5856700137e621c",
+     "required": true
+    },
+    {
+     "id": "5a787fdfc5856700142fdd9a",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5a7828548dc32e5a9c28b517",
+     "required": false
+    },
+    {
+     "id": "5a7882dcc5856700177af662",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5a7828548dc32e5a9c28b519",
+     "required": false
+    },
+    {
+     "id": "5a78813bc5856700186c4abe",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5a7828548dc32e5a9c28b51a",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 81.9,
+    "recoil": 278,
+    "weight": 3.05,
+    "width": 4,
+    "height": 1,
+    "magazineCapacity": 4,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3270f86f77445ba41d4dd": {
+   "name": "Gunsmith - Part 6",
+   "weapon": "59d6088586f774275f37482f",
+   "parts": [
+    {
+     "id": "5a01ad4786f77450561fda02",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "59d6088586f774275f374831",
+     "required": false
+    },
+    {
+     "id": "647dd2b8a12ebf96c3031655",
+     "parent": "5a01ad4786f77450561fda02",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a01ad4786f77450561fda03",
+     "required": false
+    },
+    {
+     "id": "59f8a37386f7747af3328f06",
+     "parent": "647dd2b8a12ebf96c3031655",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "647dd2b8a12ebf96c3031656",
+     "required": true
+    },
+    {
+     "id": "59d6272486f77466146386ff",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "59d6088586f774275f374838",
+     "required": true
+    },
+    {
+     "id": "593d489686f7745c6255d58a",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "59d6088586f774275f374833",
+     "required": true
+    },
+    {
+     "id": "619b69037b9de8162902673e",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "59d6088586f774275f374834",
+     "required": false
+    },
+    {
+     "id": "628a7b23b0f75035732dd565",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "59d6088586f774275f374836",
+     "required": false
+    },
+    {
+     "id": "6130ca3fd92c473c77020dbd",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "59d6088586f774275f37483a",
+     "required": false
+    },
+    {
+     "id": "5d2c76ed48f03532f2136169",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "59d6088586f774275f374835",
+     "required": false
+    },
+    {
+     "id": "5c86592b2e2216000e69e77c",
+     "parent": "5d2c76ed48f03532f2136169",
+     "slot": "MOD_SCOPE",
+     "slotId": "5d2c76ed48f03532f213616b",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "5c86592b2e2216000e69e77c",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c86592b2e2216000e69e77e",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 61.1,
+    "recoil": 91,
+    "weight": 5.45,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 25,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 400,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac244eb86f7741356335af1": {
+   "name": "Gunsmith - Part 7",
+   "weapon": "5447a9cd4bdc2dbd208b4567",
+   "parts": [
+    {
+     "id": "5c0e2f26d174af02a9625114",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "55d5a2ec4bdc2d972f8b4575",
+     "required": false
+    },
+    {
+     "id": "55d35ee94bdc2d61338b4568",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_BARREL",
+     "slotId": "5c0e2f26d174af02a9625117",
+     "required": false
+    },
+    {
+     "id": "5c7fb51d2e2216001219ce11",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_MUZZLE",
+     "slotId": "564afddf4bdc2d1b2b8b4592",
+     "required": false
+    },
+    {
+     "id": "55d6190f4bdc2d87028b4567",
+     "parent": "5c7fb51d2e2216001219ce11",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7fb51d2e2216001219ce13",
+     "required": true
+    },
+    {
+     "id": "5a33e75ac4a2826c6e06d759",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "55d354084bdc2d8c2f8b4568",
+     "required": false
+    },
+    {
+     "id": "5c793fb92e221644f31bfb64",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "55d5a3074bdc2d61338b4574",
+     "required": false
+    },
+    {
+     "id": "6895bf08e2d16810ba0bf43e",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "55d5a30f4bdc2d882f8b4574",
+     "required": false
+    },
+    {
+     "id": "5c6d5d8b2e221644fc630b39",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5c0e2f26d174af02a9625118",
+     "required": false
+    },
+    {
+     "id": "63d3ce281fe77d0f2801859e",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "56ea8e15d2720bf2698b456b",
+     "required": false
+    },
+    {
+     "id": "5c6592372e221600133e47d7",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "55d3555c4bdc2d962f8b4568",
+     "required": false
+    },
+    {
+     "id": "5dfe6104585a0c3e995c7b82",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c0e2f26d174af02a9625116",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 54.5,
+    "recoil": 76,
+    "weight": 3.68,
+    "width": 4,
+    "height": 3,
+    "magazineCapacity": 100,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 37,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 300,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 3.8,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3277186f7745973054106": {
+   "name": "Gunsmith - Part 8",
+   "weapon": "5ab8e9fcd8ce870019439434",
+   "parts": [
+    {
+     "id": "5649ab884bdc2ded0b8b457f",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5ab8e9fcd8ce870019439439",
+     "required": true
+    },
+    {
+     "id": "5649af884bdc2d1b2b8b4589",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5ab8e9fcd8ce87001943943b",
+     "required": true
+    },
+    {
+     "id": "5649ae4a4bdc2d1b2b8b4588",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5ab8e9fcd8ce87001943943a",
+     "required": true
+    },
+    {
+     "id": "59ecc28286f7746d7a68aa8c",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5ab8e9fcd8ce87001943943d",
+     "required": false
+    },
+    {
+     "id": "59ecc3dd86f7746dc827481c",
+     "parent": "59ecc28286f7746d7a68aa8c",
+     "slot": "MOD_STOCK",
+     "slotId": "59ecc28286f7746d7a68aa8d",
+     "required": true
+    },
+    {
+     "id": "5bed61680db834001d2c45ab",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5ab8e9fcd8ce87001943943e",
+     "required": true
+    },
+    {
+     "id": "5a01ad4786f77450561fda02",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5ab8e9fcd8ce870019439437",
+     "required": false
+    },
+    {
+     "id": "5efaf417aeb21837e749c7f2",
+     "parent": "5a01ad4786f77450561fda02",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a01ad4786f77450561fda03",
+     "required": true
+    },
+    {
+     "id": "5c1bc4812e22164bef5cfde7",
+     "parent": "5efaf417aeb21837e749c7f2",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5efaf417aeb21837e749c7f4",
+     "required": true
+    },
+    {
+     "id": "5a5f1ce64f39f90b401987bc",
+     "parent": "5efaf417aeb21837e749c7f2",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5efaf417aeb21837e749c7f6",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 67.5,
+    "recoil": 55,
+    "weight": 3.92,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 52,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 275,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 5,
+     "compareMethod": ">="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "676529af9c90953d090882e7": {
+   "name": "Gunsmith - Old Friend's Request",
+   "weapon": "5df24cf80dee1b22f862e9bc",
+   "parts": [
+    {
+     "id": "5df35e970b92095fd441e4d2",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5df38776b11454561e3923ea",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": "5df35e970b92095fd441e4d2",
+     "slot": "MOD_SCOPE",
+     "slotId": "5df35e970b92095fd441e4d4",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    },
+    {
+     "id": "5df35e59c41b2312ea3334d5",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5df24cf80dee1b22f862e9c2",
+     "required": false
+    },
+    {
+     "id": "5df25d3bfd6b4e6e2276dc9a",
+     "parent": "5df35e59c41b2312ea3334d5",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5df389abdfc58d14537c203a",
+     "required": false
+    },
+    {
+     "id": "5888961624597754281f93f3",
+     "parent": "5df25d3bfd6b4e6e2276dc9a",
+     "slot": "MOD_BIPOD",
+     "slotId": "6718519b2e2eeb98d406f3b6",
+     "required": true
+    },
+    {
+     "id": "5df256570dee1b22f862e9c4",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5df24cf80dee1b22f862e9c0",
+     "required": false
+    },
+    {
+     "id": "5c7954d52e221600106f4cc7",
+     "parent": "5df256570dee1b22f862e9c4",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5df256570dee1b22f862e9c6",
+     "required": false
+    },
+    {
+     "id": "5c7955c22e221644f31bfd5e",
+     "parent": "5c7954d52e221600106f4cc7",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7954d52e221600106f4cc9",
+     "required": true
+    },
+    {
+     "id": "5df38a5fb74cd90030650cb6",
+     "parent": "5df35e59c41b2312ea3334d5",
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5df389bdfd6b4e6e2276dcb2",
+     "required": false
+    },
+    {
+     "id": "5df35ddddfc58d14537c2036",
+     "parent": "5df35e59c41b2312ea3334d5",
+     "slot": "MOD_STOCK",
+     "slotId": "5df389c823295c755a015895",
+     "required": false
+    },
+    {
+     "id": "5df36948bb49d91fb446d5ad",
+     "parent": "5df25d3bfd6b4e6e2276dc9a",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5df388648b6c4240ba265202",
+     "required": false
+    },
+    {
+     "id": "5df25b6c0b92095fd441e4cf",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5df24cf80dee1b22f862e9be",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 28.5,
+    "recoil": 83,
+    "weight": 7.81,
+    "width": 7,
+    "height": 3,
+    "magazineCapacity": 5,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 18,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 5,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872fa9b4fb827b200d8e5": {
+   "name": "Gunsmith - Part 9",
+   "weapon": "56d59856d2720bd8418b456a",
+   "parts": [
+    {
+     "id": "5c00076d0db834001d23ee1f",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "56d59f88d2720b92418b4569",
+     "required": true
+    },
+    {
+     "id": "5c0009510db834001966907f",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "56d59f98d2720bd7418b4569",
+     "required": true
+    },
+    {
+     "id": "5cc9c20cd7f00c001336c65d",
+     "parent": null,
+     "slot": "MOD_TACTICAL",
+     "slotId": "56def3c2d2720bd4328b456a",
+     "required": true
+    },
+    {
+     "id": "56d5a1f7d2720bb3418b456a",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "56d59f62d2720bdc418b4569",
+     "required": false
+    },
+    {
+     "id": "5c920e902e221644f31c3c99",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "56d6ed94d2720b8a0a8b456a",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 81,
+    "recoil": 368,
+    "weight": 0.87,
+    "width": 2,
+    "height": 1,
+    "magazineCapacity": 20,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 77,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 610,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 1.5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae327c886f7745c7b3f2f3f": {
+   "name": "Gunsmith - Part 10",
+   "weapon": "5ac66d9b5acfc4001633997a",
+   "parts": [
+    {
+     "id": "593d493f86f7745e6b2ceb22",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5ac66d9b5acfc4001633997f",
+     "required": true
+    },
+    {
+     "id": "5bed625c0db834001c062946",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5ac66d9b5acfc40016339984",
+     "required": false
+    },
+    {
+     "id": "649ec2cec93611967b03495e",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5ac66d9b5acfc40016339982",
+     "required": false
+    },
+    {
+     "id": "59c6633186f7740cf0493bb9",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5ac66d9b5acfc4001633997d",
+     "required": false
+    },
+    {
+     "id": "5cf4e3f3d7f00c06595bc7f0",
+     "parent": "59c6633186f7740cf0493bb9",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59c663e986f7740cfb39760a",
+     "required": false
+    },
+    {
+     "id": "5c791e872e2216001219c40a",
+     "parent": "5cf4e3f3d7f00c06595bc7f0",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5cf4e3f3d7f00c06595bc7f2",
+     "required": false
+    },
+    {
+     "id": "6130ca3fd92c473c77020dbd",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5ac66d9b5acfc40016339986",
+     "required": false
+    },
+    {
+     "id": "5ac50da15acfc4001718d287",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5ac66d9b5acfc40016339981",
+     "required": false
+    },
+    {
+     "id": "65f1b1176dbd6c5ba2082eed",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5ac66d9b5acfc40016339985",
+     "required": false
+    },
+    {
+     "id": "648ae3e356c6310a830fc291",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5ac66d9b5acfc40016339980",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": "648ae3e356c6310a830fc291",
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "648ae44056c6310a830fc293",
+     "required": false
+    },
+    {
+     "id": "65f1b2a5c14a07890801fc70",
+     "parent": "65f1b1176dbd6c5ba2082eed",
+     "slot": "MOD_MOUNT",
+     "slotId": "65f1b1576dbd6c5ba2082ef0",
+     "required": false
+    },
+    {
+     "id": "5c064c400db834001d23f468",
+     "parent": "65f1b2a5c14a07890801fc70",
+     "slot": "MOD_SCOPE",
+     "slotId": "65f1b2a5c14a07890801fc71",
+     "required": false
+    },
+    {
+     "id": "5a37ca54c4a282000d72296a",
+     "parent": "5c064c400db834001d23f468",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c064c400db834001d23f46a",
+     "required": false
+    },
+    {
+     "id": "68caad7f933990601c07f47c",
+     "parent": "5a37ca54c4a282000d72296a",
+     "slot": "MOD_SCOPE",
+     "slotId": "5a37ce4ac4a282000b1521c9",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 65.1,
+    "recoil": 98,
+    "weight": 4.8,
+    "width": 4,
+    "height": 3,
+    "magazineCapacity": 95,
+    "effectiveDistance": 1500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 21,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4.8,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 4,
+     "compareMethod": ">="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872fc93ae507d5858c3a6": {
+   "name": "Gunsmith - Part 11",
+   "weapon": "5fc3f2d5900b1d5091531e57",
+   "parts": [
+    {
+     "id": "5fbb978207e8a97d1f0902d3",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5fc3f2d5900b1d5091531e60",
+     "required": true
+    },
+    {
+     "id": "5f6340d3ca442212f4047eb2",
+     "parent": "5fbb978207e8a97d1f0902d3",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5fbb978207e8a97d1f0902d5",
+     "required": true
+    },
+    {
+     "id": "5fbbc366ca32ed67276c1557",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5fc3f2d5900b1d5091531e5f",
+     "required": false
+    },
+    {
+     "id": "5c6165902e22160010261b28",
+     "parent": "5fbbc366ca32ed67276c1557",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5fbbc366ca32ed67276c1559",
+     "required": true
+    },
+    {
+     "id": "5a718f958dc32e00094b97e7",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5fc3f2d5900b1d5091531e59",
+     "required": false
+    },
+    {
+     "id": "5dfe6104585a0c3e995c7b82",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "5fc3f2d5900b1d5091531e5c",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 53,
+    "recoil": 46,
+    "weight": 3.69,
+    "width": 3,
+    "height": 3,
+    "magazineCapacity": 50,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 48,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 31,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 240,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4.5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b47799d86f7746c5d6a5fd8": {
+   "name": "Gunsmith - Part 12",
+   "weapon": "58948c8e86f77409493f7266",
+   "parts": [
+    {
+     "id": "5b07db875acfc40dc528a5f6",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "58948c8f86f77409493f7267",
+     "required": true
+    },
+    {
+     "id": "5894a5b586f77426d2590767",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "58948c8f86f77409493f7269",
+     "required": false
+    },
+    {
+     "id": "5c5db5852e2216003a0fe71a",
+     "parent": "5894a5b586f77426d2590767",
+     "slot": "MOD_BARREL",
+     "slotId": "5894a5b586f77426d2590769",
+     "required": false
+    },
+    {
+     "id": "5b3a16655acfc40016387a2a",
+     "parent": "5c5db5852e2216003a0fe71a",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c5db5862e2216003a0fe71c",
+     "required": true
+    },
+    {
+     "id": "63fc449f5bd61c6cf3784a88",
+     "parent": "5894a5b586f77426d2590767",
+     "slot": "MOD_SCOPE",
+     "slotId": "5894a5b586f77426d2590768",
+     "required": false
+    },
+    {
+     "id": "63fc44e2429a8a166c7f61e6",
+     "parent": "63fc449f5bd61c6cf3784a88",
+     "slot": "MOD_SCOPE",
+     "slotId": "63fc449f5bd61c6cf3784a89",
+     "required": false
+    },
+    {
+     "id": "5b07dd285acfc4001754240d",
+     "parent": "63fc44e2429a8a166c7f61e6",
+     "slot": "MOD_TACTICAL",
+     "slotId": "63fc44e2429a8a166c7f61e7",
+     "required": true
+    },
+    {
+     "id": "5c5db6b32e221600102611a0",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "58948c8f86f77409493f726b",
+     "required": false
+    },
+    {
+     "id": "5c5db5f22e2216000e5e47e8",
+     "parent": "5894a5b586f77426d2590767",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5894a5b586f77426d259076a",
+     "required": false
+    },
+    {
+     "id": "5894a13e86f7742405482982",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "58948c8f86f77409493f726a",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 65.5,
+    "recoil": 36,
+    "weight": 2.96,
+    "width": 3,
+    "height": 2,
+    "magazineCapacity": 0,
+    "effectiveDistance": 500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 47,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 225,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac244c486f77413e12cf945": {
+   "name": "Gunsmith - Part 13",
+   "weapon": "5a367e5dc4a282000e49738f",
+   "parts": [
+    {
+     "id": "6985eb089edef67ade080b72",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5a367e5dc4a282000e497390",
+     "required": false
+    },
+    {
+     "id": "5d120a10d7ad1a4e1026ba85",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5a367e5dc4a282000e497393",
+     "required": false
+    },
+    {
+     "id": "6065881d1246154cad35d637",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a36813fc4a282329a73b4ca",
+     "required": false
+    },
+    {
+     "id": "57cffb66245977632f391a99",
+     "parent": "6065881d1246154cad35d637",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "6065881d1246154cad35d63d",
+     "required": false
+    },
+    {
+     "id": "5df8f535bb49d91fb446d6b0",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5a367e5dc4a282000e497391",
+     "required": false
+    },
+    {
+     "id": "5fb6564947ce63734e3fa1da",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5c17b22b2e221602b5428dd5",
+     "required": false
+    },
+    {
+     "id": "5fb6567747ce63734e3fa1dc",
+     "parent": "6065881d1246154cad35d637",
+     "slot": "MOD_SIGHT_FRONT",
+     "slotId": "6065881d1246154cad35d63e",
+     "required": false
+    },
+    {
+     "id": "5d120a28d7ad1a1c8962e295",
+     "parent": "5d120a10d7ad1a4e1026ba85",
+     "slot": "MOD_STOCK",
+     "slotId": "5d120bb5d7ad1a77b74dc8db",
+     "required": false
+    },
+    {
+     "id": "5a34f7f1c4a2826c6e06d75d",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5a37926ec4a282329a73b4da",
+     "required": false
+    },
+    {
+     "id": "5c7954d52e221600106f4cc7",
+     "parent": "5a34f7f1c4a2826c6e06d75d",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5a34f7f1c4a2826c6e06d75e",
+     "required": false
+    },
+    {
+     "id": "5c7955c22e221644f31bfd5e",
+     "parent": "5c7954d52e221600106f4cc7",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7954d52e221600106f4cc9",
+     "required": true
+    },
+    {
+     "id": "6065dc8a132d4d12c81fd8e3",
+     "parent": "5a34f7f1c4a2826c6e06d75d",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5a34f7f1c4a2826c6e06d75f",
+     "required": false
+    },
+    {
+     "id": "618b9643526131765025ab35",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "5a3792f2c4a282000c5a9532",
+     "required": false
+    },
+    {
+     "id": "5b3b99475acfc432ff4dcbee",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_SCOPE",
+     "slotId": "618b9643526131765025ab37",
+     "required": true
+    },
+    {
+     "id": "618b9671d14d6d5ab879c5ea",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_MOUNT",
+     "slotId": "618ba83fb766fe04084b015b",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 66,
+    "recoil": 86,
+    "weight": 5.8,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 10,
+    "effectiveDistance": 1500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 1500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 17,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 300,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6.7,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872fe8871e1272b10ccf6": {
+   "name": "Gunsmith - Part 14",
+   "weapon": "5bb2475ed4351e00853264e3",
+   "parts": [
+    {
+     "id": "5bb20d53d4351e4502010a69",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5bb2475ed4351e00853264e7",
+     "required": false
+    },
+    {
+     "id": "5c6d85e02e22165df16b81f4",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_BARREL",
+     "slotId": "5bb20d53d4351e4502010a6c",
+     "required": false
+    },
+    {
+     "id": "5c7fb51d2e2216001219ce11",
+     "parent": "5c6d85e02e22165df16b81f4",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c6d85e02e22165df16b81f6",
+     "required": false
+    },
+    {
+     "id": "5ea17bbc09aa976f2e7a51cd",
+     "parent": "5c7fb51d2e2216001219ce11",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7fb51d2e2216001219ce13",
+     "required": true
+    },
+    {
+     "id": "5bb20dfcd4351e00334c9e24",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5bb20d53d4351e4502010a6d",
+     "required": false
+    },
+    {
+     "id": "5fce0cf655375d18a253eff0",
+     "parent": "5bb20dfcd4351e00334c9e24",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5bb20dfcd4351e00334c9e26",
+     "required": true
+    },
+    {
+     "id": "558022b54bdc2dac148b458d",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_SCOPE",
+     "slotId": "5bb20d53d4351e4502010a6b",
+     "required": true
+    },
+    {
+     "id": "5d15cf3bd7ad1a67e71518b2",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5bb2475ed4351e00853264e5",
+     "required": true
+    },
+    {
+     "id": "5947eab886f77475961d96c5",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5bb2475ed4351e00853264e8",
+     "required": true
+    },
+    {
+     "id": "5c06595c0db834001a66af6c",
+     "parent": "5bb20dfcd4351e00334c9e24",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5bb212b8d4351e00367faf08",
+     "required": true
+    },
+    {
+     "id": "5bb20dcad4351e3bac1212da",
+     "parent": "5c6d85e02e22165df16b81f4",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5c6d85e02e22165df16b81f7",
+     "required": false
+    },
+    {
+     "id": "61840bedd92c473c77021635",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5bb2475ed4351e00853264e6",
+     "required": false
+    },
+    {
+     "id": "5fb6564947ce63734e3fa1da",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5bb20d53d4351e4502010a6e",
+     "required": false
+    },
+    {
+     "id": "5f633ff5c444ce7e3c30a006",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5bb2475ed4351e00853264e9",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 77,
+    "recoil": 79,
+    "weight": 4,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 300,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 300
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 50,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 310,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "666314b0acf8442f8b0531a1": {
+   "name": "Hell on Earth - Part 1",
+   "weapon": "5580223e4bdc2d1c128b457f",
+   "parts": [
+    {
+     "id": "5580169d4bdc2d9d138b4585",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "55d5a27c4bdc2d8c2f8b456f",
+     "required": false
+    },
+    {
+     "id": "611a31ce5b7ffe001b4649d1",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "611a35095b7ffe001b4649d3",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 43,
+    "recoil": 259,
+    "weight": 3.4,
+    "width": 4,
+    "height": 1,
+    "magazineCapacity": 0,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 42,
+     "compareMethod": ">="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3280386f7742a41359364": {
+   "name": "Gunsmith - Part 15",
+   "weapon": "57c44b372459772d2b39b8ce",
+   "parts": [
+    {
+     "id": "5a69a2ed8dc32e000d46d1f1",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "57c44cf92459772d2b39b8d5",
+     "required": false
+    },
+    {
+     "id": "5a9eb32da2750c00171b3f9c",
+     "parent": "5a69a2ed8dc32e000d46d1f1",
+     "slot": "MOD_STOCK",
+     "slotId": "5a69a5648dc32e000d46d1f3",
+     "required": true
+    },
+    {
+     "id": "67069c8cee8138ed2f05ad34",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "57c4526f2459772d291a83e9",
+     "required": false
+    },
+    {
+     "id": "544909bb4bdc2d6f028b4577",
+     "parent": "67069c8cee8138ed2f05ad34",
+     "slot": "MOD_TACTICAL",
+     "slotId": "67069c8cee8138ed2f05ad37",
+     "required": true
+    },
+    {
+     "id": "5a7c74b3e899ef0014332c29",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "57c452612459772d2d75e495",
+     "required": true
+    },
+    {
+     "id": "57c44dd02459772d2e0ae249",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "57c44cb62459772d2d75e37f",
+     "required": false
+    },
+    {
+     "id": "651178336cad06c37c049eb4",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "6511786c1b90b4fc77015073",
+     "required": false
+    },
+    {
+     "id": "65118f531b90b4fc77015083",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "57c44cec2459772d303d899c",
+     "required": false
+    },
+    {
+     "id": "5ba36f85d4351e0085325c81",
+     "parent": "5a7c74b3e899ef0014332c29",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5ba36fe2d4351e4502010472",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 30.5,
+    "recoil": 47,
+    "weight": 4.51,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 30,
+    "effectiveDistance": 300,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 300
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 27,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 220,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac242ab86f77412464f68b4": {
+   "name": "Gunsmith - Part 16",
+   "weapon": "588892092459774ac91d4b11",
+   "parts": [
+    {
+     "id": "5888945a2459774bf43ba385",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "58889e2d245977567641f459",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "58889e5d24597759817d5dd3",
+     "required": false
+    },
+    {
+     "id": "58889c7324597754281f9439",
+     "parent": "5888945a2459774bf43ba385",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5888945a2459774bf43ba386",
+     "required": false
+    },
+    {
+     "id": "58889d0c2459775bc215d981",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "58889ea42459775bc215d983",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "588892092459774ac91d4b13",
+     "required": false
+    },
+    {
+     "id": "62850c28da09541f43158cca",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    },
+    {
+     "id": "61605d88ffa6e502ac5e7eeb",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10c",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 46,
+    "recoil": 59,
+    "weight": 6.04,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 0,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 2000,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 36,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 450,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6.7,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b47749f86f7746c5d6a5fd4": {
+   "name": "Gunsmith - Part 17",
+   "weapon": "5ac66d015acfc400180ae6e4",
+   "parts": [
+    {
+     "id": "5e21ca18e4d47f0da15e77dd",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5ac66d015acfc400180ae6e9",
+     "required": false
+    },
+    {
+     "id": "5f6372e2865db925d54f3869",
+     "parent": "5e21ca18e4d47f0da15e77dd",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5e21ca18e4d47f0da15e77df",
+     "required": false
+    },
+    {
+     "id": "5f6339d53ada5942720e2dc3",
+     "parent": "5f6372e2865db925d54f3869",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5f6372e2865db925d54f386b",
+     "required": true
+    },
+    {
+     "id": "5c0548ae0db834001966a3c2",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5ac66d015acfc400180ae6ee",
+     "required": true
+    },
+    {
+     "id": "59c6633186f7740cf0493bb9",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5ac66d015acfc400180ae6e7",
+     "required": false
+    },
+    {
+     "id": "5cf4e3f3d7f00c06595bc7f0",
+     "parent": "59c6633186f7740cf0493bb9",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59c663e986f7740cfb39760a",
+     "required": false
+    },
+    {
+     "id": "588226ef24597767af46e39c",
+     "parent": "5cf4e3f3d7f00c06595bc7f0",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5cf4e3f3d7f00c06595bc7f2",
+     "required": true
+    },
+    {
+     "id": "5b3a337e5acfc4704b4a19a0",
+     "parent": "5cf4e3f3d7f00c06595bc7f0",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5cf4e3f3d7f00c06595bc7f4",
+     "required": true
+    },
+    {
+     "id": "5beec8b20db834001961942a",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5ac66d015acfc400180ae6ed",
+     "required": true
+    },
+    {
+     "id": "5bf3f59f0db834001a6fa060",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5ac66d015acfc400180ae6ec",
+     "required": false
+    },
+    {
+     "id": "606587d11246154cad35d635",
+     "parent": "5beec8b20db834001961942a",
+     "slot": "MOD_STOCK",
+     "slotId": "5beec8b20db834001961942c",
+     "required": false
+    },
+    {
+     "id": "5ac50da15acfc4001718d287",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5ac66d015acfc400180ae6eb",
+     "required": false
+    },
+    {
+     "id": "6130ca3fd92c473c77020dbd",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5ac66d015acfc400180ae6f0",
+     "required": false
+    },
+    {
+     "id": "65f1b1176dbd6c5ba2082eed",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5ac66d015acfc400180ae6ef",
+     "required": false
+    },
+    {
+     "id": "648ae3e356c6310a830fc291",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5ac66d015acfc400180ae6ea",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": "648ae3e356c6310a830fc291",
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "648ae44056c6310a830fc293",
+     "required": false
+    },
+    {
+     "id": "65f1b2a5c14a07890801fc70",
+     "parent": "65f1b1176dbd6c5ba2082eed",
+     "slot": "MOD_MOUNT",
+     "slotId": "65f1b1576dbd6c5ba2082ef0",
+     "required": false
+    },
+    {
+     "id": "5c064c400db834001d23f468",
+     "parent": "65f1b2a5c14a07890801fc70",
+     "slot": "MOD_SCOPE",
+     "slotId": "65f1b2a5c14a07890801fc71",
+     "required": false
+    },
+    {
+     "id": "5c86592b2e2216000e69e77c",
+     "parent": "5c064c400db834001d23f468",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c064c400db834001d23f46a",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "5c86592b2e2216000e69e77c",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c86592b2e2216000e69e77e",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 73.6,
+    "recoil": 69,
+    "weight": 5.85,
+    "width": 4,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 53,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": "<="
+    },
+    {
+     "key": "recoil",
+     "value": 300,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b477b6f86f7747290681823": {
+   "name": "Gunsmith - Part 18",
+   "weapon": "5a0ec13bfcdbcb00165aa685",
+   "parts": [
+    {
+     "id": "59c6633186f7740cf0493bb9",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5a0ec13bfcdbcb00165aa687",
+     "required": false
+    },
+    {
+     "id": "57cff947245977638e6f2a19",
+     "parent": "59c6633186f7740cf0493bb9",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59c663e986f7740cfb39760a",
+     "required": true
+    },
+    {
+     "id": "5b30ac585acfc433000eb79c",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5a0ec13bfcdbcb00165aa68a",
+     "required": true
+    },
+    {
+     "id": "59d6272486f77466146386ff",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5a0ec13bfcdbcb00165aa68e",
+     "required": true
+    },
+    {
+     "id": "57cffb66245977632f391a99",
+     "parent": "57cff947245977638e6f2a19",
+     "slot": "MOD_MOUNT",
+     "slotId": "57cffb3524597763887ef4c0",
+     "required": true
+    },
+    {
+     "id": "5a9fbacda2750c00141e080f",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5a0ec13bfcdbcb00165aa689",
+     "required": true
+    },
+    {
+     "id": "5d2c770c48f0354b4a07c100",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5a0ec13bfcdbcb00165aa68b",
+     "required": false
+    },
+    {
+     "id": "5c07dd120db834001c39092d",
+     "parent": "5d2c770c48f0354b4a07c100",
+     "slot": "MOD_SCOPE",
+     "slotId": "5d2c770c48f0354b4a07c102",
+     "required": true
+    },
+    {
+     "id": "5b0e794b5acfc47a877359b2",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5a0ec13bfcdbcb00165aa68d",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 56.5,
+    "recoil": 87,
+    "weight": 4.65,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 600,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 600
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 600,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 40,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 380,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639873003693c63d86328f25": {
+   "name": "Gunsmith - Part 19",
+   "weapon": "5c46fbd72e2216398b5a8c9c",
+   "parts": [
+    {
+     "id": "6197b229af1f5202c57a9bea",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5c46fbd72e2216398b5a8ca0",
+     "required": false
+    },
+    {
+     "id": "5947e98b86f774778f1448bc",
+     "parent": "6197b229af1f5202c57a9bea",
+     "slot": "MOD_STOCK",
+     "slotId": "6197b229af1f5202c57a9bec",
+     "required": true
+    },
+    {
+     "id": "5dfcd0e547101c39625f66f9",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5c471d722e221602b66cd9b0",
+     "required": true
+    },
+    {
+     "id": "6516b129609aaf354b34b3a8",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5c46fbd72e2216398b5a8c9e",
+     "required": false
+    },
+    {
+     "id": "5b30ac585acfc433000eb79c",
+     "parent": "6516b129609aaf354b34b3a8",
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "6516b176caa50259d91deb76",
+     "required": true
+    },
+    {
+     "id": "618b9643526131765025ab35",
+     "parent": "5dfcd0e547101c39625f66f9",
+     "slot": "MOD_SCOPE",
+     "slotId": "5dfcd0e547101c39625f6701",
+     "required": false
+    },
+    {
+     "id": "57c5ac0824597754771e88a9",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_SCOPE",
+     "slotId": "618b9643526131765025ab37",
+     "required": true
+    },
+    {
+     "id": "5c471cb32e221602b177afaa",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5c46fbd72e2216398b5a8ca2",
+     "required": false
+    },
+    {
+     "id": "5c471bfc2e221602b21d4e17",
+     "parent": "5c471cb32e221602b177afaa",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c471cb32e221602b177afac",
+     "required": false
+    },
+    {
+     "id": "5e01e9e273d8eb11426f5bc3",
+     "parent": "5c471bfc2e221602b21d4e17",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5e020339d4353e3302576b6a",
+     "required": false
+    },
+    {
+     "id": "5e01ea19e9dc277128008c0b",
+     "parent": "5e01e9e273d8eb11426f5bc3",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5e01e9e273d8eb11426f5bc5",
+     "required": true
+    },
+    {
+     "id": "5dfce88fe9dc277128008b2e",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5c4722852e221602b3137e73",
+     "required": false
+    },
+    {
+     "id": "618b9671d14d6d5ab879c5ea",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_MOUNT",
+     "slotId": "618ba83fb766fe04084b015b",
+     "required": false
+    },
+    {
+     "id": "5c471c842e221615214259b5",
+     "parent": "5c471cb32e221602b177afaa",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5c471cb32e221602b177afad",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 27,
+    "recoil": 90,
+    "weight": 6.67,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 0,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 1000,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 10,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 10,
+     "compareMethod": "<="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 8,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b477f7686f7744d1b23c4d2": {
+   "name": "Gunsmith - Part 20",
+   "weapon": "5aafa857e5b5b00018480968",
+   "parts": [
+    {
+     "id": "5addbf175acfc408fb13965b",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5aafa857e5b5b0001848096c",
+     "required": false
+    },
+    {
+     "id": "5addbfbb5acfc400194dbcf7",
+     "parent": "5addbf175acfc408fb13965b",
+     "slot": "MOD_MOUNT",
+     "slotId": "5addbf175acfc408fb13965d",
+     "required": true
+    },
+    {
+     "id": "5addbfef5acfc400185c2857",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5addc6a45acfc4001714e045",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": "5addbfef5acfc400185c2857",
+     "slot": "MOD_SCOPE",
+     "slotId": "5addbfef5acfc400185c2859",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    },
+    {
+     "id": "58d39d3d86f77445bb794ae7",
+     "parent": "5addbfbb5acfc400194dbcf7",
+     "slot": "MOD_SCOPE",
+     "slotId": "5addbfbb5acfc400194dbcf9",
+     "required": false
+    },
+    {
+     "id": "58d399e486f77442e0016fe7",
+     "parent": "58d39d3d86f77445bb794ae7",
+     "slot": "MOD_SCOPE",
+     "slotId": "58d39d3d86f77445bb794ae8",
+     "required": true
+    },
+    {
+     "id": "57fd23e32459772d0805bcf1",
+     "parent": "5addbf175acfc408fb13965b",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5addbf615acfc4001669f0ad",
+     "required": true
+    },
+    {
+     "id": "5aaf9d53e5b5b00015042a52",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5aafa857e5b5b0001848096e",
+     "required": false
+    },
+    {
+     "id": "5aafa1c2e5b5b00015042a56",
+     "parent": "5aaf9d53e5b5b00015042a52",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5aaf9d53e5b5b00015042a54",
+     "required": false
+    },
+    {
+     "id": "5addcce35acfc4001a5fc635",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5aafa857e5b5b0001848096b",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 32,
+    "recoil": 113,
+    "weight": 6.93,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 30,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 400,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 7.3,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "63987301e11ec11ff5504036": {
+   "name": "Gunsmith - Part 21",
+   "weapon": "5bfea6e90db834001b7347f3",
+   "parts": [
+    {
+     "id": "5cde739cd7f00c0010373bd3",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5bfea6e90db834001b7347f6",
+     "required": true
+    },
+    {
+     "id": "5cde7afdd7f00c000d36b89d",
+     "parent": "5cde739cd7f00c0010373bd3",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5cde7f37d7f00c000f261266",
+     "required": true
+    },
+    {
+     "id": "5cde7b43d7f00c000d36b93e",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5bfebf0e0db834001808a2b7",
+     "required": true
+    },
+    {
+     "id": "5d2703038abbc3105103d94c",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5bfea6e90db834001b7347f7",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": "5cde739cd7f00c0010373bd3",
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5cde7dc1d7f00c0010373bdd",
+     "required": false
+    },
+    {
+     "id": "627254cc9c563e6e442c398f",
+     "parent": "5cde739cd7f00c0010373bd3",
+     "slot": "MOD_STOCK",
+     "slotId": "5cde739cd7f00c0010373bd5",
+     "required": false
+    },
+    {
+     "id": "5fc0f9b5d724d907e2077d82",
+     "parent": "5cde7afdd7f00c000d36b89d",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5cde7afdd7f00c000d36b8a7",
+     "required": false
+    },
+    {
+     "id": "5d270ca28abbc31ee25ee821",
+     "parent": "5d2703038abbc3105103d94c",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5d2703038abbc3105103d94e",
+     "required": false
+    },
+    {
+     "id": "5dfa3d950dee1b22f862eae0",
+     "parent": "5cde7afdd7f00c000d36b89d",
+     "slot": "MOD_SIGHT_FRONT",
+     "slotId": "5cde7afdd7f00c000d36b8a6",
+     "required": false
+    },
+    {
+     "id": "5dfa3d7ac41b2312ea33362a",
+     "parent": "5cde7b43d7f00c000d36b93e",
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5cde805fd7f00c000f261268",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": "5cde7b43d7f00c000d36b93e",
+     "slot": "MOD_SCOPE",
+     "slotId": "5cde7b43d7f00c000d36b940",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 73,
+    "recoil": 113,
+    "weight": 5.43,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 0,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 1500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 35,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 5,
+     "compareMethod": "<="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b47825886f77468074618d3": {
+   "name": "Gunsmith - Part 22",
+   "weapon": "5447a9cd4bdc2dbd208b4567",
+   "parts": [
+    {
+     "id": "5c0e2f26d174af02a9625114",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "55d5a2ec4bdc2d972f8b4575",
+     "required": false
+    },
+    {
+     "id": "55d35ee94bdc2d61338b4568",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_BARREL",
+     "slotId": "5c0e2f26d174af02a9625117",
+     "required": false
+    },
+    {
+     "id": "56ea8180d2720bf2698b456a",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_MUZZLE",
+     "slotId": "564afddf4bdc2d1b2b8b4592",
+     "required": false
+    },
+    {
+     "id": "57dbb57e2459774673234890",
+     "parent": "56ea8180d2720bf2698b456a",
+     "slot": "MOD_MUZZLE",
+     "slotId": "57da91d72459771cb524d22c",
+     "required": true
+    },
+    {
+     "id": "5b2cfa535acfc432ff4db7a0",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5c0e2f26d174af02a9625118",
+     "required": true
+    },
+    {
+     "id": "5a1ead28fcdbcb001912fa9f",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c0e2f26d174af02a9625116",
+     "required": false
+    },
+    {
+     "id": "5a1eaa87fcdbcb001865f75e",
+     "parent": "5a1ead28fcdbcb001912fa9f",
+     "slot": "MOD_SCOPE",
+     "slotId": "5a1ead28fcdbcb001912faa0",
+     "required": true
+    },
+    {
+     "id": "5a33e75ac4a2826c6e06d759",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "55d354084bdc2d8c2f8b4568",
+     "required": false
+    },
+    {
+     "id": "5c793fb92e221644f31bfb64",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "55d5a3074bdc2d61338b4574",
+     "required": false
+    },
+    {
+     "id": "6895bf08e2d16810ba0bf43e",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "55d5a30f4bdc2d882f8b4574",
+     "required": false
+    },
+    {
+     "id": "63d3ce281fe77d0f2801859e",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "56ea8e15d2720bf2698b456b",
+     "required": false
+    },
+    {
+     "id": "6761765f1f08ed5e8800b7a6",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "55d3555c4bdc2d962f8b4568",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 41.5,
+    "recoil": 75,
+    "weight": 5,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 100,
+    "effectiveDistance": 500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 500
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 40,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 280,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "64f83bb69878a0569d6ecfbe": {
+   "name": "Gunsmith - Part 23",
+   "weapon": "606587252535c57a13424cfd",
+   "parts": [
+    {
+     "id": "606587a88900dc2d9a55b659",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "606587252535c57a13424d01",
+     "required": false
+    },
+    {
+     "id": "5d00ef6dd7ad1a0940739b16",
+     "parent": "606587a88900dc2d9a55b659",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "606587a88900dc2d9a55b65d",
+     "required": true
+    },
+    {
+     "id": "59f9d81586f7744c7506ee62",
+     "parent": "606587a88900dc2d9a55b659",
+     "slot": "MOD_SCOPE",
+     "slotId": "606587a88900dc2d9a55b65b",
+     "required": true
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "5d00ef6dd7ad1a0940739b16",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5d00ef6dd7ad1a0940739b1a",
+     "required": true
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "606587252535c57a13424cff",
+     "required": false
+    },
+    {
+     "id": "627254cc9c563e6e442c398f",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "606587252535c57a13424d02",
+     "required": false
+    },
+    {
+     "id": "606587bd6d0bd7580617bacc",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "606587252535c57a13424d03",
+     "required": false
+    },
+    {
+     "id": "6065878ac9cf8012264142fd",
+     "parent": "606587a88900dc2d9a55b659",
+     "slot": "MOD_BARREL",
+     "slotId": "606587a88900dc2d9a55b65c",
+     "required": false
+    },
+    {
+     "id": "6065dc8a132d4d12c81fd8e3",
+     "parent": "6065878ac9cf8012264142fd",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "6065878ac9cf801226414300",
+     "required": false
+    },
+    {
+     "id": "5c6175362e221600133e3b94",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "606587252535c57a13424d00",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 62,
+    "recoil": 94,
+    "weight": 4.34,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 73,
+    "effectiveDistance": 300,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 300
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 73,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 350,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "64f83bcdde58fc437700d8fa": {
+   "name": "Gunsmith - Part 24",
+   "weapon": "5df8ce05b11454561e39243b",
+   "parts": [
+    {
+     "id": "5df8e4080b92095fd441e594",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5df926b94a9f347bc92edcac",
+     "required": false
+    },
+    {
+     "id": "6932aec6cccd2b808a043856",
+     "parent": "5df8e4080b92095fd441e594",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5df8e4080b92095fd441e598",
+     "required": false
+    },
+    {
+     "id": "5b057b4f5acfc4771e1bd3e9",
+     "parent": "6932aec6cccd2b808a043856",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "6932e8a016ead46c44078bf5",
+     "required": true
+    },
+    {
+     "id": "5d025cc1d7ad1a53845279ef",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5df8ce05b11454561e39243d",
+     "required": true
+    },
+    {
+     "id": "5d1b5e94d7ad1a2b865a96b0",
+     "parent": "5df8e4080b92095fd441e594",
+     "slot": "MOD_SCOPE",
+     "slotId": "5df8e4080b92095fd441e596",
+     "required": true
+    },
+    {
+     "id": "5d2369418abbc306c62e0c80",
+     "parent": "6932aec6cccd2b808a043856",
+     "slot": "MOD_TACTICAL",
+     "slotId": "6932aec6cccd2b808a043859",
+     "required": true
+    },
+    {
+     "id": "5649a2464bdc2d91118b45a8",
+     "parent": "6932aec6cccd2b808a043856",
+     "slot": "MOD_MOUNT",
+     "slotId": "6932aec6cccd2b808a043858",
+     "required": true
+    },
+    {
+     "id": "577d128124597739d65d0e56",
+     "parent": "5649a2464bdc2d91118b45a8",
+     "slot": "MOD_SCOPE",
+     "slotId": "5649dc074bdc2d1b2b8b458f",
+     "required": false
+    },
+    {
+     "id": "577d141e24597739c5255e01",
+     "parent": "577d128124597739d65d0e56",
+     "slot": "MOD_SCOPE",
+     "slotId": "577d13f724597739ba176c31",
+     "required": true
+    },
+    {
+     "id": "5df917564a9f347bc92edca3",
+     "parent": "5df8e4080b92095fd441e594",
+     "slot": "MOD_BARREL",
+     "slotId": "5df8e4080b92095fd441e597",
+     "required": false
+    },
+    {
+     "id": "5dfa3cd1b33c0951220c079b",
+     "parent": "5df917564a9f347bc92edca3",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5df917564a9f347bc92edca5",
+     "required": false
+    },
+    {
+     "id": "5dfa3d2b0dee1b22f862eade",
+     "parent": "5dfa3cd1b33c0951220c079b",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5dfa3cd1b33c0951220c079d",
+     "required": true
+    },
+    {
+     "id": "5d120a10d7ad1a4e1026ba85",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5df8ce05b11454561e39243f",
+     "required": false
+    },
+    {
+     "id": "5df8e085bb49d91fb446d6a8",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5df926e28b6c4240ba265260",
+     "required": false
+    },
+    {
+     "id": "5dfa3d45dfc58d14537c20b0",
+     "parent": "5df917564a9f347bc92edca3",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5df917564a9f347bc92edca6",
+     "required": false
+    },
+    {
+     "id": "6761770e48fa5c377e06fc3c",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5df8ce05b11454561e39243e",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 32.5,
+    "recoil": 86,
+    "weight": 5.45,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 50,
+    "effectiveDistance": 500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 25,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 10,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 350,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "64f83bd983cfca080a362c82": {
+   "name": "Gunsmith - Part 25",
+   "weapon": "64ca3d3954fc657e230529cc",
+   "parts": [
+    {
+     "id": "6491c6f6ef312a876705191b",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "64ca3d3954fc657e230529d3",
+     "required": true
+    },
+    {
+     "id": "6492d7847363b8a52206bc52",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "64ca3d3954fc657e230529d0",
+     "required": true
+    },
+    {
+     "id": "646371faf2404ab67905c8e9",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "64ca3d3954fc657e230529d1",
+     "required": false
+    },
+    {
+     "id": "6492ef63cfcf7c89e701abf1",
+     "parent": "646371faf2404ab67905c8e9",
+     "slot": "MOD_MUZZLE",
+     "slotId": "646371faf2404ab67905c8ea",
+     "required": true
+    },
+    {
+     "id": "5cf638cbd7f00c06595bc936",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "64ca3dd78f30beca2606cd07",
+     "required": true
+    },
+    {
+     "id": "646372518610c40fc20204e8",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "64ca3d3954fc657e230529cf",
+     "required": true
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "6491c6f6ef312a876705191b",
+     "slot": "MOD_TACTICAL",
+     "slotId": "6491c6f6ef312a876705191d",
+     "required": true
+    },
+    {
+     "id": "5f6341043ada5942720e2dc5",
+     "parent": null,
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "64ca3d3954fc657e230529ce",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 16,
+    "recoil": 63,
+    "weight": 9.9,
+    "width": 6,
+    "height": 3,
+    "magazineCapacity": 100,
+    "effectiveDistance": 600,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 600
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 10,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 950,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  }
+ },
+ "pve": {
+  "5ac23c6186f7741247042bad": {
+   "name": "Gunsmith - Part 1",
+   "weapon": "54491c4f4bdc2db1078b4568",
+   "parts": [
+    {
+     "id": "55d45f484bdc2d972f8b456d",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "560d1a214bdc2da74d8b4570",
+     "required": false
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "55d45f484bdc2d972f8b456d",
+     "slot": "MOD_TACTICAL",
+     "slotId": "560d493e4bdc2d26448b4577",
+     "required": true
+    },
+    {
+     "id": "560835c74bdc2dc8488b456f",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "560d19c44bdc2de22e8b457a",
+     "required": false
+    },
+    {
+     "id": "55d484b44bdc2d1d4e8b456d",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "560d1bc94bdc2de22e8b457b",
+     "required": false
+    },
+    {
+     "id": "56083a334bdc2dc8488b4571",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "560d1d074bdc2d26448b4574",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 56,
+    "recoil": 361,
+    "weight": 2.84,
+    "width": 4,
+    "height": 1,
+    "magazineCapacity": 6,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 45,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 1,
+     "compareMethod": "<="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 5,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 850,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac2426c86f774138762edfe": {
+   "name": "Gunsmith - Part 2",
+   "weapon": "57dc2fa62459775949412633",
+   "parts": [
+    {
+     "id": "59d36a0086f7747e673f3946",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "59d368ce86f7747e6a5beb03",
+     "required": false
+    },
+    {
+     "id": "57ffa9f4245977728561e844",
+     "parent": "59d36a0086f7747e673f3946",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59d36a0086f7747e673f3947",
+     "required": true
+    },
+    {
+     "id": "5beec8ea0db834001a6f9dbf",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "57dc31bc245977596d4ef3d2",
+     "required": false
+    },
+    {
+     "id": "55d482194bdc2d1d4e8b456b",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "57dc31f2245977596c274b4f",
+     "required": false
+    },
+    {
+     "id": "5c791e872e2216001219c40a",
+     "parent": "57ffa9f4245977728561e844",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "57ffad2224597779db60ceb4",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 63,
+    "recoil": 107,
+    "weight": 2.42,
+    "width": 3,
+    "height": 2,
+    "magazineCapacity": 60,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 56,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": "<="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 550,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 3.5,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 3,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac2428686f77412450b42bf": {
+   "name": "Gunsmith - Part 3",
+   "weapon": "5926bb2186f7744b1c6c6e60",
+   "parts": [
+    {
+     "id": "5926c0df86f77462f647f764",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5926bb2186f7744b1c6c6e63",
+     "required": false
+    },
+    {
+     "id": "5c0000c00db834001a6697fc",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5926df9986f7742f6356f504",
+     "required": false
+    },
+    {
+     "id": "5c6165902e22160010261b28",
+     "parent": "5c0000c00db834001a6697fc",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c013b390db83400232ff0bc",
+     "required": true
+    },
+    {
+     "id": "5a9548c9159bd400133e97b3",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5926c0df86f77462f647f767",
+     "required": false
+    },
+    {
+     "id": "5cc9c20cd7f00c001336c65d",
+     "parent": "5a9548c9159bd400133e97b3",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5a954931159bd400160a65a2",
+     "required": true
+    },
+    {
+     "id": "5926c32286f774616e42de99",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5926bb2186f7744b1c6c6e65",
+     "required": false
+    },
+    {
+     "id": "5926d3c686f77410de68ebc8",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_STOCK",
+     "slotId": "5926c1c786f774641f04af45",
+     "required": false
+    },
+    {
+     "id": "5a351711c4a282000b1521a4",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5926bb2186f7744b1c6c6e62",
+     "required": false
+    },
+    {
+     "id": "5926d2be86f774134d668e4e",
+     "parent": "5926c0df86f77462f647f764",
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5926c0df86f77462f647f768",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 60,
+    "recoil": 42,
+    "weight": 3.6,
+    "width": 4,
+    "height": 2,
+    "magazineCapacity": 50,
+    "effectiveDistance": 200,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 200
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 200,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 45,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 50,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 240,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872f9decada40426d3447": {
+   "name": "Gunsmith - Part 4",
+   "weapon": "587e02ff24597743df3deaeb",
+   "parts": [
+    {
+     "id": "634eff66517ccc8a960fc735",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "587e02ff24597743df3deaed",
+     "required": false
+    },
+    {
+     "id": "5cf67cadd7f00c065a5abab7",
+     "parent": "634eff66517ccc8a960fc735",
+     "slot": "MOD_MUZZLE",
+     "slotId": "634eff66517ccc8a960fc738",
+     "required": false
+    },
+    {
+     "id": "5e208b9842457a4a7a33d074",
+     "parent": "5cf67cadd7f00c065a5abab7",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5cf67cadd7f00c065a5abab9",
+     "required": true
+    },
+    {
+     "id": "653ecef836fae5a82f02b869",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "587e02ff24597743df3deaec",
+     "required": false
+    },
+    {
+     "id": "6415c694da439c6a97048b56",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "593d4a0586f7745e5838a153",
+     "required": false
+    },
+    {
+     "id": "634f05a21f9f536910079b56",
+     "parent": "634eff66517ccc8a960fc735",
+     "slot": "MOD_MOUNT",
+     "slotId": "634eff66517ccc8a960fc736",
+     "required": false
+    },
+    {
+     "id": "634f036a517ccc8a960fc746",
+     "parent": "634f05a21f9f536910079b56",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "634f05a21f9f536910079b57",
+     "required": false
+    },
+    {
+     "id": "587df583245977373c4f1129",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "587e02ff24597743df3deaee",
+     "required": false
+    },
+    {
+     "id": "5dfe6104585a0c3e995c7b82",
+     "parent": "6415c694da439c6a97048b56",
+     "slot": "MOD_SCOPE",
+     "slotId": "6415c694da439c6a97048b57",
+     "required": false
+    },
+    {
+     "id": "653ecc425a1690d9d90491e4",
+     "parent": "634f036a517ccc8a960fc746",
+     "slot": "MOD_MOUNT",
+     "slotId": "634f0cddfc6902735b039204",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 38,
+    "recoil": 81,
+    "weight": 5.28,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 20,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 600,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 35,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 350,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3267986f7742a413592fe": {
+   "name": "Gunsmith - Part 5",
+   "weapon": "5a7828548dc32e5a9c28b516",
+   "parts": [
+    {
+     "id": "5a788068c5856700137e4c8f",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a7828548dc32e5a9c28b518",
+     "required": true
+    },
+    {
+     "id": "5b7be47f5acfc400170e2dd2",
+     "parent": "5a788068c5856700137e4c8f",
+     "slot": "MOD_MOUNT",
+     "slotId": "5b7d2ae05acfc4001a5c401d",
+     "required": false
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "5b7be47f5acfc400170e2dd2",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5b7be47f5acfc400170e2dd4",
+     "required": true
+    },
+    {
+     "id": "57cffb66245977632f391a99",
+     "parent": "5a788068c5856700137e4c8f",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5a788c7fc5856700137e621c",
+     "required": true
+    },
+    {
+     "id": "5a787fdfc5856700142fdd9a",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5a7828548dc32e5a9c28b517",
+     "required": false
+    },
+    {
+     "id": "5a7882dcc5856700177af662",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5a7828548dc32e5a9c28b519",
+     "required": false
+    },
+    {
+     "id": "5a78813bc5856700186c4abe",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5a7828548dc32e5a9c28b51a",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 81.9,
+    "recoil": 278,
+    "weight": 3.05,
+    "width": 4,
+    "height": 1,
+    "magazineCapacity": 4,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3270f86f77445ba41d4dd": {
+   "name": "Gunsmith - Part 6",
+   "weapon": "59d6088586f774275f37482f",
+   "parts": [
+    {
+     "id": "5a01ad4786f77450561fda02",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "59d6088586f774275f374831",
+     "required": false
+    },
+    {
+     "id": "647dd2b8a12ebf96c3031655",
+     "parent": "5a01ad4786f77450561fda02",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a01ad4786f77450561fda03",
+     "required": false
+    },
+    {
+     "id": "59f8a37386f7747af3328f06",
+     "parent": "647dd2b8a12ebf96c3031655",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "647dd2b8a12ebf96c3031656",
+     "required": true
+    },
+    {
+     "id": "59d6272486f77466146386ff",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "59d6088586f774275f374838",
+     "required": true
+    },
+    {
+     "id": "593d489686f7745c6255d58a",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "59d6088586f774275f374833",
+     "required": true
+    },
+    {
+     "id": "619b69037b9de8162902673e",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "59d6088586f774275f374834",
+     "required": false
+    },
+    {
+     "id": "628a7b23b0f75035732dd565",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "59d6088586f774275f374836",
+     "required": false
+    },
+    {
+     "id": "6130ca3fd92c473c77020dbd",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "59d6088586f774275f37483a",
+     "required": false
+    },
+    {
+     "id": "5d2c76ed48f03532f2136169",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "59d6088586f774275f374835",
+     "required": false
+    },
+    {
+     "id": "5c86592b2e2216000e69e77c",
+     "parent": "5d2c76ed48f03532f2136169",
+     "slot": "MOD_SCOPE",
+     "slotId": "5d2c76ed48f03532f213616b",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "5c86592b2e2216000e69e77c",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c86592b2e2216000e69e77e",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 61.1,
+    "recoil": 91,
+    "weight": 5.45,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 25,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 400,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac244eb86f7741356335af1": {
+   "name": "Gunsmith - Part 7",
+   "weapon": "5447a9cd4bdc2dbd208b4567",
+   "parts": [
+    {
+     "id": "5c0e2f26d174af02a9625114",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "55d5a2ec4bdc2d972f8b4575",
+     "required": false
+    },
+    {
+     "id": "55d35ee94bdc2d61338b4568",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_BARREL",
+     "slotId": "5c0e2f26d174af02a9625117",
+     "required": false
+    },
+    {
+     "id": "5c7fb51d2e2216001219ce11",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_MUZZLE",
+     "slotId": "564afddf4bdc2d1b2b8b4592",
+     "required": false
+    },
+    {
+     "id": "55d6190f4bdc2d87028b4567",
+     "parent": "5c7fb51d2e2216001219ce11",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7fb51d2e2216001219ce13",
+     "required": true
+    },
+    {
+     "id": "5a33e75ac4a2826c6e06d759",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "55d354084bdc2d8c2f8b4568",
+     "required": false
+    },
+    {
+     "id": "5c793fb92e221644f31bfb64",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "55d5a3074bdc2d61338b4574",
+     "required": false
+    },
+    {
+     "id": "6895bf08e2d16810ba0bf43e",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "55d5a30f4bdc2d882f8b4574",
+     "required": false
+    },
+    {
+     "id": "5c6d5d8b2e221644fc630b39",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5c0e2f26d174af02a9625118",
+     "required": false
+    },
+    {
+     "id": "63d3ce281fe77d0f2801859e",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "56ea8e15d2720bf2698b456b",
+     "required": false
+    },
+    {
+     "id": "5c6592372e221600133e47d7",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "55d3555c4bdc2d962f8b4568",
+     "required": false
+    },
+    {
+     "id": "5dfe6104585a0c3e995c7b82",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c0e2f26d174af02a9625116",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 54.5,
+    "recoil": 76,
+    "weight": 3.68,
+    "width": 4,
+    "height": 3,
+    "magazineCapacity": 100,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 37,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 300,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 3.8,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3277186f7745973054106": {
+   "name": "Gunsmith - Part 8",
+   "weapon": "5ab8e9fcd8ce870019439434",
+   "parts": [
+    {
+     "id": "5649ab884bdc2ded0b8b457f",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5ab8e9fcd8ce870019439439",
+     "required": true
+    },
+    {
+     "id": "5649af884bdc2d1b2b8b4589",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5ab8e9fcd8ce87001943943b",
+     "required": true
+    },
+    {
+     "id": "5649ae4a4bdc2d1b2b8b4588",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5ab8e9fcd8ce87001943943a",
+     "required": true
+    },
+    {
+     "id": "59ecc28286f7746d7a68aa8c",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5ab8e9fcd8ce87001943943d",
+     "required": false
+    },
+    {
+     "id": "59ecc3dd86f7746dc827481c",
+     "parent": "59ecc28286f7746d7a68aa8c",
+     "slot": "MOD_STOCK",
+     "slotId": "59ecc28286f7746d7a68aa8d",
+     "required": true
+    },
+    {
+     "id": "5bed61680db834001d2c45ab",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5ab8e9fcd8ce87001943943e",
+     "required": true
+    },
+    {
+     "id": "5a01ad4786f77450561fda02",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5ab8e9fcd8ce870019439437",
+     "required": false
+    },
+    {
+     "id": "5efaf417aeb21837e749c7f2",
+     "parent": "5a01ad4786f77450561fda02",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a01ad4786f77450561fda03",
+     "required": true
+    },
+    {
+     "id": "5c1bc4812e22164bef5cfde7",
+     "parent": "5efaf417aeb21837e749c7f2",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5efaf417aeb21837e749c7f4",
+     "required": true
+    },
+    {
+     "id": "5a5f1ce64f39f90b401987bc",
+     "parent": "5efaf417aeb21837e749c7f2",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5efaf417aeb21837e749c7f6",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 67.5,
+    "recoil": 55,
+    "weight": 3.92,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 52,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 275,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 5,
+     "compareMethod": ">="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "676529af9c90953d090882e7": {
+   "name": "Gunsmith - Old Friend's Request",
+   "weapon": "5df24cf80dee1b22f862e9bc",
+   "parts": [
+    {
+     "id": "5df35e970b92095fd441e4d2",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5df38776b11454561e3923ea",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": "5df35e970b92095fd441e4d2",
+     "slot": "MOD_SCOPE",
+     "slotId": "5df35e970b92095fd441e4d4",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    },
+    {
+     "id": "5df35e59c41b2312ea3334d5",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5df24cf80dee1b22f862e9c2",
+     "required": false
+    },
+    {
+     "id": "5df25d3bfd6b4e6e2276dc9a",
+     "parent": "5df35e59c41b2312ea3334d5",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5df389abdfc58d14537c203a",
+     "required": false
+    },
+    {
+     "id": "5888961624597754281f93f3",
+     "parent": "5df25d3bfd6b4e6e2276dc9a",
+     "slot": "MOD_BIPOD",
+     "slotId": "6718519b2e2eeb98d406f3b6",
+     "required": true
+    },
+    {
+     "id": "5df256570dee1b22f862e9c4",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5df24cf80dee1b22f862e9c0",
+     "required": false
+    },
+    {
+     "id": "5c7954d52e221600106f4cc7",
+     "parent": "5df256570dee1b22f862e9c4",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5df256570dee1b22f862e9c6",
+     "required": false
+    },
+    {
+     "id": "5c7955c22e221644f31bfd5e",
+     "parent": "5c7954d52e221600106f4cc7",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7954d52e221600106f4cc9",
+     "required": true
+    },
+    {
+     "id": "5df38a5fb74cd90030650cb6",
+     "parent": "5df35e59c41b2312ea3334d5",
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5df389bdfd6b4e6e2276dcb2",
+     "required": false
+    },
+    {
+     "id": "5df35ddddfc58d14537c2036",
+     "parent": "5df35e59c41b2312ea3334d5",
+     "slot": "MOD_STOCK",
+     "slotId": "5df389c823295c755a015895",
+     "required": false
+    },
+    {
+     "id": "5df36948bb49d91fb446d5ad",
+     "parent": "5df25d3bfd6b4e6e2276dc9a",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5df388648b6c4240ba265202",
+     "required": false
+    },
+    {
+     "id": "5df25b6c0b92095fd441e4cf",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5df24cf80dee1b22f862e9be",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 28.5,
+    "recoil": 83,
+    "weight": 7.81,
+    "width": 7,
+    "height": 3,
+    "magazineCapacity": 5,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 18,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 5,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872fa9b4fb827b200d8e5": {
+   "name": "Gunsmith - Part 9",
+   "weapon": "56d59856d2720bd8418b456a",
+   "parts": [
+    {
+     "id": "5c00076d0db834001d23ee1f",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "56d59f88d2720b92418b4569",
+     "required": true
+    },
+    {
+     "id": "5c0009510db834001966907f",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "56d59f98d2720bd7418b4569",
+     "required": true
+    },
+    {
+     "id": "5cc9c20cd7f00c001336c65d",
+     "parent": null,
+     "slot": "MOD_TACTICAL",
+     "slotId": "56def3c2d2720bd4328b456a",
+     "required": true
+    },
+    {
+     "id": "56d5a1f7d2720bb3418b456a",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "56d59f62d2720bdc418b4569",
+     "required": false
+    },
+    {
+     "id": "5c920e902e221644f31c3c99",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "56d6ed94d2720b8a0a8b456a",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 81,
+    "recoil": 368,
+    "weight": 0.87,
+    "width": 2,
+    "height": 1,
+    "magazineCapacity": 20,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 77,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 610,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 1.5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae327c886f7745c7b3f2f3f": {
+   "name": "Gunsmith - Part 10",
+   "weapon": "5ac66d9b5acfc4001633997a",
+   "parts": [
+    {
+     "id": "593d493f86f7745e6b2ceb22",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5ac66d9b5acfc4001633997f",
+     "required": true
+    },
+    {
+     "id": "5bed625c0db834001c062946",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5ac66d9b5acfc40016339984",
+     "required": false
+    },
+    {
+     "id": "649ec2cec93611967b03495e",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5ac66d9b5acfc40016339982",
+     "required": false
+    },
+    {
+     "id": "59c6633186f7740cf0493bb9",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5ac66d9b5acfc4001633997d",
+     "required": false
+    },
+    {
+     "id": "5cf4e3f3d7f00c06595bc7f0",
+     "parent": "59c6633186f7740cf0493bb9",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59c663e986f7740cfb39760a",
+     "required": false
+    },
+    {
+     "id": "5c791e872e2216001219c40a",
+     "parent": "5cf4e3f3d7f00c06595bc7f0",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5cf4e3f3d7f00c06595bc7f2",
+     "required": false
+    },
+    {
+     "id": "6130ca3fd92c473c77020dbd",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5ac66d9b5acfc40016339986",
+     "required": false
+    },
+    {
+     "id": "5ac50da15acfc4001718d287",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5ac66d9b5acfc40016339981",
+     "required": false
+    },
+    {
+     "id": "65f1b1176dbd6c5ba2082eed",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5ac66d9b5acfc40016339985",
+     "required": false
+    },
+    {
+     "id": "648ae3e356c6310a830fc291",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5ac66d9b5acfc40016339980",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": "648ae3e356c6310a830fc291",
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "648ae44056c6310a830fc293",
+     "required": false
+    },
+    {
+     "id": "65f1b2a5c14a07890801fc70",
+     "parent": "65f1b1176dbd6c5ba2082eed",
+     "slot": "MOD_MOUNT",
+     "slotId": "65f1b1576dbd6c5ba2082ef0",
+     "required": false
+    },
+    {
+     "id": "5c064c400db834001d23f468",
+     "parent": "65f1b2a5c14a07890801fc70",
+     "slot": "MOD_SCOPE",
+     "slotId": "65f1b2a5c14a07890801fc71",
+     "required": false
+    },
+    {
+     "id": "5a37ca54c4a282000d72296a",
+     "parent": "5c064c400db834001d23f468",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c064c400db834001d23f46a",
+     "required": false
+    },
+    {
+     "id": "68caad7f933990601c07f47c",
+     "parent": "5a37ca54c4a282000d72296a",
+     "slot": "MOD_SCOPE",
+     "slotId": "5a37ce4ac4a282000b1521c9",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 65.1,
+    "recoil": 98,
+    "weight": 4.8,
+    "width": 4,
+    "height": 3,
+    "magazineCapacity": 95,
+    "effectiveDistance": 1500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 21,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4.8,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 4,
+     "compareMethod": ">="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872fc93ae507d5858c3a6": {
+   "name": "Gunsmith - Part 11",
+   "weapon": "5fc3f2d5900b1d5091531e57",
+   "parts": [
+    {
+     "id": "5fbb978207e8a97d1f0902d3",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5fc3f2d5900b1d5091531e60",
+     "required": true
+    },
+    {
+     "id": "5f6340d3ca442212f4047eb2",
+     "parent": "5fbb978207e8a97d1f0902d3",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5fbb978207e8a97d1f0902d5",
+     "required": true
+    },
+    {
+     "id": "5fbbc366ca32ed67276c1557",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5fc3f2d5900b1d5091531e5f",
+     "required": false
+    },
+    {
+     "id": "5c6165902e22160010261b28",
+     "parent": "5fbbc366ca32ed67276c1557",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5fbbc366ca32ed67276c1559",
+     "required": true
+    },
+    {
+     "id": "5a718f958dc32e00094b97e7",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5fc3f2d5900b1d5091531e59",
+     "required": false
+    },
+    {
+     "id": "5dfe6104585a0c3e995c7b82",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "5fc3f2d5900b1d5091531e5c",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 53,
+    "recoil": 46,
+    "weight": 3.69,
+    "width": 3,
+    "height": 3,
+    "magazineCapacity": 50,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 48,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 31,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 240,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4.5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b47799d86f7746c5d6a5fd8": {
+   "name": "Gunsmith - Part 12",
+   "weapon": "58948c8e86f77409493f7266",
+   "parts": [
+    {
+     "id": "5b07db875acfc40dc528a5f6",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "58948c8f86f77409493f7267",
+     "required": true
+    },
+    {
+     "id": "5894a5b586f77426d2590767",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "58948c8f86f77409493f7269",
+     "required": false
+    },
+    {
+     "id": "5c5db5852e2216003a0fe71a",
+     "parent": "5894a5b586f77426d2590767",
+     "slot": "MOD_BARREL",
+     "slotId": "5894a5b586f77426d2590769",
+     "required": false
+    },
+    {
+     "id": "5b3a16655acfc40016387a2a",
+     "parent": "5c5db5852e2216003a0fe71a",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c5db5862e2216003a0fe71c",
+     "required": true
+    },
+    {
+     "id": "63fc449f5bd61c6cf3784a88",
+     "parent": "5894a5b586f77426d2590767",
+     "slot": "MOD_SCOPE",
+     "slotId": "5894a5b586f77426d2590768",
+     "required": false
+    },
+    {
+     "id": "63fc44e2429a8a166c7f61e6",
+     "parent": "63fc449f5bd61c6cf3784a88",
+     "slot": "MOD_SCOPE",
+     "slotId": "63fc449f5bd61c6cf3784a89",
+     "required": false
+    },
+    {
+     "id": "5b07dd285acfc4001754240d",
+     "parent": "63fc44e2429a8a166c7f61e6",
+     "slot": "MOD_TACTICAL",
+     "slotId": "63fc44e2429a8a166c7f61e7",
+     "required": true
+    },
+    {
+     "id": "5c5db6b32e221600102611a0",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "58948c8f86f77409493f726b",
+     "required": false
+    },
+    {
+     "id": "5c5db5f22e2216000e5e47e8",
+     "parent": "5894a5b586f77426d2590767",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5894a5b586f77426d259076a",
+     "required": false
+    },
+    {
+     "id": "5894a13e86f7742405482982",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "58948c8f86f77409493f726a",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 65.5,
+    "recoil": 36,
+    "weight": 2.96,
+    "width": 3,
+    "height": 2,
+    "magazineCapacity": 0,
+    "effectiveDistance": 500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 47,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 225,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac244c486f77413e12cf945": {
+   "name": "Gunsmith - Part 13",
+   "weapon": "5a367e5dc4a282000e49738f",
+   "parts": [
+    {
+     "id": "6985eb089edef67ade080b72",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5a367e5dc4a282000e497390",
+     "required": false
+    },
+    {
+     "id": "5d120a10d7ad1a4e1026ba85",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5a367e5dc4a282000e497393",
+     "required": false
+    },
+    {
+     "id": "6065881d1246154cad35d637",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5a36813fc4a282329a73b4ca",
+     "required": false
+    },
+    {
+     "id": "57cffb66245977632f391a99",
+     "parent": "6065881d1246154cad35d637",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "6065881d1246154cad35d63d",
+     "required": false
+    },
+    {
+     "id": "5df8f535bb49d91fb446d6b0",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5a367e5dc4a282000e497391",
+     "required": false
+    },
+    {
+     "id": "5fb6564947ce63734e3fa1da",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5c17b22b2e221602b5428dd5",
+     "required": false
+    },
+    {
+     "id": "5fb6567747ce63734e3fa1dc",
+     "parent": "6065881d1246154cad35d637",
+     "slot": "MOD_SIGHT_FRONT",
+     "slotId": "6065881d1246154cad35d63e",
+     "required": false
+    },
+    {
+     "id": "5d120a28d7ad1a1c8962e295",
+     "parent": "5d120a10d7ad1a4e1026ba85",
+     "slot": "MOD_STOCK",
+     "slotId": "5d120bb5d7ad1a77b74dc8db",
+     "required": false
+    },
+    {
+     "id": "5a34f7f1c4a2826c6e06d75d",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5a37926ec4a282329a73b4da",
+     "required": false
+    },
+    {
+     "id": "5c7954d52e221600106f4cc7",
+     "parent": "5a34f7f1c4a2826c6e06d75d",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5a34f7f1c4a2826c6e06d75e",
+     "required": false
+    },
+    {
+     "id": "5c7955c22e221644f31bfd5e",
+     "parent": "5c7954d52e221600106f4cc7",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7954d52e221600106f4cc9",
+     "required": true
+    },
+    {
+     "id": "6065dc8a132d4d12c81fd8e3",
+     "parent": "5a34f7f1c4a2826c6e06d75d",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5a34f7f1c4a2826c6e06d75f",
+     "required": false
+    },
+    {
+     "id": "618b9643526131765025ab35",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "5a3792f2c4a282000c5a9532",
+     "required": false
+    },
+    {
+     "id": "5b3b99475acfc432ff4dcbee",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_SCOPE",
+     "slotId": "618b9643526131765025ab37",
+     "required": true
+    },
+    {
+     "id": "618b9671d14d6d5ab879c5ea",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_MOUNT",
+     "slotId": "618ba83fb766fe04084b015b",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 66,
+    "recoil": 86,
+    "weight": 5.8,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 10,
+    "effectiveDistance": 1500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 1500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 17,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 300,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6.7,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639872fe8871e1272b10ccf6": {
+   "name": "Gunsmith - Part 14",
+   "weapon": "5bb2475ed4351e00853264e3",
+   "parts": [
+    {
+     "id": "5bb20d53d4351e4502010a69",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5bb2475ed4351e00853264e7",
+     "required": false
+    },
+    {
+     "id": "5c6d85e02e22165df16b81f4",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_BARREL",
+     "slotId": "5bb20d53d4351e4502010a6c",
+     "required": false
+    },
+    {
+     "id": "5c7fb51d2e2216001219ce11",
+     "parent": "5c6d85e02e22165df16b81f4",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c6d85e02e22165df16b81f6",
+     "required": false
+    },
+    {
+     "id": "5ea17bbc09aa976f2e7a51cd",
+     "parent": "5c7fb51d2e2216001219ce11",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c7fb51d2e2216001219ce13",
+     "required": true
+    },
+    {
+     "id": "5bb20dfcd4351e00334c9e24",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5bb20d53d4351e4502010a6d",
+     "required": false
+    },
+    {
+     "id": "5fce0cf655375d18a253eff0",
+     "parent": "5bb20dfcd4351e00334c9e24",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5bb20dfcd4351e00334c9e26",
+     "required": true
+    },
+    {
+     "id": "558022b54bdc2dac148b458d",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_SCOPE",
+     "slotId": "5bb20d53d4351e4502010a6b",
+     "required": true
+    },
+    {
+     "id": "5d15cf3bd7ad1a67e71518b2",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5bb2475ed4351e00853264e5",
+     "required": true
+    },
+    {
+     "id": "5947eab886f77475961d96c5",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5bb2475ed4351e00853264e8",
+     "required": true
+    },
+    {
+     "id": "5c06595c0db834001a66af6c",
+     "parent": "5bb20dfcd4351e00334c9e24",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5bb212b8d4351e00367faf08",
+     "required": true
+    },
+    {
+     "id": "5bb20dcad4351e3bac1212da",
+     "parent": "5c6d85e02e22165df16b81f4",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5c6d85e02e22165df16b81f7",
+     "required": false
+    },
+    {
+     "id": "61840bedd92c473c77021635",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5bb2475ed4351e00853264e6",
+     "required": false
+    },
+    {
+     "id": "5fb6564947ce63734e3fa1da",
+     "parent": "5bb20d53d4351e4502010a69",
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5bb20d53d4351e4502010a6e",
+     "required": false
+    },
+    {
+     "id": "5f633ff5c444ce7e3c30a006",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5bb2475ed4351e00853264e9",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 77,
+    "recoil": 79,
+    "weight": 4,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 300,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 300
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 50,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 310,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "666314b0acf8442f8b0531a1": {
+   "name": "Hell on Earth - Part 1",
+   "weapon": "5580223e4bdc2d1c128b457f",
+   "parts": [
+    {
+     "id": "5580169d4bdc2d9d138b4585",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "55d5a27c4bdc2d8c2f8b456f",
+     "required": false
+    },
+    {
+     "id": "611a31ce5b7ffe001b4649d1",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "611a35095b7ffe001b4649d3",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 43,
+    "recoil": 259,
+    "weight": 3.4,
+    "width": 4,
+    "height": 1,
+    "magazineCapacity": 0,
+    "effectiveDistance": 100,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 100
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 42,
+     "compareMethod": ">="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ae3280386f7742a41359364": {
+   "name": "Gunsmith - Part 15",
+   "weapon": "57c44b372459772d2b39b8ce",
+   "parts": [
+    {
+     "id": "5a69a2ed8dc32e000d46d1f1",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "57c44cf92459772d2b39b8d5",
+     "required": false
+    },
+    {
+     "id": "5a9eb32da2750c00171b3f9c",
+     "parent": "5a69a2ed8dc32e000d46d1f1",
+     "slot": "MOD_STOCK",
+     "slotId": "5a69a5648dc32e000d46d1f3",
+     "required": true
+    },
+    {
+     "id": "67069c8cee8138ed2f05ad34",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "57c4526f2459772d291a83e9",
+     "required": false
+    },
+    {
+     "id": "544909bb4bdc2d6f028b4577",
+     "parent": "67069c8cee8138ed2f05ad34",
+     "slot": "MOD_TACTICAL",
+     "slotId": "67069c8cee8138ed2f05ad37",
+     "required": true
+    },
+    {
+     "id": "5a7c74b3e899ef0014332c29",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "57c452612459772d2d75e495",
+     "required": true
+    },
+    {
+     "id": "57c44dd02459772d2e0ae249",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "57c44cb62459772d2d75e37f",
+     "required": false
+    },
+    {
+     "id": "651178336cad06c37c049eb4",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "6511786c1b90b4fc77015073",
+     "required": false
+    },
+    {
+     "id": "65118f531b90b4fc77015083",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "57c44cec2459772d303d899c",
+     "required": false
+    },
+    {
+     "id": "5ba36f85d4351e0085325c81",
+     "parent": "5a7c74b3e899ef0014332c29",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5ba36fe2d4351e4502010472",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 30.5,
+    "recoil": 47,
+    "weight": 4.51,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 30,
+    "effectiveDistance": 300,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 300
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 27,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 220,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5ac242ab86f77412464f68b4": {
+   "name": "Gunsmith - Part 16",
+   "weapon": "588892092459774ac91d4b11",
+   "parts": [
+    {
+     "id": "5888945a2459774bf43ba385",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "58889e2d245977567641f459",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "58889e5d24597759817d5dd3",
+     "required": false
+    },
+    {
+     "id": "58889c7324597754281f9439",
+     "parent": "5888945a2459774bf43ba385",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5888945a2459774bf43ba386",
+     "required": false
+    },
+    {
+     "id": "58889d0c2459775bc215d981",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "58889ea42459775bc215d983",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "588892092459774ac91d4b13",
+     "required": false
+    },
+    {
+     "id": "62850c28da09541f43158cca",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    },
+    {
+     "id": "61605d88ffa6e502ac5e7eeb",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10c",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 46,
+    "recoil": 59,
+    "weight": 6.04,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 0,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 2000,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 36,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 450,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6.7,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b47749f86f7746c5d6a5fd4": {
+   "name": "Gunsmith - Part 17",
+   "weapon": "5ac66d015acfc400180ae6e4",
+   "parts": [
+    {
+     "id": "5e21ca18e4d47f0da15e77dd",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5ac66d015acfc400180ae6e9",
+     "required": false
+    },
+    {
+     "id": "5f6372e2865db925d54f3869",
+     "parent": "5e21ca18e4d47f0da15e77dd",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5e21ca18e4d47f0da15e77df",
+     "required": false
+    },
+    {
+     "id": "5f6339d53ada5942720e2dc3",
+     "parent": "5f6372e2865db925d54f3869",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5f6372e2865db925d54f386b",
+     "required": true
+    },
+    {
+     "id": "5c0548ae0db834001966a3c2",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5ac66d015acfc400180ae6ee",
+     "required": true
+    },
+    {
+     "id": "59c6633186f7740cf0493bb9",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5ac66d015acfc400180ae6e7",
+     "required": false
+    },
+    {
+     "id": "5cf4e3f3d7f00c06595bc7f0",
+     "parent": "59c6633186f7740cf0493bb9",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59c663e986f7740cfb39760a",
+     "required": false
+    },
+    {
+     "id": "588226ef24597767af46e39c",
+     "parent": "5cf4e3f3d7f00c06595bc7f0",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5cf4e3f3d7f00c06595bc7f2",
+     "required": true
+    },
+    {
+     "id": "5b3a337e5acfc4704b4a19a0",
+     "parent": "5cf4e3f3d7f00c06595bc7f0",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5cf4e3f3d7f00c06595bc7f4",
+     "required": true
+    },
+    {
+     "id": "5beec8b20db834001961942a",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5ac66d015acfc400180ae6ed",
+     "required": true
+    },
+    {
+     "id": "5bf3f59f0db834001a6fa060",
+     "parent": null,
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5ac66d015acfc400180ae6ec",
+     "required": false
+    },
+    {
+     "id": "606587d11246154cad35d635",
+     "parent": "5beec8b20db834001961942a",
+     "slot": "MOD_STOCK",
+     "slotId": "5beec8b20db834001961942c",
+     "required": false
+    },
+    {
+     "id": "5ac50da15acfc4001718d287",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5ac66d015acfc400180ae6eb",
+     "required": false
+    },
+    {
+     "id": "6130ca3fd92c473c77020dbd",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5ac66d015acfc400180ae6f0",
+     "required": false
+    },
+    {
+     "id": "65f1b1176dbd6c5ba2082eed",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5ac66d015acfc400180ae6ef",
+     "required": false
+    },
+    {
+     "id": "648ae3e356c6310a830fc291",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5ac66d015acfc400180ae6ea",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": "648ae3e356c6310a830fc291",
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "648ae44056c6310a830fc293",
+     "required": false
+    },
+    {
+     "id": "65f1b2a5c14a07890801fc70",
+     "parent": "65f1b1176dbd6c5ba2082eed",
+     "slot": "MOD_MOUNT",
+     "slotId": "65f1b1576dbd6c5ba2082ef0",
+     "required": false
+    },
+    {
+     "id": "5c064c400db834001d23f468",
+     "parent": "65f1b2a5c14a07890801fc70",
+     "slot": "MOD_SCOPE",
+     "slotId": "65f1b2a5c14a07890801fc71",
+     "required": false
+    },
+    {
+     "id": "5c86592b2e2216000e69e77c",
+     "parent": "5c064c400db834001d23f468",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c064c400db834001d23f46a",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "5c86592b2e2216000e69e77c",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c86592b2e2216000e69e77e",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 73.6,
+    "recoil": 69,
+    "weight": 5.85,
+    "width": 4,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 800,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 53,
+     "compareMethod": ">="
+    },
+    {
+     "key": "height",
+     "value": 2,
+     "compareMethod": "<="
+    },
+    {
+     "key": "recoil",
+     "value": 300,
+     "compareMethod": "<="
+    },
+    {
+     "key": "width",
+     "value": 4,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b477b6f86f7747290681823": {
+   "name": "Gunsmith - Part 18",
+   "weapon": "5a0ec13bfcdbcb00165aa685",
+   "parts": [
+    {
+     "id": "59c6633186f7740cf0493bb9",
+     "parent": null,
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5a0ec13bfcdbcb00165aa687",
+     "required": false
+    },
+    {
+     "id": "57cff947245977638e6f2a19",
+     "parent": "59c6633186f7740cf0493bb9",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "59c663e986f7740cfb39760a",
+     "required": true
+    },
+    {
+     "id": "5b30ac585acfc433000eb79c",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5a0ec13bfcdbcb00165aa68a",
+     "required": true
+    },
+    {
+     "id": "59d6272486f77466146386ff",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5a0ec13bfcdbcb00165aa68e",
+     "required": true
+    },
+    {
+     "id": "57cffb66245977632f391a99",
+     "parent": "57cff947245977638e6f2a19",
+     "slot": "MOD_MOUNT",
+     "slotId": "57cffb3524597763887ef4c0",
+     "required": true
+    },
+    {
+     "id": "5a9fbacda2750c00141e080f",
+     "parent": null,
+     "slot": "MOD_MUZZLE",
+     "slotId": "5a0ec13bfcdbcb00165aa689",
+     "required": true
+    },
+    {
+     "id": "5d2c770c48f0354b4a07c100",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5a0ec13bfcdbcb00165aa68b",
+     "required": false
+    },
+    {
+     "id": "5c07dd120db834001c39092d",
+     "parent": "5d2c770c48f0354b4a07c100",
+     "slot": "MOD_SCOPE",
+     "slotId": "5d2c770c48f0354b4a07c102",
+     "required": true
+    },
+    {
+     "id": "5b0e794b5acfc47a877359b2",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5a0ec13bfcdbcb00165aa68d",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 56.5,
+    "recoil": 87,
+    "weight": 4.65,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 30,
+    "effectiveDistance": 600,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 600
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 600,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 40,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 380,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "639873003693c63d86328f25": {
+   "name": "Gunsmith - Part 19",
+   "weapon": "5c46fbd72e2216398b5a8c9c",
+   "parts": [
+    {
+     "id": "6197b229af1f5202c57a9bea",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5c46fbd72e2216398b5a8ca0",
+     "required": false
+    },
+    {
+     "id": "5947e98b86f774778f1448bc",
+     "parent": "6197b229af1f5202c57a9bea",
+     "slot": "MOD_STOCK",
+     "slotId": "6197b229af1f5202c57a9bec",
+     "required": true
+    },
+    {
+     "id": "5dfcd0e547101c39625f66f9",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5c471d722e221602b66cd9b0",
+     "required": true
+    },
+    {
+     "id": "6516b129609aaf354b34b3a8",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5c46fbd72e2216398b5a8c9e",
+     "required": false
+    },
+    {
+     "id": "5b30ac585acfc433000eb79c",
+     "parent": "6516b129609aaf354b34b3a8",
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "6516b176caa50259d91deb76",
+     "required": true
+    },
+    {
+     "id": "618b9643526131765025ab35",
+     "parent": "5dfcd0e547101c39625f66f9",
+     "slot": "MOD_SCOPE",
+     "slotId": "5dfcd0e547101c39625f6701",
+     "required": false
+    },
+    {
+     "id": "57c5ac0824597754771e88a9",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_SCOPE",
+     "slotId": "618b9643526131765025ab37",
+     "required": true
+    },
+    {
+     "id": "5c471cb32e221602b177afaa",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5c46fbd72e2216398b5a8ca2",
+     "required": false
+    },
+    {
+     "id": "5c471bfc2e221602b21d4e17",
+     "parent": "5c471cb32e221602b177afaa",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5c471cb32e221602b177afac",
+     "required": false
+    },
+    {
+     "id": "5e01e9e273d8eb11426f5bc3",
+     "parent": "5c471bfc2e221602b21d4e17",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5e020339d4353e3302576b6a",
+     "required": false
+    },
+    {
+     "id": "5e01ea19e9dc277128008c0b",
+     "parent": "5e01e9e273d8eb11426f5bc3",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5e01e9e273d8eb11426f5bc5",
+     "required": true
+    },
+    {
+     "id": "5dfce88fe9dc277128008b2e",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5c4722852e221602b3137e73",
+     "required": false
+    },
+    {
+     "id": "618b9671d14d6d5ab879c5ea",
+     "parent": "618b9643526131765025ab35",
+     "slot": "MOD_MOUNT",
+     "slotId": "618ba83fb766fe04084b015b",
+     "required": false
+    },
+    {
+     "id": "5c471c842e221615214259b5",
+     "parent": "5c471cb32e221602b177afaa",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5c471cb32e221602b177afad",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 27,
+    "recoil": 90,
+    "weight": 6.67,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 0,
+    "effectiveDistance": 1000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 1000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 1000,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 10,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 10,
+     "compareMethod": "<="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 8,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b477f7686f7744d1b23c4d2": {
+   "name": "Gunsmith - Part 20",
+   "weapon": "5aafa857e5b5b00018480968",
+   "parts": [
+    {
+     "id": "5addbf175acfc408fb13965b",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5aafa857e5b5b0001848096c",
+     "required": false
+    },
+    {
+     "id": "5addbfbb5acfc400194dbcf7",
+     "parent": "5addbf175acfc408fb13965b",
+     "slot": "MOD_MOUNT",
+     "slotId": "5addbf175acfc408fb13965d",
+     "required": true
+    },
+    {
+     "id": "5addbfef5acfc400185c2857",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5addc6a45acfc4001714e045",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": "5addbfef5acfc400185c2857",
+     "slot": "MOD_SCOPE",
+     "slotId": "5addbfef5acfc400185c2859",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    },
+    {
+     "id": "58d39d3d86f77445bb794ae7",
+     "parent": "5addbfbb5acfc400194dbcf7",
+     "slot": "MOD_SCOPE",
+     "slotId": "5addbfbb5acfc400194dbcf9",
+     "required": false
+    },
+    {
+     "id": "58d399e486f77442e0016fe7",
+     "parent": "58d39d3d86f77445bb794ae7",
+     "slot": "MOD_SCOPE",
+     "slotId": "58d39d3d86f77445bb794ae8",
+     "required": true
+    },
+    {
+     "id": "57fd23e32459772d0805bcf1",
+     "parent": "5addbf175acfc408fb13965b",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5addbf615acfc4001669f0ad",
+     "required": true
+    },
+    {
+     "id": "5aaf9d53e5b5b00015042a52",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5aafa857e5b5b0001848096e",
+     "required": false
+    },
+    {
+     "id": "5aafa1c2e5b5b00015042a56",
+     "parent": "5aaf9d53e5b5b00015042a52",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5aaf9d53e5b5b00015042a54",
+     "required": false
+    },
+    {
+     "id": "5addcce35acfc4001a5fc635",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5aafa857e5b5b0001848096b",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 32,
+    "recoil": 113,
+    "weight": 6.93,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 30,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 20,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 400,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 7.3,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "63987301e11ec11ff5504036": {
+   "name": "Gunsmith - Part 21",
+   "weapon": "5bfea6e90db834001b7347f3",
+   "parts": [
+    {
+     "id": "5cde739cd7f00c0010373bd3",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5bfea6e90db834001b7347f6",
+     "required": true
+    },
+    {
+     "id": "5cde7afdd7f00c000d36b89d",
+     "parent": "5cde739cd7f00c0010373bd3",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5cde7f37d7f00c000f261266",
+     "required": true
+    },
+    {
+     "id": "5cde7b43d7f00c000d36b93e",
+     "parent": null,
+     "slot": "MOD_MOUNT",
+     "slotId": "5bfebf0e0db834001808a2b7",
+     "required": true
+    },
+    {
+     "id": "5d2703038abbc3105103d94c",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "5bfea6e90db834001b7347f7",
+     "required": false
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": "5cde739cd7f00c0010373bd3",
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5cde7dc1d7f00c0010373bdd",
+     "required": false
+    },
+    {
+     "id": "627254cc9c563e6e442c398f",
+     "parent": "5cde739cd7f00c0010373bd3",
+     "slot": "MOD_STOCK",
+     "slotId": "5cde739cd7f00c0010373bd5",
+     "required": false
+    },
+    {
+     "id": "5fc0f9b5d724d907e2077d82",
+     "parent": "5cde7afdd7f00c000d36b89d",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "5cde7afdd7f00c000d36b8a7",
+     "required": false
+    },
+    {
+     "id": "5d270ca28abbc31ee25ee821",
+     "parent": "5d2703038abbc3105103d94c",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5d2703038abbc3105103d94e",
+     "required": false
+    },
+    {
+     "id": "5dfa3d950dee1b22f862eae0",
+     "parent": "5cde7afdd7f00c000d36b89d",
+     "slot": "MOD_SIGHT_FRONT",
+     "slotId": "5cde7afdd7f00c000d36b8a6",
+     "required": false
+    },
+    {
+     "id": "5dfa3d7ac41b2312ea33362a",
+     "parent": "5cde7b43d7f00c000d36b93e",
+     "slot": "MOD_SIGHT_REAR",
+     "slotId": "5cde805fd7f00c000f261268",
+     "required": false
+    },
+    {
+     "id": "61713cc4d8e3106d9806c109",
+     "parent": "5cde7b43d7f00c000d36b93e",
+     "slot": "MOD_SCOPE",
+     "slotId": "5cde7b43d7f00c000d36b940",
+     "required": false
+    },
+    {
+     "id": "5aa66be6e5b5b0214e506e97",
+     "parent": "61713cc4d8e3106d9806c109",
+     "slot": "MOD_SCOPE",
+     "slotId": "61713cc4d8e3106d9806c10b",
+     "required": true
+    }
+   ],
+   "stats": {
+    "ergonomics": 73,
+    "recoil": 113,
+    "weight": 5.43,
+    "width": 5,
+    "height": 3,
+    "magazineCapacity": 0,
+    "effectiveDistance": 2000,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 2000
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 1500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 35,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 5,
+     "compareMethod": "<="
+    },
+    {
+     "key": "recoil",
+     "value": 500,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "5b47825886f77468074618d3": {
+   "name": "Gunsmith - Part 22",
+   "weapon": "5447a9cd4bdc2dbd208b4567",
+   "parts": [
+    {
+     "id": "5c0e2f26d174af02a9625114",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "55d5a2ec4bdc2d972f8b4575",
+     "required": false
+    },
+    {
+     "id": "55d35ee94bdc2d61338b4568",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_BARREL",
+     "slotId": "5c0e2f26d174af02a9625117",
+     "required": false
+    },
+    {
+     "id": "56ea8180d2720bf2698b456a",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_MUZZLE",
+     "slotId": "564afddf4bdc2d1b2b8b4592",
+     "required": false
+    },
+    {
+     "id": "57dbb57e2459774673234890",
+     "parent": "56ea8180d2720bf2698b456a",
+     "slot": "MOD_MUZZLE",
+     "slotId": "57da91d72459771cb524d22c",
+     "required": true
+    },
+    {
+     "id": "5b2cfa535acfc432ff4db7a0",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5c0e2f26d174af02a9625118",
+     "required": true
+    },
+    {
+     "id": "5a1ead28fcdbcb001912fa9f",
+     "parent": "5c0e2f26d174af02a9625114",
+     "slot": "MOD_SCOPE",
+     "slotId": "5c0e2f26d174af02a9625116",
+     "required": false
+    },
+    {
+     "id": "5a1eaa87fcdbcb001865f75e",
+     "parent": "5a1ead28fcdbcb001912fa9f",
+     "slot": "MOD_SCOPE",
+     "slotId": "5a1ead28fcdbcb001912faa0",
+     "required": true
+    },
+    {
+     "id": "5a33e75ac4a2826c6e06d759",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "55d354084bdc2d8c2f8b4568",
+     "required": false
+    },
+    {
+     "id": "5c793fb92e221644f31bfb64",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "55d5a3074bdc2d61338b4574",
+     "required": false
+    },
+    {
+     "id": "6895bf08e2d16810ba0bf43e",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "55d5a30f4bdc2d882f8b4574",
+     "required": false
+    },
+    {
+     "id": "63d3ce281fe77d0f2801859e",
+     "parent": "55d35ee94bdc2d61338b4568",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "56ea8e15d2720bf2698b456b",
+     "required": false
+    },
+    {
+     "id": "6761765f1f08ed5e8800b7a6",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "55d3555c4bdc2d962f8b4568",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 41.5,
+    "recoil": 75,
+    "weight": 5,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 100,
+    "effectiveDistance": 500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 500
+   },
+   "conditions": [
+    {
+     "key": "ergonomics",
+     "value": 40,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 60,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 280,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 5,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "64f83bb69878a0569d6ecfbe": {
+   "name": "Gunsmith - Part 23",
+   "weapon": "606587252535c57a13424cfd",
+   "parts": [
+    {
+     "id": "606587a88900dc2d9a55b659",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "606587252535c57a13424d01",
+     "required": false
+    },
+    {
+     "id": "5d00ef6dd7ad1a0940739b16",
+     "parent": "606587a88900dc2d9a55b659",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "606587a88900dc2d9a55b65d",
+     "required": true
+    },
+    {
+     "id": "59f9d81586f7744c7506ee62",
+     "parent": "606587a88900dc2d9a55b659",
+     "slot": "MOD_SCOPE",
+     "slotId": "606587a88900dc2d9a55b65b",
+     "required": true
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "5d00ef6dd7ad1a0940739b16",
+     "slot": "MOD_TACTICAL",
+     "slotId": "5d00ef6dd7ad1a0940739b1a",
+     "required": true
+    },
+    {
+     "id": "6984b7d56be2752c150e6895",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "606587252535c57a13424cff",
+     "required": false
+    },
+    {
+     "id": "627254cc9c563e6e442c398f",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "606587252535c57a13424d02",
+     "required": false
+    },
+    {
+     "id": "606587bd6d0bd7580617bacc",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "606587252535c57a13424d03",
+     "required": false
+    },
+    {
+     "id": "6065878ac9cf8012264142fd",
+     "parent": "606587a88900dc2d9a55b659",
+     "slot": "MOD_BARREL",
+     "slotId": "606587a88900dc2d9a55b65c",
+     "required": false
+    },
+    {
+     "id": "6065dc8a132d4d12c81fd8e3",
+     "parent": "6065878ac9cf8012264142fd",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "6065878ac9cf801226414300",
+     "required": false
+    },
+    {
+     "id": "5c6175362e221600133e3b94",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "606587252535c57a13424d00",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 62,
+    "recoil": 94,
+    "weight": 4.34,
+    "width": 5,
+    "height": 2,
+    "magazineCapacity": 73,
+    "effectiveDistance": 300,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 300
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 300,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 30,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 73,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 350,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "64f83bcdde58fc437700d8fa": {
+   "name": "Gunsmith - Part 24",
+   "weapon": "5df8ce05b11454561e39243b",
+   "parts": [
+    {
+     "id": "5df8e4080b92095fd441e594",
+     "parent": null,
+     "slot": "MOD_RECIEVER",
+     "slotId": "5df926b94a9f347bc92edcac",
+     "required": false
+    },
+    {
+     "id": "6932aec6cccd2b808a043856",
+     "parent": "5df8e4080b92095fd441e594",
+     "slot": "MOD_HANDGUARD",
+     "slotId": "5df8e4080b92095fd441e598",
+     "required": false
+    },
+    {
+     "id": "5b057b4f5acfc4771e1bd3e9",
+     "parent": "6932aec6cccd2b808a043856",
+     "slot": "MOD_FOREGRIP",
+     "slotId": "6932e8a016ead46c44078bf5",
+     "required": true
+    },
+    {
+     "id": "5d025cc1d7ad1a53845279ef",
+     "parent": null,
+     "slot": "MOD_PISTOL_GRIP",
+     "slotId": "5df8ce05b11454561e39243d",
+     "required": true
+    },
+    {
+     "id": "5d1b5e94d7ad1a2b865a96b0",
+     "parent": "5df8e4080b92095fd441e594",
+     "slot": "MOD_SCOPE",
+     "slotId": "5df8e4080b92095fd441e596",
+     "required": true
+    },
+    {
+     "id": "5d2369418abbc306c62e0c80",
+     "parent": "6932aec6cccd2b808a043856",
+     "slot": "MOD_TACTICAL",
+     "slotId": "6932aec6cccd2b808a043859",
+     "required": true
+    },
+    {
+     "id": "5649a2464bdc2d91118b45a8",
+     "parent": "6932aec6cccd2b808a043856",
+     "slot": "MOD_MOUNT",
+     "slotId": "6932aec6cccd2b808a043858",
+     "required": true
+    },
+    {
+     "id": "577d128124597739d65d0e56",
+     "parent": "5649a2464bdc2d91118b45a8",
+     "slot": "MOD_SCOPE",
+     "slotId": "5649dc074bdc2d1b2b8b458f",
+     "required": false
+    },
+    {
+     "id": "577d141e24597739c5255e01",
+     "parent": "577d128124597739d65d0e56",
+     "slot": "MOD_SCOPE",
+     "slotId": "577d13f724597739ba176c31",
+     "required": true
+    },
+    {
+     "id": "5df917564a9f347bc92edca3",
+     "parent": "5df8e4080b92095fd441e594",
+     "slot": "MOD_BARREL",
+     "slotId": "5df8e4080b92095fd441e597",
+     "required": false
+    },
+    {
+     "id": "5dfa3cd1b33c0951220c079b",
+     "parent": "5df917564a9f347bc92edca3",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5df917564a9f347bc92edca5",
+     "required": false
+    },
+    {
+     "id": "5dfa3d2b0dee1b22f862eade",
+     "parent": "5dfa3cd1b33c0951220c079b",
+     "slot": "MOD_MUZZLE",
+     "slotId": "5dfa3cd1b33c0951220c079d",
+     "required": true
+    },
+    {
+     "id": "5d120a10d7ad1a4e1026ba85",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "5df8ce05b11454561e39243f",
+     "required": false
+    },
+    {
+     "id": "5df8e085bb49d91fb446d6a8",
+     "parent": null,
+     "slot": "MOD_CHARGE",
+     "slotId": "5df926e28b6c4240ba265260",
+     "required": false
+    },
+    {
+     "id": "5dfa3d45dfc58d14537c20b0",
+     "parent": "5df917564a9f347bc92edca3",
+     "slot": "MOD_GAS_BLOCK",
+     "slotId": "5df917564a9f347bc92edca6",
+     "required": false
+    },
+    {
+     "id": "6761770e48fa5c377e06fc3c",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "5df8ce05b11454561e39243e",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 32.5,
+    "recoil": 86,
+    "weight": 5.45,
+    "width": 6,
+    "height": 2,
+    "magazineCapacity": 50,
+    "effectiveDistance": 500,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 500
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 25,
+     "compareMethod": ">="
+    },
+    {
+     "key": "magazineCapacity",
+     "value": 10,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 350,
+     "compareMethod": "<="
+    },
+    {
+     "key": "weight",
+     "value": 6,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  },
+  "64f83bd983cfca080a362c82": {
+   "name": "Gunsmith - Part 25",
+   "weapon": "64ca3d3954fc657e230529cc",
+   "parts": [
+    {
+     "id": "6491c6f6ef312a876705191b",
+     "parent": null,
+     "slot": "MOD_HANDGUARD",
+     "slotId": "64ca3d3954fc657e230529d3",
+     "required": true
+    },
+    {
+     "id": "6492d7847363b8a52206bc52",
+     "parent": null,
+     "slot": "MOD_STOCK",
+     "slotId": "64ca3d3954fc657e230529d0",
+     "required": true
+    },
+    {
+     "id": "646371faf2404ab67905c8e9",
+     "parent": null,
+     "slot": "MOD_BARREL",
+     "slotId": "64ca3d3954fc657e230529d1",
+     "required": false
+    },
+    {
+     "id": "6492ef63cfcf7c89e701abf1",
+     "parent": "646371faf2404ab67905c8e9",
+     "slot": "MOD_MUZZLE",
+     "slotId": "646371faf2404ab67905c8ea",
+     "required": true
+    },
+    {
+     "id": "5cf638cbd7f00c06595bc936",
+     "parent": null,
+     "slot": "MOD_SCOPE",
+     "slotId": "64ca3dd78f30beca2606cd07",
+     "required": true
+    },
+    {
+     "id": "646372518610c40fc20204e8",
+     "parent": null,
+     "slot": "MOD_MAGAZINE",
+     "slotId": "64ca3d3954fc657e230529cf",
+     "required": true
+    },
+    {
+     "id": "5a800961159bd4315e3a1657",
+     "parent": "6491c6f6ef312a876705191b",
+     "slot": "MOD_TACTICAL",
+     "slotId": "6491c6f6ef312a876705191d",
+     "required": true
+    },
+    {
+     "id": "5f6341043ada5942720e2dc5",
+     "parent": null,
+     "slot": "MOD_PISTOLGRIP",
+     "slotId": "64ca3d3954fc657e230529ce",
+     "required": false
+    }
+   ],
+   "stats": {
+    "ergonomics": 16,
+    "recoil": 63,
+    "weight": 9.9,
+    "width": 6,
+    "height": 3,
+    "magazineCapacity": 100,
+    "effectiveDistance": 600,
+    "durability": 100,
+    "accuracy": 0,
+    "muzzleVelocity": 0,
+    "sightingRange": 600
+   },
+   "conditions": [
+    {
+     "key": "effectiveDistance",
+     "value": 500,
+     "compareMethod": ">="
+    },
+    {
+     "key": "ergonomics",
+     "value": 10,
+     "compareMethod": ">="
+    },
+    {
+     "key": "recoil",
+     "value": 950,
+     "compareMethod": "<="
+    }
+   ],
+   "unmet": [],
+   "missingRequired": []
+  }
+ }
+}

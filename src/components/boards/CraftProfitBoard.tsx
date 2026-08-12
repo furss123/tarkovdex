@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { ArrowRight } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { formatSignedRoubles } from '@/lib/format';
 import type { CraftLeaderGroups } from '@/types/dashboard';
@@ -36,7 +38,7 @@ function CraftCard({
   locale: Locale;
   showPriceAge: boolean;
 }) {
-  const t = useTranslations('home');
+  const t = useTranslations('craft');
   const loss = leader.profit < 0;
   return (
     <article className="flex min-w-0 flex-col rounded-lg border border-border bg-surface/30 p-4">
@@ -153,19 +155,39 @@ const GRID =
 export function CraftProfitBoard({
   leaders,
   locale,
+  moreHref,
 }: {
   leaders: CraftLeaderGroups | null;
   locale: Locale;
+  /** Set on summary surfaces only. The dedicated page omits it rather than
+   * linking to itself. */
+  moreHref?: string;
 }) {
-  const t = useTranslations('home');
+  const t = useTranslations('craft');
 
   return (
     <section aria-labelledby="craft-profit-heading">
-      <div className="flex flex-col gap-1">
-        <h2 id="craft-profit-heading" className="text-base font-medium text-fg">
-          {t('craftProfitTitle')}
-        </h2>
-        <p className="text-xs text-muted">{t('craftProfitDescription')}</p>
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2
+            id="craft-profit-heading"
+            className="text-base font-medium text-fg"
+          >
+            {t('craftProfitTitle')}
+          </h2>
+          <p className="text-xs text-muted">
+            {moreHref ? t('craftSummaryDescription') : t('craftProfitDescription')}
+          </p>
+        </div>
+        {moreHref ? (
+          <Link
+            href={moreHref}
+            className="flex min-h-touch shrink-0 items-center gap-1 rounded text-xs text-muted underline-offset-4 transition-colors hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+          >
+            {t('craftSeeAll')}
+            <ArrowRight className="size-3.5 text-accent" aria-hidden="true" />
+          </Link>
+        ) : null}
       </div>
 
       {leaders === null ? (

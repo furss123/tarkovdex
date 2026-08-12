@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { GameMode } from '@/types/tarkov';
+import { isGameMode, type GameMode } from '@/types/tarkov';
 
 type GameModeContextValue = {
   gameMode: GameMode;
@@ -19,14 +19,10 @@ const GameModeContext = createContext<GameModeContextValue | null>(null);
 
 const STORAGE_KEY = 'tarkovdex:gameMode';
 
-function isGameMode(value: unknown): value is GameMode {
-  return value === 'regular' || value === 'pve';
-}
-
 /**
- * Site-wide PvP/PvE selection, picked once in the Header and read by the
- * dashboard's craft and boss boards. Both modes' data is already resident on
- * the page (server-rendered, then refreshed together by the live poll), so
+ * Site-wide PvP / PvE / PvP-S selection, picked once in the Header and read by
+ * every board on every page. All three modes' data is already resident on the
+ * page (server-rendered, then refreshed together by the live poll), so
  * switching here is a pure client-side re-render, never a refetch.
  *
  * The stored value is read in an effect rather than a `useState` initializer:

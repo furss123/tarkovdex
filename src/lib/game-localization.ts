@@ -4,10 +4,12 @@
  * strings. Plain module (no 'server-only') so both server mapping code and
  * client components can import it.
  *
- * Scope note (single-page redesign): the caliber, armor-material and quest-text
- * glossaries were removed with the ammo, armor and quest routes. Only the boss
- * name gap the dashboard's spawn board depends on remains.
+ * Scope note: the caliber and armor-material glossaries were removed with the
+ * ammo and armor routes. The boss-name gap (dashboard spawn board) and the
+ * quest-text gap (gunsmith quest names) remain, because both are still
+ * rendered and both are still incomplete upstream.
  */
+import TASK_TEXT_KO from '@/lib/task-ko.json';
 
 /** Korean names for the mobs json.tarkov.dev's ko dictionary leaves in
  * English (confirmed live: Knight, Partisan, Kaban, Kollontay, etc. come back
@@ -40,6 +42,21 @@ export function localizeMobName(
 ): string {
   if (locale === 'ko' && !HAS_HANGUL.test(translated)) {
     return MOB_NAMES_KO[mobId] ?? translated;
+  }
+  return translated;
+}
+
+/**
+ * Fill upstream's Korean quest-text gap. `tasks_ko` returns a large share of
+ * quest names byte-identical to English (audited live), so a static glossary
+ * generated offline by `scripts/generate-task-ko.mjs` supplies the Korean —
+ * but only when the API's own lookup produced no Hangul, so upstream wins the
+ * moment it catches up. Keyed on the English text because the underlying
+ * dictionary keys are per-task ids.
+ */
+export function localizeTaskText(translated: string, locale: string): string {
+  if (locale === 'ko' && !HAS_HANGUL.test(translated)) {
+    return (TASK_TEXT_KO as Record<string, string>)[translated] ?? translated;
   }
   return translated;
 }
