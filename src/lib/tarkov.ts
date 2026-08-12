@@ -52,7 +52,7 @@ const DEFAULT_GAME_MODE: GameMode = 'regular';
 const MODE_PATH: Record<GameMode, string> = {
   regular: 'regular',
   pve: 'pve',
-  seasonal: process.env.TARKOV_SEASONAL_PATH?.trim() || 'seasonal',
+  seasonal: process.env.TARKOV_SEASONAL_PATH?.trim() || 'pvp-season',
 };
 
 export function modePath(gameMode: GameMode): string {
